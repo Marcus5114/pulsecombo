@@ -344,8 +344,8 @@
   }
   // Modificadores de la galaxia: chips que se encienden y muestran cuántas estrellas suman o restan
   function renderMods(gal) {
-    const ids = Object.keys(MODS).filter(id => MODS[id].gal === gal), amp = 1 + 0.25 * L('g_mod_amp');
-    const st = id => { const v = MODS[id].stars > 0 ? MODS[id].stars * amp : MODS[id].stars; return `${v > 0 ? '+' : '−'}${dec1(Math.abs(v))}★`; };
+    const ids = Object.keys(MODS).filter(id => MODS[id].gal === gal);
+    const st = id => { const v = modPct(id); return `${v > 0 ? '+' : '−'}${Math.round(Math.abs(v) * 100)}% ★`; };
     $('mods').innerHTML = ids.map(id => {
       const m = MODS[id];
       if (!modOpen(id)) return `<span class="chip mod locked" title="${m.desc}">${m.label} <small>${st(id)}</small></span>`;
@@ -355,7 +355,7 @@
     const tut = SONGS[S.sel].tut;
     $('modHint').innerHTML = !L('g_mods') ? 'Se abren con el nodo <b>Modificadores</b> de la rama Desafíos del árbol global.'
       : !galHardClear(gal) ? `Superá Difícil en un planeta de ${GX[gal].name} para usarlos.`
-      : ids.map(id => `<b>${MODS[id].label}:</b> ${MODS[id].desc}`).join(' ') + (tut ? ' No se aplican en el tutorial.' : '');
+      : 'Cada uno sube o baja las estrellas de la canción en un porcentaje. ' + ids.map(id => `<b>${MODS[id].label}:</b> ${MODS[id].desc}`).join(' ') + (tut ? ' No se aplican en el tutorial.' : '');
   }
   $('mods').addEventListener('click', e => {
     const b = e.target.closest('button[data-m]'); if (!b) return;
@@ -374,7 +374,22 @@
   });
   const REFUND = 0.4;
   const spentOnTree = tid => TREES[tid].nodes.reduce((sum, n) => { if (!n.cost) return sum; for (let k = 0; k < L(n.id); k++) sum += nodeCost(n, k); return sum; }, 0);
+  // Condensador: la moneda que sobra se convierte en materia oscura
+  function renderCond() {
+    const box = $('condBox'); if (treeId === 'global') { box.hidden = true; return; }
+    const g = GX[treeId], c = condCost(treeId), n = S.cond[treeId] || 0, ok = S[g.cur] >= c;
+    box.hidden = false;
+    box.innerHTML = `<div><b>Condensador</b><span>Convertí ${g.unit} en materia oscura. Cada condensación cuesta 6% más${n ? ` · llevás ${n}` : ''}.</span></div>
+      <button class="play-btn" id="condBtn" ${ok ? '' : 'disabled'}>+1 materia oscura · ${fmt(c)} ${g.unit}</button>`;
+  }
+  $('condBox').addEventListener('click', e => {
+    if (e.target.id !== 'condBtn' || treeId === 'global') return;
+    const g = GX[treeId], c = condCost(treeId); if (S[g.cur] < c) return;
+    S[g.cur] -= c; S.cond[treeId] = (S.cond[treeId] || 0) + 1; S.mo += 1;
+    save(); renderCond(); updateTree(); renderUI(true);
+  });
   function renderRespec(confirming) {
+    renderCond();
     const spent = spentOnTree(treeId), back = Math.floor(spent * REFUND), u = walletUnit(treeId);
     $('spentInfo').textContent = `${TREES[treeId].title} · invertido: ${fmt(spent)} ${u}`;
     $('respecBox').innerHTML = !spent ? ''
@@ -411,7 +426,7 @@
     const nb = TREES[S.galaxy].nodes.filter(canBuy).length, ng = TREES.global.nodes.filter(canBuy).length;
     $('badge').hidden = !nb; $('badge').textContent = nb;
     $('badgeG').hidden = !ng; $('badgeG').textContent = ng;
-    if (view === 'tree' && !force) { updateTree(); if (tipOpen) renderDetail(); }
+    if (view === 'tree' && !force) { updateTree(); renderCond(); if (tipOpen) renderDetail(); }
     if (view === 'gal' && !force && now % 1000 < 260) renderGalInfo();
   }
 

@@ -66,7 +66,7 @@
     if (!chartCache.has(k)) {
       const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : buildStack(si, di);
       c.baseStars = c.stars; c.mods = mods;
-      if (mods.length) { c.stars = Math.max(0.5, Math.round((c.stars + modStars(mods)) * 10) / 10); c.mult = starMult(c.stars); }
+      if (mods.length) { c.stars = Math.max(0.5, Math.round(c.stars * modFactor(mods) * 10) / 10); c.mult = starMult(c.stars); }
       chartCache.set(k, c);
     }
     return chartCache.get(k);

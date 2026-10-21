@@ -171,3 +171,10 @@ button.chip.mod { cursor: pointer; }
 button.chip.mod:hover { border-color: var(--fg); }
 .chip.mod.on { color: var(--acc); border-color: var(--acc); }
 .chip.mod small { font-size: 0.66rem; letter-spacing: 0.02em; opacity: 0.8; margin-left: 2px; }
+
+/* Condensador de materia oscura */
+.cond { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-size: 0.78rem; line-height: 1.4; }
+.cond div { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 260px; }
+.cond b { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.cond span { color: var(--muted); }
+.cond .play-btn { padding: 9px 14px; font-size: 0.72rem; }
