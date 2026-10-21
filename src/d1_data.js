@@ -194,6 +194,7 @@
       branches: [
         { id: 'ga', name: 'Amplificadores', tag: 'Multiplicadores para la moneda de cada galaxia (en partidas y en ecos).' },
         { id: 'ge', name: 'Ecos', tag: 'Tus mejores resultados se repiten solos. Hacelos rendir más y más seguido.' },
+        { id: 'gm', name: 'Desafíos', tag: 'Modificadores que cambian cómo se juega una canción y suben o bajan sus estrellas.' },
       ],
       nodes: [
         { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con materia oscura.', fx: () => 'Activo' },
@@ -204,6 +205,8 @@
         { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.5], req: [['g_amp_pulso', 1]], desc: 'Más piezas en Ensamble.', fx: lv => `+${25 * lv}% piezas` },
         { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.5], req: [['g_amp_pulso', 1]], desc: 'Más datos en Señal.', fx: lv => `+${25 * lv}% datos` },
         { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3]], desc: 'Con las tres galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
+        { id: 'g_mods', br: 'gm', pos: [2, 1], root: true, name: 'Modificadores', max: 1, cost: [3, 1], req: [['g_core', 1]], desc: 'Abre los modificadores en el menú de cada canción. Cada uno se habilita al superar Difícil en un planeta de su galaxia.', fx: lv => lv ? 'Modificadores abiertos' : 'Cerrados' },
+        { id: 'g_mod_amp', br: 'gm', pos: [2, 2], name: 'Maestría', max: 4, cost: [6, 1.8], req: [['g_mods', 1]], desc: 'Las estrellas que suman los modificadores valen más. No cambia los que restan.', fx: lv => `+${25 * lv}% de estrellas por modificador` },
         { id: 'g_eco_eff', br: 'ge', pos: [2, 1], root: true, name: 'Ecos persistentes', max: 6, cost: [2, 1.6], req: [['g_core', 1]], desc: 'Cada eco rinde un porcentaje mayor de tu mejor resultado.', fx: lv => `Rinden ${10 + 5 * lv}%` },
         { id: 'g_eco_speed', br: 'ge', pos: [1, 2], name: 'Bucle temporal', max: 4, cost: [4, 1.8], req: [['g_eco_eff', 1]], desc: 'Los ecos se repiten más seguido.', fx: lv => `${pct(1 / (1 + 0.25 * lv))} del tiempo` },
         { id: 'g_eco_off', br: 'ge', pos: [3, 2], name: 'Memoria del vacío', max: 5, cost: [3, 1.6], req: [['g_eco_eff', 1]], desc: 'Los ecos siguen sonando más horas con el juego cerrado.', fx: lv => `Hasta ${2 + 2 * lv} h sin jugar` },
@@ -214,19 +217,19 @@
   const ALL_NODES = [];
   for (const [tid, t] of Object.entries(TREES)) for (const n of t.nodes) { n.tree = tid; if (n.br === 'core' && !n.parent) n.isCore = true; ALL_NODES.push(n); }
   const N = Object.fromEntries(ALL_NODES.map(n => [n.id, n]));
-  const BR_NAME = { core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas', ed: 'Diseño', ec: 'Cadencia', sm: 'Memoria', st: 'Transmisión', ga: 'Amplificadores', ge: 'Ecos' };
+  const BR_NAME = { gm: 'Desafíos', core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas', ed: 'Diseño', ec: 'Cadencia', sm: 'Memoria', st: 'Transmisión', ga: 'Amplificadores', ge: 'Ecos' };
   const CORE_IDS = new Set(ALL_NODES.filter(n => n.isCore).map(n => n.id));
 
   // ---------- Estado ----------
   const KEY = 'comboPulso_v3';
-  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
+  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
   let S = fresh();
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const d = JSON.parse(raw);
       S = { ...fresh(), ...d, moInit: d.moInit || false };
-      S.n = S.n || {}; S.rec = S.rec || {}; S.off = S.off || {};
+      S.n = S.n || {}; S.rec = S.rec || {}; S.off = S.off || {}; S.mods = S.mods || {};
       S.tot = { pulso: 0, ens: 0, sen: 0, ...(d.tot || {}) };
       if (d.total && !d.tot) S.tot.pulso = d.total;
       S.galOpen = { pulso: true, ...(d.galOpen || {}) };
@@ -266,6 +269,23 @@
   const recOf = (s, d) => S.rec[`${s.id}-${d}`];
   const diffsOf = s => s.tut ? [0] : modeOf(s) === 'arrows' ? [0, 1, 2, 3] : [0, 1, 2];
   const diffOpen = (s, d) => d === 0 || [0, 1, 2, 3].some(k => k >= d - 1 && recOf(s, k)?.clear);
+  // Modificadores de dificultad: se abren con el nodo global y, cada uno, al superar Difícil en un planeta de su galaxia.
+  // stars: estrellas que suman (o restan) a la canción. No se aplican en los tutoriales.
+  const MODS = {
+    hidden:  { gal: 'pulso', label: 'Oculto', stars: 0.5, desc: 'Las flechas desaparecen al acercarse a los indicadores.' },
+    sudden:  { gal: 'pulso', label: 'Repentino', stars: 0.4, desc: 'Las flechas aparecen recién en la mitad de la pista.' },
+    dark:    { gal: 'pulso', label: 'Sin indicadores', stars: 0.3, desc: 'Los indicadores de arriba no se ven.' },
+    nofail:  { gal: 'pulso', label: 'Sin caída', stars: -1, desc: 'El aguante no te saca de la canción. Si se hubiera vaciado, no cuenta como superada.' },
+    flash:   { gal: 'ens', label: 'Destello', stars: 0.5, desc: 'La pieza que cae solo se ve al principio de cada tiempo.' },
+    narrow:  { gal: 'ens', label: 'Pozo angosto', stars: 0.4, desc: 'Tablero de 8 columnas en vez de 10.' },
+    audio:   { gal: 'sen', label: 'Solo audio', stars: 1, desc: 'La llamada no se ve: solo se escucha.' },
+    reverse: { gal: 'sen', label: 'Al revés', stars: 0.8, desc: 'Repetís la llamada en orden inverso.' },
+    delay:   { gal: 'sen', label: 'Memoria diferida', stars: 1.2, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
+  };
+  const galHardClear = gal => SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
+  const modOpen = id => !!L('g_mods') && galHardClear(MODS[id].gal);
+  const activeMods = s => s.tut ? [] : Object.keys(MODS).filter(id => MODS[id].gal === s.gal && S.mods[id] && modOpen(id));
+  const modStars = ids => ids.reduce((a, id) => a + (MODS[id].stars > 0 ? MODS[id].stars * (1 + 0.25 * L('g_mod_amp')) : MODS[id].stars), 0);
   const tutDone = gal => SONGS.some(s => s.gal === gal && s.tut && recOf(s, 0)?.clear);
   const clearedIn = wi => WORLDS[wi].idx.filter(i => [0, 1, 2, 3].some(d => recOf(SONGS[i], d)?.clear)).length;
   const worldDone = wi => WORLDS[wi].tutorial ? tutDone(WORLDS[wi].gal) : clearedIn(wi) >= GX[WORLDS[wi].gal].need;

@@ -11,6 +11,14 @@
     ctx.lineTo(-0.2, 0.48); ctx.lineTo(-0.2, 0); ctx.lineTo(-0.5, 0); ctx.closePath();
     ctx.restore();
   }
+  // Etiqueta de la partida: canción, dificultad, estrellas y modificadores activos
+  // Arriba a la derecha: canción, dificultad y estrellas; debajo, los modificadores activos. Se achica si no entra.
+  function drawRunLabel(U) {
+    const fit = (txt, px, y, wgt) => { ctx.font = F(wgt, px); const w = ctx.measureText(txt).width, max = W * 0.7; if (w > max) ctx.font = F(wgt, px * max / w); ctx.fillText(txt, W - 10, y); };
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    fit(`${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`, U * 0.032, 24, 600);
+    if (run.ch.mods.length) { ctx.fillStyle = `rgba(${XC()},0.8)`; fit(run.ch.mods.map(id => MODS[id].label).join(' + '), U * 0.028, 24 + U * 0.042, 700); }
+  }
   const F = (w, px) => `${w} ${Math.round(px)}px Montserrat, Arial, sans-serif`;
   function draw() {
     if (!run || !W) return;
@@ -45,8 +53,7 @@
     ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(fmt(run.earned), 10, 22);
-    ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
-    ctx.fillText(`${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`, W - 10, 24);
+    drawRunLabel(U);
     if (fever) {
       ctx.textAlign = 'center'; ctx.fillStyle = `rgb(${XC()})`; ctx.font = F(800, U * 0.034);
       ctx.fillText(`FIEBRE x2 · ${dec1(Math.max(0, run.feverUntil - t))} s`, W / 2, 44);
@@ -73,17 +80,26 @@
     // receptores
     let beatPulse = 0;
     if (t > LEAD) { const bl = 60 / run.song.bpm; beatPulse = Math.max(0, 1 - (((t - LEAD) % bl) / bl) * 3); }
-    for (let i = 0; i < nb * 4; i++) {
+    for (let i = 0; i < nb * 4 && !run.mods.dark; i++) {   // Sin indicadores: no se dibujan
       const f = Math.max(0, 1 - (now - flash[i]) / 220);
       arrow(laneX(i), rY, size * (1 + 0.06 * beatPulse + 0.12 * f), ANG[i % 4]);
       ctx.lineWidth = 3; ctx.strokeStyle = `rgba(255,255,255,${0.35 + 0.3 * beatPulse + 0.35 * f})`; ctx.stroke();
       if (f > 0) { ctx.fillStyle = `rgba(255,255,255,${0.5 * f})`; ctx.fill(); }
     }
 
-    // flechas
+    // flechas. Oculto: se apagan al acercarse a los indicadores · Repentino: aparecen recién en la mitad de la pista
+    const range = H - rY, MD = run.mods;
+    const vis = y => {
+      const d = (y - rY) / range; let a = 1;
+      if (MD.hidden) a = Math.min(a, Math.max(0, Math.min(1, (d - 0.22) / 0.16)));
+      if (MD.sudden) a = Math.min(a, Math.max(0, Math.min(1, (0.55 - d) / 0.12)));
+      return a;
+    };
     for (const n of run.notes) {
       const y = rY + (n.t - t) * speed;
       if (y > H + size) break;
+      ctx.globalAlpha = n.holding ? 1 : vis(y);
+      if (ctx.globalAlpha < 0.01) continue;
       const x = laneX(n.lane), a = ANG[n.lane % 4];
       if (n.kind === 'h') {
         if (n.completed) continue;
@@ -113,6 +129,7 @@
       if (!n.missed) { ctx.lineWidth = 2; ctx.strokeStyle = '#0d0d0e'; ctx.stroke(); }
     }
 
+    ctx.globalAlpha = 1;
     // juicio, rango y combo
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const age = (now - judgeAt) / 600;

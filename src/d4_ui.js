@@ -191,6 +191,7 @@
     });
     chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
     $('mech').innerHTML = chips.join('');
+    renderMods(W0.gal);
     $('mechHint').hidden = !Object.keys(TOGGLES).some(id => L(id));
   }
   $('songs').addEventListener('click', e => {
@@ -341,6 +342,26 @@
     else if (capped(n)) { btn.disabled = true; btn.textContent = 'Abrí otro planeta'; }
     else { const c = nodeCost(n, lv); btn.disabled = S[T.wallet] < c; btn.textContent = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)}${n.tree === 'global' ? ' MO' : ''}`; }
   }
+  // Modificadores de la galaxia: chips que se encienden y muestran cuántas estrellas suman o restan
+  function renderMods(gal) {
+    const ids = Object.keys(MODS).filter(id => MODS[id].gal === gal), amp = 1 + 0.25 * L('g_mod_amp');
+    const st = id => { const v = MODS[id].stars > 0 ? MODS[id].stars * amp : MODS[id].stars; return `${v > 0 ? '+' : '−'}${dec1(Math.abs(v))}★`; };
+    $('mods').innerHTML = ids.map(id => {
+      const m = MODS[id];
+      if (!modOpen(id)) return `<span class="chip mod locked" title="${m.desc}">${m.label} <small>${st(id)}</small></span>`;
+      const on = !!S.mods[id];
+      return `<button class="chip mod${on ? ' on' : ''}" data-m="${id}" aria-pressed="${on}" title="${m.desc}">${on ? '✓ ' : ''}${m.label} <small>${st(id)}</small></button>`;
+    }).join('');
+    const tut = SONGS[S.sel].tut;
+    $('modHint').innerHTML = !L('g_mods') ? 'Se abren con el nodo <b>Modificadores</b> de la rama Desafíos del árbol global.'
+      : !galHardClear(gal) ? `Superá Difícil en un planeta de ${GX[gal].name} para usarlos.`
+      : ids.map(id => `<b>${MODS[id].label}:</b> ${MODS[id].desc}`).join(' ') + (tut ? ' No se aplican en el tutorial.' : '');
+  }
+  $('mods').addEventListener('click', e => {
+    const b = e.target.closest('button[data-m]'); if (!b) return;
+    const id = b.dataset.m; S.mods[id] = !S.mods[id]; if (!S.mods[id]) delete S.mods[id];
+    save(); renderSongs();
+  });
   function toggleMech(id) {
     S.off = S.off || {};
     S.off[id] = !S.off[id]; if (!S.off[id]) delete S.off[id];

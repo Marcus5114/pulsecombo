@@ -406,6 +406,13 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
 @media (prefers-reduced-motion: reduce) { .here-mark { animation: none; } }
 /* El contador del árbol global es siempre neutro (blanco), en cualquier galaxia */
 #badgeG { background: var(--fg); color: var(--bg); }
+
+/* Modificadores en el menú de la canción */
+.chip.mod { background: none; font-family: var(--font); padding: 6px 11px; }
+button.chip.mod { cursor: pointer; }
+button.chip.mod:hover { border-color: var(--fg); }
+.chip.mod.on { color: var(--acc); border-color: var(--acc); }
+.chip.mod small { font-size: 0.66rem; letter-spacing: 0.02em; opacity: 0.8; margin-left: 2px; }
 </style>
 </head>
 <body>
@@ -468,6 +475,11 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
       <h2>Mecánicas en las canciones</h2>
       <div class="mech" id="mech"></div>
       <p class="hint" id="mechHint" hidden>Tocá una mecánica para apagarla o encenderla. Apagada baja la dificultad y las estrellas (y el multiplicador). La mejora sigue comprada.</p>
+    </div>
+    <div class="mech-box" id="modBox">
+      <h2>Modificadores</h2>
+      <div class="mech" id="mods"></div>
+      <p class="hint" id="modHint"></p>
     </div>
     <p class="hint" id="menuHint"></p>
   </section>
@@ -740,6 +752,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
       branches: [
         { id: 'ga', name: 'Amplificadores', tag: 'Multiplicadores para la moneda de cada galaxia (en partidas y en ecos).' },
         { id: 'ge', name: 'Ecos', tag: 'Tus mejores resultados se repiten solos. Hacelos rendir más y más seguido.' },
+        { id: 'gm', name: 'Desafíos', tag: 'Modificadores que cambian cómo se juega una canción y suben o bajan sus estrellas.' },
       ],
       nodes: [
         { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con materia oscura.', fx: () => 'Activo' },
@@ -750,6 +763,8 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
         { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.5], req: [['g_amp_pulso', 1]], desc: 'Más piezas en Ensamble.', fx: lv => `+${25 * lv}% piezas` },
         { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.5], req: [['g_amp_pulso', 1]], desc: 'Más datos en Señal.', fx: lv => `+${25 * lv}% datos` },
         { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3]], desc: 'Con las tres galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
+        { id: 'g_mods', br: 'gm', pos: [2, 1], root: true, name: 'Modificadores', max: 1, cost: [3, 1], req: [['g_core', 1]], desc: 'Abre los modificadores en el menú de cada canción. Cada uno se habilita al superar Difícil en un planeta de su galaxia.', fx: lv => lv ? 'Modificadores abiertos' : 'Cerrados' },
+        { id: 'g_mod_amp', br: 'gm', pos: [2, 2], name: 'Maestría', max: 4, cost: [6, 1.8], req: [['g_mods', 1]], desc: 'Las estrellas que suman los modificadores valen más. No cambia los que restan.', fx: lv => `+${25 * lv}% de estrellas por modificador` },
         { id: 'g_eco_eff', br: 'ge', pos: [2, 1], root: true, name: 'Ecos persistentes', max: 6, cost: [2, 1.6], req: [['g_core', 1]], desc: 'Cada eco rinde un porcentaje mayor de tu mejor resultado.', fx: lv => `Rinden ${10 + 5 * lv}%` },
         { id: 'g_eco_speed', br: 'ge', pos: [1, 2], name: 'Bucle temporal', max: 4, cost: [4, 1.8], req: [['g_eco_eff', 1]], desc: 'Los ecos se repiten más seguido.', fx: lv => `${pct(1 / (1 + 0.25 * lv))} del tiempo` },
         { id: 'g_eco_off', br: 'ge', pos: [3, 2], name: 'Memoria del vacío', max: 5, cost: [3, 1.6], req: [['g_eco_eff', 1]], desc: 'Los ecos siguen sonando más horas con el juego cerrado.', fx: lv => `Hasta ${2 + 2 * lv} h sin jugar` },
@@ -760,19 +775,19 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
   const ALL_NODES = [];
   for (const [tid, t] of Object.entries(TREES)) for (const n of t.nodes) { n.tree = tid; if (n.br === 'core' && !n.parent) n.isCore = true; ALL_NODES.push(n); }
   const N = Object.fromEntries(ALL_NODES.map(n => [n.id, n]));
-  const BR_NAME = { core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas', ed: 'Diseño', ec: 'Cadencia', sm: 'Memoria', st: 'Transmisión', ga: 'Amplificadores', ge: 'Ecos' };
+  const BR_NAME = { gm: 'Desafíos', core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas', ed: 'Diseño', ec: 'Cadencia', sm: 'Memoria', st: 'Transmisión', ga: 'Amplificadores', ge: 'Ecos' };
   const CORE_IDS = new Set(ALL_NODES.filter(n => n.isCore).map(n => n.id));
 
   // ---------- Estado ----------
   const KEY = 'comboPulso_v3';
-  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
+  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
   let S = fresh();
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const d = JSON.parse(raw);
       S = { ...fresh(), ...d, moInit: d.moInit || false };
-      S.n = S.n || {}; S.rec = S.rec || {}; S.off = S.off || {};
+      S.n = S.n || {}; S.rec = S.rec || {}; S.off = S.off || {}; S.mods = S.mods || {};
       S.tot = { pulso: 0, ens: 0, sen: 0, ...(d.tot || {}) };
       if (d.total && !d.tot) S.tot.pulso = d.total;
       S.galOpen = { pulso: true, ...(d.galOpen || {}) };
@@ -812,6 +827,23 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
   const recOf = (s, d) => S.rec[`${s.id}-${d}`];
   const diffsOf = s => s.tut ? [0] : modeOf(s) === 'arrows' ? [0, 1, 2, 3] : [0, 1, 2];
   const diffOpen = (s, d) => d === 0 || [0, 1, 2, 3].some(k => k >= d - 1 && recOf(s, k)?.clear);
+  // Modificadores de dificultad: se abren con el nodo global y, cada uno, al superar Difícil en un planeta de su galaxia.
+  // stars: estrellas que suman (o restan) a la canción. No se aplican en los tutoriales.
+  const MODS = {
+    hidden:  { gal: 'pulso', label: 'Oculto', stars: 0.5, desc: 'Las flechas desaparecen al acercarse a los indicadores.' },
+    sudden:  { gal: 'pulso', label: 'Repentino', stars: 0.4, desc: 'Las flechas aparecen recién en la mitad de la pista.' },
+    dark:    { gal: 'pulso', label: 'Sin indicadores', stars: 0.3, desc: 'Los indicadores de arriba no se ven.' },
+    nofail:  { gal: 'pulso', label: 'Sin caída', stars: -1, desc: 'El aguante no te saca de la canción. Si se hubiera vaciado, no cuenta como superada.' },
+    flash:   { gal: 'ens', label: 'Destello', stars: 0.5, desc: 'La pieza que cae solo se ve al principio de cada tiempo.' },
+    narrow:  { gal: 'ens', label: 'Pozo angosto', stars: 0.4, desc: 'Tablero de 8 columnas en vez de 10.' },
+    audio:   { gal: 'sen', label: 'Solo audio', stars: 1, desc: 'La llamada no se ve: solo se escucha.' },
+    reverse: { gal: 'sen', label: 'Al revés', stars: 0.8, desc: 'Repetís la llamada en orden inverso.' },
+    delay:   { gal: 'sen', label: 'Memoria diferida', stars: 1.2, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
+  };
+  const galHardClear = gal => SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
+  const modOpen = id => !!L('g_mods') && galHardClear(MODS[id].gal);
+  const activeMods = s => s.tut ? [] : Object.keys(MODS).filter(id => MODS[id].gal === s.gal && S.mods[id] && modOpen(id));
+  const modStars = ids => ids.reduce((a, id) => a + (MODS[id].stars > 0 ? MODS[id].stars * (1 + 0.25 * L('g_mod_amp')) : MODS[id].stars), 0);
   const tutDone = gal => SONGS.some(s => s.gal === gal && s.tut && recOf(s, 0)?.clear);
   const clearedIn = wi => WORLDS[wi].idx.filter(i => [0, 1, 2, 3].some(d => recOf(SONGS[i], d)?.clear)).length;
   const worldDone = wi => WORLDS[wi].tutorial ? tutDone(WORLDS[wi].gal) : clearedIn(wi) >= GX[WORLDS[wi].gal].need;
@@ -1374,13 +1406,14 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
   // Cada ronda: la baliza toca un patrón (llamada) y en el mismo largo siguiente hay que repetirlo (respuesta).
   const beacon = (at, lane) => { tone(at, 'sine', LANE_NOW[lane] * 0.5, 0.16, 0.26); tone(at, 'triangle', LANE_NOW[lane], 0.04, 0.14); };
   const click = (at, strong) => tone(at, 'square', strong ? 1760 : 1320, strong ? 0.035 : 0.022, 0.03);
-  function buildSignal(si, di) {
+  function buildSignal(si, di, mods = []) {
     const s = SONGS[si], step = 60 / s.bpm / 4, R = rng(3000 + si * 131 + di * 17);
     const bars = s.tut ? 1 : di === 2 ? 2 : 1, len = bars * 16, cycle = len * 2;
     const nR = Math.max(2, Math.floor((songMeasures(s) * 16 - 24) / cycle)), total = 16 + nR * cycle + 8;
     const lvlAdj = Math.min(2, Math.floor((s.lvl - 1) / 2));
     const notes = [], calls = [], rounds = [];
     let last = -1, sumN = 0;
+    const pats = [];   // patrón de cada llamada: para Memoria diferida, la respuesta usa el de la ronda anterior
     for (let r = 0; r < nR; r++) {
       const start = 16 + r * cycle, resp = start + len, prog = nR > 1 ? r / (nR - 1) : 0;
       const grid = s.tut || di === 0 ? 4 : di === 1 ? (prog < 0.3 ? 4 : 2) : (prog < 0.4 ? 2 : r % 2 ? 1 : 2);
@@ -1394,18 +1427,24 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
       if (s.tut || R() < 0.7) pick.add(0);
       while (pick.size < count) pick.add(Math.floor(R() * slots));
       const offs = [...pick].sort((a, b) => a - b).map(k => k * grid);
-      const round = { start, resp, n: offs.length, left: offs.length, hits: 0, misses: 0, slots: [] };
-      offs.forEach((off, k) => {
+      const pat = offs.map((off, k) => {
         let lane = s.tut ? (r + k) % 4 : Math.floor(R() * 4);
         if (!s.tut && lane === last && R() < 0.5) lane = (lane + 1 + Math.floor(R() * 3)) % 4;
         last = lane;
         calls.push({ t: LEAD + (start + off) * step, i: start + off, lane });
-        notes.push({ t: LEAD + (resp + off) * step, i: resp + off, lane, kind: 'q', r });
-        round.slots.push({ off, lane });
+        return { off, lane };
       });
-      sumN += offs.length;
+      pats.push(pat);
+      // Respuesta: la llamada tal cual, la anterior (diferida) y/o con las flechas en orden inverso (mismo ritmo)
+      const src = mods.includes('delay') && r > 0 ? pats[r - 1] : pat;
+      const lanes = src.map(p => p.lane); if (mods.includes('reverse')) lanes.reverse();
+      const rs = src.map((p, k) => ({ off: p.off, lane: lanes[k] }));
+      const round = { start, resp, n: rs.length, left: rs.length, hits: 0, misses: 0, slots: rs, callSlots: pat };
+      for (const sl of rs) notes.push({ t: LEAD + (resp + sl.off) * step, i: resp + sl.off, lane: sl.lane, kind: 'q', r });
+      sumN += rs.length;
       rounds.push(round);
     }
+    notes.sort((a, b) => a.t - b.t);
     const dur = total * step;
     let stars = 0.4 + 1.9 * notes.length / dur + (sumN / nR) * 0.12 + (bars === 2 ? 0.5 : 0);
     stars = Math.round(stars * 10) / 10;
@@ -1425,9 +1464,14 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
   const chartCache = new Map();
   const sig = () => ['x_root', 'x_dens', 'x_semi', 'l_root', 'l_freq', 'l_len'].map(id => E(id)).join('');
   function getChart(si, di) {
-    const m = modeOf(SONGS[si]);
-    const k = `${si}-${di}-${m === 'arrows' ? sig() : ''}`;
-    if (!chartCache.has(k)) chartCache.set(k, m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di) : buildStack(si, di));
+    const s = SONGS[si], m = modeOf(s), mods = activeMods(s);
+    const k = `${si}-${di}-${m === 'arrows' ? sig() : ''}-${mods.join('.')}-${L('g_mod_amp')}`;
+    if (!chartCache.has(k)) {
+      const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : buildStack(si, di);
+      c.baseStars = c.stars; c.mods = mods;
+      if (mods.length) { c.stars = Math.max(0.5, Math.round((c.stars + modStars(mods)) * 10) / 10); c.mult = starMult(c.stars); }
+      chartCache.set(k, c);
+    }
     return chartCache.get(k);
   }
 
@@ -1471,7 +1515,8 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     const ch = getChart(si, di), mode = modeOf(s), music = getMusic(si);
     LANE_NOW = music.lanes; musicStart(ch.step);
     run = { si, di, song: s, mode, ch, boards: ch.boards, stars: ch.stars, mult: ch.mult, audioStep: 0, t0: clock() + 0.1,
-      life: 100, earned: 0, combo: 0, maxCombo: 0, rank: 0, failed: false, over: false, callIdx: 0, music };
+      life: 100, earned: 0, combo: 0, maxCombo: 0, rank: 0, failed: false, over: false, callIdx: 0, music,
+      mods: Object.fromEntries(ch.mods.map(id => [id, true])), vlife: 100, vfail: false };
     if (mode === 'stack') initStack(run);
     else {
       Object.assign(run, { notes: ch.notes.map(n => ({ ...n })), active: [], counts: { perfect: 0, great: 0, good: 0, miss: 0 },
@@ -1524,7 +1569,10 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     if (gameT() < run.feverUntil) v *= 2;
     run.earned += v;
   }
-  function hurt(d) { if (run.song.tut) return; run.life -= d; if (run.life <= 0) { run.life = 0; run.failed = true; run.mode === 'stack' ? finishStack() : finish(); } }
+  function hurt(d) {
+    if (run.song.tut) return;
+    if (run.mods.nofail) { run.vlife -= d; if (run.vlife <= 0) run.vfail = true; return; }   // Sin caída: se registra, pero no corta la canción
+    run.life -= d; if (run.life <= 0) { run.life = 0; run.failed = true; run.mode === 'stack' ? finishStack() : finish(); } }
   // Señal: al juzgarse la última nota de una ronda, se decide si el patrón quedó decodificado
   function roundNote(n, ok) {
     if (run.mode !== 'signal') return;
@@ -1641,7 +1689,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     const tutFail = run.song.tut && hits < all * 0.5;
     if (tutFail) run.failed = true;
     const fc = !run.failed && c.miss === 0 && run.drops === 0;
-    const grade = run.failed ? 'E' : GRADES.find(([min]) => acc >= min)[1];
+    const grade = run.failed || run.vfail ? 'E' : GRADES.find(([min]) => acc >= min)[1];
     let gain = run.earned; const notes = [];
     if (tutFail) notes.push(run.mode === 'signal' ? 'Repetí bien al menos la mitad de las notas para completar el tutorial' : 'Acertá al menos la mitad de las flechas para completar el tutorial');
     else if (run.failed) { gain *= 0.5; notes.push(`${run.mode === 'signal' ? 'Señal perdida' : 'Aguante agotado'}: te quedás con el 50%`); }
@@ -1664,10 +1712,11 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
     const before = { ...(S.rec[key] || {}) };
     const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
+    const cleared = !run.failed && !run.vfail;
     const newBest = gain > rec.best && !run.failed;
     rec.best = Math.max(rec.best, gain);
     if (!rec.grade || gradeRank(grade) > gradeRank(rec.grade)) rec.grade = grade;
-    rec.clear = rec.clear || !run.failed; rec.fc = rec.fc || fc;
+    rec.clear = rec.clear || cleared; rec.fc = rec.fc || (fc && cleared);
     S.rec[key] = rec;
     const mult = galMult(gal), paid = gain * mult;
     S[g.cur] += paid; S.tot[gal] += paid;
@@ -1678,7 +1727,8 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     if (mult > 1.001) notes.push(`Multiplicador global x${dec(mult)}`);
     if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
     if (newWorlds.length) notes.push(`Se abrió la ruta a ${newWorlds.map(wi => WORLDS[wi].name).join(' y ')}${gal === 'pulso' ? '. Aguante puede subir un nivel más' : ''}`);
-    if (!run.failed && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
+    if (run.vfail) notes.push('Sin caída: el aguante se habría vaciado, así que no cuenta como superada');
+    if (cleared && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
     if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmtRate(ecoPerCycle(s) / ecoInterval(s) * 60)} ${g.unit} por minuto`);
     showResult({ grade, paid, notes, rows, fc });
   }
@@ -1686,18 +1736,19 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     const s = run.song, g = GX[s.gal];
     $('rSong').textContent = `${s.name} · ${DIFFS[run.di].name}`;
     $('worldBtn').textContent = s.tut && tutDone(s.gal) ? 'Ir al mapa' : `Volver a ${WORLDS[s.wi].name}`;
-    $('rStatus').textContent = run.failed ? 'No superada' : fc ? `Superada · ${run.mode === 'stack' ? 'Sin errores de ritmo' : 'Full Combo'}` : 'Superada';
+    $('rStatus').textContent = run.failed || run.vfail ? 'No superada' : fc ? `Superada · ${run.mode === 'stack' ? 'Sin errores de ritmo' : 'Full Combo'}` : 'Superada';
     $('rGrade').textContent = grade;
     $('rGainLbl').textContent = `${g.curName} ${s.gal === 'ens' ? 'ganadas' : 'ganados'}`;
     $('rGain').textContent = '+' + fmt(paid);
-    const lines = [`Dificultad ${dec1(run.stars)}★ → multiplicador x${dec(run.mult)}`, ...notes];
+    const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
+    const lines = [`Dificultad ${dec1(run.stars)}★${ml} → multiplicador x${dec(run.mult)}`, ...notes];
     $('rCalc').innerHTML = lines.map(l => `<div>${l}</div>`).join('');
     $('rRows').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     setView('result');
   }
 
   // ---------- Ensamble ----------
-  const COLS = 10, ROWS = 18;
+  let COLS = 10; const ROWS = 18;   // Pozo angosto: 8 columnas
   const SHAPES = { I: [[0, 1], [1, 1], [2, 1], [3, 1]], O: [[0, 0], [1, 0], [0, 1], [1, 1]], T: [[1, 0], [0, 1], [1, 1], [2, 1]], S: [[1, 0], [2, 0], [0, 1], [1, 1]], Z: [[0, 0], [1, 0], [1, 1], [2, 1]], J: [[0, 0], [0, 1], [1, 1], [2, 1]], L: [[2, 0], [0, 1], [1, 1], [2, 1]] };
   const SHADE = { I: '#f0f0f2', O: '#c4c4c8', T: '#9c9ca2', S: '#7c7c82', Z: '#68686e', J: '#b0b0b5', L: '#8c8c92', G: '#3a3a40' };
   const BOXN = { I: 4, O: 2 };
@@ -1709,6 +1760,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
   const LINE_PTS = [0, 2, 5, 9, 16];
   function initStack(r) {
     const ch = r.ch;
+    COLS = r.mods.narrow ? 8 : 10;
     Object.assign(r, { board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)), bag: [], rs: rng(ch.seed), piece: null, queue: [], hold: null, holdUsed: false,
       gStep: 60 / r.song.bpm / ch.rpb, nextGrav: 0, rcombo: 0, rmax: 0, on: 0, off: 0, lines: 0, tetras: 0, soft: 2 * L('e_c_soft'),
       nextGarbage: LEAD + 128 * ch.step, fx: [], beatFlash: 0 });
@@ -1724,7 +1776,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
   });
   function spawn(type) {
     type = type || run.queue.shift(); if (run.queue.length < 4) run.queue.push(nextType(run));
-    run.piece = { type, rot: 0, x: type === 'O' ? 4 : 3, y: type === 'I' ? -1 : 0 };
+    run.piece = { type, rot: 0, x: Math.floor((COLS - (BOXN[type] || 3)) / 2), y: type === 'I' ? -1 : 0 };
     if (!fits(run.piece)) { run.failed = true; setJudge('off'); finishStack(); }
   }
   const rhythmMult = () => L('e_c_root') ? Math.min(1 + Math.floor(run.rcombo / 8) * 0.25, 1.5 + 0.5 * L('e_c_rank')) : 1;
@@ -1847,6 +1899,14 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     ctx.lineTo(-0.2, 0.48); ctx.lineTo(-0.2, 0); ctx.lineTo(-0.5, 0); ctx.closePath();
     ctx.restore();
   }
+  // Etiqueta de la partida: canción, dificultad, estrellas y modificadores activos
+  // Arriba a la derecha: canción, dificultad y estrellas; debajo, los modificadores activos. Se achica si no entra.
+  function drawRunLabel(U) {
+    const fit = (txt, px, y, wgt) => { ctx.font = F(wgt, px); const w = ctx.measureText(txt).width, max = W * 0.7; if (w > max) ctx.font = F(wgt, px * max / w); ctx.fillText(txt, W - 10, y); };
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    fit(`${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`, U * 0.032, 24, 600);
+    if (run.ch.mods.length) { ctx.fillStyle = `rgba(${XC()},0.8)`; fit(run.ch.mods.map(id => MODS[id].label).join(' + '), U * 0.028, 24 + U * 0.042, 700); }
+  }
   const F = (w, px) => `${w} ${Math.round(px)}px Montserrat, Arial, sans-serif`;
   function draw() {
     if (!run || !W) return;
@@ -1881,8 +1941,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(fmt(run.earned), 10, 22);
-    ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
-    ctx.fillText(`${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`, W - 10, 24);
+    drawRunLabel(U);
     if (fever) {
       ctx.textAlign = 'center'; ctx.fillStyle = `rgb(${XC()})`; ctx.font = F(800, U * 0.034);
       ctx.fillText(`FIEBRE x2 · ${dec1(Math.max(0, run.feverUntil - t))} s`, W / 2, 44);
@@ -1909,17 +1968,26 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     // receptores
     let beatPulse = 0;
     if (t > LEAD) { const bl = 60 / run.song.bpm; beatPulse = Math.max(0, 1 - (((t - LEAD) % bl) / bl) * 3); }
-    for (let i = 0; i < nb * 4; i++) {
+    for (let i = 0; i < nb * 4 && !run.mods.dark; i++) {   // Sin indicadores: no se dibujan
       const f = Math.max(0, 1 - (now - flash[i]) / 220);
       arrow(laneX(i), rY, size * (1 + 0.06 * beatPulse + 0.12 * f), ANG[i % 4]);
       ctx.lineWidth = 3; ctx.strokeStyle = `rgba(255,255,255,${0.35 + 0.3 * beatPulse + 0.35 * f})`; ctx.stroke();
       if (f > 0) { ctx.fillStyle = `rgba(255,255,255,${0.5 * f})`; ctx.fill(); }
     }
 
-    // flechas
+    // flechas. Oculto: se apagan al acercarse a los indicadores · Repentino: aparecen recién en la mitad de la pista
+    const range = H - rY, MD = run.mods;
+    const vis = y => {
+      const d = (y - rY) / range; let a = 1;
+      if (MD.hidden) a = Math.min(a, Math.max(0, Math.min(1, (d - 0.22) / 0.16)));
+      if (MD.sudden) a = Math.min(a, Math.max(0, Math.min(1, (0.55 - d) / 0.12)));
+      return a;
+    };
     for (const n of run.notes) {
       const y = rY + (n.t - t) * speed;
       if (y > H + size) break;
+      ctx.globalAlpha = n.holding ? 1 : vis(y);
+      if (ctx.globalAlpha < 0.01) continue;
       const x = laneX(n.lane), a = ANG[n.lane % 4];
       if (n.kind === 'h') {
         if (n.completed) continue;
@@ -1949,6 +2017,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
       if (!n.missed) { ctx.lineWidth = 2; ctx.strokeStyle = '#0d0d0e'; ctx.stroke(); }
     }
 
+    ctx.globalAlpha = 1;
     // juicio, rango y combo
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const age = (now - judgeAt) / 600;
@@ -1988,13 +2057,12 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
       ctx.fillStyle = `rgba(255,255,255,${st.a})`; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
     }
   }
-  function drawHud(U, label) {
+  function drawHud(U) {
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
     ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(fmt(run.earned), 10, 22);
-    ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
-    ctx.fillText(label, W - 10, 24);
+    drawRunLabel(U);
   }
   function wrapText(msg, x, y, maxW, lh) {
     const lines = [''];
@@ -2029,7 +2097,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     if (!run || !W) return;
     const now = performance.now(), t = gameT(), ch = run.ch, st = ch.step, U = Math.min(W, H * 0.68);
     drawSky(t);
-    drawHud(U, `${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`);
+    drawHud(U);
     const i = (t - LEAD) / st, cyc = ch.len * 2;
     let phase = 'intro', rIdx = -1, local = 0;
     if (i >= 16) {
@@ -2057,7 +2125,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     const ly = H * 0.48, gap = W / 4.6, size = Math.min(gap * 0.75, 80);
     for (let l = 0; l < 4; l++) {
       const x = W / 2 + (l - 1.5) * gap;
-      const callLit = ch.calls.some(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24);
+      const callLit = !run.mods.audio && ch.calls.some(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24);   // Solo audio: la llamada no se ve
       const f = Math.max(0, 1 - (now - flash[l]) / 220), p = Math.max(0, 1 - (now - press[l]) / 180);
       arrow(x, ly, size * (1 + 0.1 * Math.max(f, callLit ? 1 : 0)), ANG[l]);
       if (callLit) { ctx.fillStyle = '#ffffff'; ctx.fill(); }
@@ -2076,12 +2144,14 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     }
     if (rIdx >= 0) {
       const R = run.rounds[rIdx], px = tx0 + tw * (phase === 'call' ? local : local - ch.len) / ch.len;
-      const showDots = phase === 'call' || run.di === 0 || run.song.tut || L('s_m_root');
-      const showLanes = phase === 'call' || run.song.tut || L('s_m_root');
-      if (showDots) R.slots.forEach((sl, k) => {
+      // Solo audio oculta los puntos; Al revés y Memoria diferida no muestran qué flecha va en la respuesta
+      const MD = run.mods, twist = MD.reverse || MD.delay;
+      const showDots = !MD.audio && (phase === 'call' || run.di === 0 || run.song.tut || L('s_m_root'));
+      const showLanes = phase === 'call' || (!twist && (run.song.tut || L('s_m_root')));
+      if (showDots) (phase === 'call' ? R.callSlots : R.slots).forEach((sl, k) => {
         if (phase === 'call' && sl.off > local) return;   // en la llamada aparecen a medida que suenan
-        const x = tx0 + tw * sl.off / ch.len, n = run.roundNotes[rIdx][k];
-        const hitOk = phase === 'resp' && n.judged && !n.missed, missed = phase === 'resp' && n.missed;
+        const x = tx0 + tw * sl.off / ch.len, n = phase === 'resp' ? run.roundNotes[rIdx][k] : null;
+        const hitOk = n && n.judged && !n.missed, missed = n && n.missed;
         if (showLanes) {
           arrow(x, ty - U * 0.06, U * 0.05, ANG[sl.lane]);
           ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : phase === 'call' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
@@ -2091,7 +2161,8 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
       });
       ctx.fillStyle = phase === 'resp' ? '#ffffff' : 'rgba(255,255,255,0.5)'; ctx.fillRect(px - 1, ty - 14, 2, 28);
       ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.textAlign = 'left';
-      ctx.fillText(`Patrón ${rIdx + 1}/${run.rounds.length} · ${R.n} ${R.n > 1 ? 'notas' : 'nota'}`, tx0, ty + U * 0.06);
+      const nn = phase === 'call' ? R.callSlots.length : R.n;
+      ctx.fillText(`Patrón ${rIdx + 1}/${run.rounds.length} · ${nn} ${nn > 1 ? 'notas' : 'nota'}${phase === 'resp' && MD.delay && rIdx > 0 ? ' · repetí el anterior' : ''}`, tx0, ty + U * 0.06);
       ctx.textAlign = 'right';
       ctx.fillText(`Decodificados ${run.decoded}${run.streak > 1 ? ` · racha ${run.streak}` : ''}`, tx1, ty + U * 0.06);
     }
@@ -2119,7 +2190,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     if (!run || !W) return;
     const now = performance.now(), t = gameT(), ch = run.ch, U = Math.min(W, H * 0.68);
     drawSky(t);
-    drawHud(U, `${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`);
+    drawHud(U);
     const cs = Math.floor(Math.min((W * 0.64) / COLS, (H * 0.74) / ROWS)), bx = Math.round(W * 0.05), by = Math.round(H * 0.1);
     const bw = cs * COLS, bh = cs * ROWS;
     // pulso del tiempo en el borde del tablero
@@ -2136,8 +2207,10 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     }
     run.fx = run.fx.filter(f => now - f.at < 350);
     const p = run.piece;
-    if (p) {
-      if (L('e_d_ghost')) {
+    // Destello: la pieza (y su proyección) solo se ve al principio de cada tiempo
+    const lit = !run.mods.flash || t < LEAD || ((t - LEAD) % beat) / beat < 0.3;
+    if (p && lit) {
+      if (L('e_d_ghost') && !run.mods.flash) {
         let gy = 0; while (fits(p, 0, gy + 1)) gy++;
         ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
         for (const [cx, cy] of cellsOf(p.type, p.rot)) { const y = p.y + cy + gy; if (y >= 0) ctx.strokeRect(bx + (p.x + cx) * cs + 2.5, by + y * cs + 2.5, cs - 5, cs - 5); }
@@ -2423,6 +2496,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     });
     chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
     $('mech').innerHTML = chips.join('');
+    renderMods(W0.gal);
     $('mechHint').hidden = !Object.keys(TOGGLES).some(id => L(id));
   }
   $('songs').addEventListener('click', e => {
@@ -2573,6 +2647,26 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     else if (capped(n)) { btn.disabled = true; btn.textContent = 'Abrí otro planeta'; }
     else { const c = nodeCost(n, lv); btn.disabled = S[T.wallet] < c; btn.textContent = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)}${n.tree === 'global' ? ' MO' : ''}`; }
   }
+  // Modificadores de la galaxia: chips que se encienden y muestran cuántas estrellas suman o restan
+  function renderMods(gal) {
+    const ids = Object.keys(MODS).filter(id => MODS[id].gal === gal), amp = 1 + 0.25 * L('g_mod_amp');
+    const st = id => { const v = MODS[id].stars > 0 ? MODS[id].stars * amp : MODS[id].stars; return `${v > 0 ? '+' : '−'}${dec1(Math.abs(v))}★`; };
+    $('mods').innerHTML = ids.map(id => {
+      const m = MODS[id];
+      if (!modOpen(id)) return `<span class="chip mod locked" title="${m.desc}">${m.label} <small>${st(id)}</small></span>`;
+      const on = !!S.mods[id];
+      return `<button class="chip mod${on ? ' on' : ''}" data-m="${id}" aria-pressed="${on}" title="${m.desc}">${on ? '✓ ' : ''}${m.label} <small>${st(id)}</small></button>`;
+    }).join('');
+    const tut = SONGS[S.sel].tut;
+    $('modHint').innerHTML = !L('g_mods') ? 'Se abren con el nodo <b>Modificadores</b> de la rama Desafíos del árbol global.'
+      : !galHardClear(gal) ? `Superá Difícil en un planeta de ${GX[gal].name} para usarlos.`
+      : ids.map(id => `<b>${MODS[id].label}:</b> ${MODS[id].desc}`).join(' ') + (tut ? ' No se aplican en el tutorial.' : '');
+  }
+  $('mods').addEventListener('click', e => {
+    const b = e.target.closest('button[data-m]'); if (!b) return;
+    const id = b.dataset.m; S.mods[id] = !S.mods[id]; if (!S.mods[id]) delete S.mods[id];
+    save(); renderSongs();
+  });
   function toggleMech(id) {
     S.off = S.off || {};
     S.off[id] = !S.off[id]; if (!S.off[id]) delete S.off[id];

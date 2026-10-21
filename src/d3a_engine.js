@@ -39,7 +39,8 @@
     const ch = getChart(si, di), mode = modeOf(s), music = getMusic(si);
     LANE_NOW = music.lanes; musicStart(ch.step);
     run = { si, di, song: s, mode, ch, boards: ch.boards, stars: ch.stars, mult: ch.mult, audioStep: 0, t0: clock() + 0.1,
-      life: 100, earned: 0, combo: 0, maxCombo: 0, rank: 0, failed: false, over: false, callIdx: 0, music };
+      life: 100, earned: 0, combo: 0, maxCombo: 0, rank: 0, failed: false, over: false, callIdx: 0, music,
+      mods: Object.fromEntries(ch.mods.map(id => [id, true])), vlife: 100, vfail: false };
     if (mode === 'stack') initStack(run);
     else {
       Object.assign(run, { notes: ch.notes.map(n => ({ ...n })), active: [], counts: { perfect: 0, great: 0, good: 0, miss: 0 },
@@ -92,7 +93,10 @@
     if (gameT() < run.feverUntil) v *= 2;
     run.earned += v;
   }
-  function hurt(d) { if (run.song.tut) return; run.life -= d; if (run.life <= 0) { run.life = 0; run.failed = true; run.mode === 'stack' ? finishStack() : finish(); } }
+  function hurt(d) {
+    if (run.song.tut) return;
+    if (run.mods.nofail) { run.vlife -= d; if (run.vlife <= 0) run.vfail = true; return; }   // Sin caída: se registra, pero no corta la canción
+    run.life -= d; if (run.life <= 0) { run.life = 0; run.failed = true; run.mode === 'stack' ? finishStack() : finish(); } }
   // Señal: al juzgarse la última nota de una ronda, se decide si el patrón quedó decodificado
   function roundNote(n, ok) {
     if (run.mode !== 'signal') return;
@@ -209,7 +213,7 @@
     const tutFail = run.song.tut && hits < all * 0.5;
     if (tutFail) run.failed = true;
     const fc = !run.failed && c.miss === 0 && run.drops === 0;
-    const grade = run.failed ? 'E' : GRADES.find(([min]) => acc >= min)[1];
+    const grade = run.failed || run.vfail ? 'E' : GRADES.find(([min]) => acc >= min)[1];
     let gain = run.earned; const notes = [];
     if (tutFail) notes.push(run.mode === 'signal' ? 'Repetí bien al menos la mitad de las notas para completar el tutorial' : 'Acertá al menos la mitad de las flechas para completar el tutorial');
     else if (run.failed) { gain *= 0.5; notes.push(`${run.mode === 'signal' ? 'Señal perdida' : 'Aguante agotado'}: te quedás con el 50%`); }
@@ -232,10 +236,11 @@
     const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
     const before = { ...(S.rec[key] || {}) };
     const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
+    const cleared = !run.failed && !run.vfail;
     const newBest = gain > rec.best && !run.failed;
     rec.best = Math.max(rec.best, gain);
     if (!rec.grade || gradeRank(grade) > gradeRank(rec.grade)) rec.grade = grade;
-    rec.clear = rec.clear || !run.failed; rec.fc = rec.fc || fc;
+    rec.clear = rec.clear || cleared; rec.fc = rec.fc || (fc && cleared);
     S.rec[key] = rec;
     const mult = galMult(gal), paid = gain * mult;
     S[g.cur] += paid; S.tot[gal] += paid;
@@ -246,7 +251,8 @@
     if (mult > 1.001) notes.push(`Multiplicador global x${dec(mult)}`);
     if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
     if (newWorlds.length) notes.push(`Se abrió la ruta a ${newWorlds.map(wi => WORLDS[wi].name).join(' y ')}${gal === 'pulso' ? '. Aguante puede subir un nivel más' : ''}`);
-    if (!run.failed && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
+    if (run.vfail) notes.push('Sin caída: el aguante se habría vaciado, así que no cuenta como superada');
+    if (cleared && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
     if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmtRate(ecoPerCycle(s) / ecoInterval(s) * 60)} ${g.unit} por minuto`);
     showResult({ grade, paid, notes, rows, fc });
   }
@@ -254,18 +260,19 @@
     const s = run.song, g = GX[s.gal];
     $('rSong').textContent = `${s.name} · ${DIFFS[run.di].name}`;
     $('worldBtn').textContent = s.tut && tutDone(s.gal) ? 'Ir al mapa' : `Volver a ${WORLDS[s.wi].name}`;
-    $('rStatus').textContent = run.failed ? 'No superada' : fc ? `Superada · ${run.mode === 'stack' ? 'Sin errores de ritmo' : 'Full Combo'}` : 'Superada';
+    $('rStatus').textContent = run.failed || run.vfail ? 'No superada' : fc ? `Superada · ${run.mode === 'stack' ? 'Sin errores de ritmo' : 'Full Combo'}` : 'Superada';
     $('rGrade').textContent = grade;
     $('rGainLbl').textContent = `${g.curName} ${s.gal === 'ens' ? 'ganadas' : 'ganados'}`;
     $('rGain').textContent = '+' + fmt(paid);
-    const lines = [`Dificultad ${dec1(run.stars)}★ → multiplicador x${dec(run.mult)}`, ...notes];
+    const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
+    const lines = [`Dificultad ${dec1(run.stars)}★${ml} → multiplicador x${dec(run.mult)}`, ...notes];
     $('rCalc').innerHTML = lines.map(l => `<div>${l}</div>`).join('');
     $('rRows').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     setView('result');
   }
 
   // ---------- Ensamble ----------
-  const COLS = 10, ROWS = 18;
+  let COLS = 10; const ROWS = 18;   // Pozo angosto: 8 columnas
   const SHAPES = { I: [[0, 1], [1, 1], [2, 1], [3, 1]], O: [[0, 0], [1, 0], [0, 1], [1, 1]], T: [[1, 0], [0, 1], [1, 1], [2, 1]], S: [[1, 0], [2, 0], [0, 1], [1, 1]], Z: [[0, 0], [1, 0], [1, 1], [2, 1]], J: [[0, 0], [0, 1], [1, 1], [2, 1]], L: [[2, 0], [0, 1], [1, 1], [2, 1]] };
   const SHADE = { I: '#f0f0f2', O: '#c4c4c8', T: '#9c9ca2', S: '#7c7c82', Z: '#68686e', J: '#b0b0b5', L: '#8c8c92', G: '#3a3a40' };
   const BOXN = { I: 4, O: 2 };
@@ -277,6 +284,7 @@
   const LINE_PTS = [0, 2, 5, 9, 16];
   function initStack(r) {
     const ch = r.ch;
+    COLS = r.mods.narrow ? 8 : 10;
     Object.assign(r, { board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)), bag: [], rs: rng(ch.seed), piece: null, queue: [], hold: null, holdUsed: false,
       gStep: 60 / r.song.bpm / ch.rpb, nextGrav: 0, rcombo: 0, rmax: 0, on: 0, off: 0, lines: 0, tetras: 0, soft: 2 * L('e_c_soft'),
       nextGarbage: LEAD + 128 * ch.step, fx: [], beatFlash: 0 });
@@ -292,7 +300,7 @@
   });
   function spawn(type) {
     type = type || run.queue.shift(); if (run.queue.length < 4) run.queue.push(nextType(run));
-    run.piece = { type, rot: 0, x: type === 'O' ? 4 : 3, y: type === 'I' ? -1 : 0 };
+    run.piece = { type, rot: 0, x: Math.floor((COLS - (BOXN[type] || 3)) / 2), y: type === 'I' ? -1 : 0 };
     if (!fits(run.piece)) { run.failed = true; setJudge('off'); finishStack(); }
   }
   const rhythmMult = () => L('e_c_root') ? Math.min(1 + Math.floor(run.rcombo / 8) * 0.25, 1.5 + 0.5 * L('e_c_rank')) : 1;

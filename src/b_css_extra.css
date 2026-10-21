@@ -164,3 +164,10 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
 @media (prefers-reduced-motion: reduce) { .here-mark { animation: none; } }
 /* El contador del árbol global es siempre neutro (blanco), en cualquier galaxia */
 #badgeG { background: var(--fg); color: var(--bg); }
+
+/* Modificadores en el menú de la canción */
+.chip.mod { background: none; font-family: var(--font); padding: 6px 11px; }
+button.chip.mod { cursor: pointer; }
+button.chip.mod:hover { border-color: var(--fg); }
+.chip.mod.on { color: var(--acc); border-color: var(--acc); }
+.chip.mod small { font-size: 0.66rem; letter-spacing: 0.02em; opacity: 0.8; margin-left: 2px; }

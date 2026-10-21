@@ -7,13 +7,12 @@
       ctx.fillStyle = `rgba(255,255,255,${st.a})`; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
     }
   }
-  function drawHud(U, label) {
+  function drawHud(U) {
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
     ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(fmt(run.earned), 10, 22);
-    ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
-    ctx.fillText(label, W - 10, 24);
+    drawRunLabel(U);
   }
   function wrapText(msg, x, y, maxW, lh) {
     const lines = [''];
@@ -48,7 +47,7 @@
     if (!run || !W) return;
     const now = performance.now(), t = gameT(), ch = run.ch, st = ch.step, U = Math.min(W, H * 0.68);
     drawSky(t);
-    drawHud(U, `${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`);
+    drawHud(U);
     const i = (t - LEAD) / st, cyc = ch.len * 2;
     let phase = 'intro', rIdx = -1, local = 0;
     if (i >= 16) {
@@ -76,7 +75,7 @@
     const ly = H * 0.48, gap = W / 4.6, size = Math.min(gap * 0.75, 80);
     for (let l = 0; l < 4; l++) {
       const x = W / 2 + (l - 1.5) * gap;
-      const callLit = ch.calls.some(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24);
+      const callLit = !run.mods.audio && ch.calls.some(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24);   // Solo audio: la llamada no se ve
       const f = Math.max(0, 1 - (now - flash[l]) / 220), p = Math.max(0, 1 - (now - press[l]) / 180);
       arrow(x, ly, size * (1 + 0.1 * Math.max(f, callLit ? 1 : 0)), ANG[l]);
       if (callLit) { ctx.fillStyle = '#ffffff'; ctx.fill(); }
@@ -95,12 +94,14 @@
     }
     if (rIdx >= 0) {
       const R = run.rounds[rIdx], px = tx0 + tw * (phase === 'call' ? local : local - ch.len) / ch.len;
-      const showDots = phase === 'call' || run.di === 0 || run.song.tut || L('s_m_root');
-      const showLanes = phase === 'call' || run.song.tut || L('s_m_root');
-      if (showDots) R.slots.forEach((sl, k) => {
+      // Solo audio oculta los puntos; Al revés y Memoria diferida no muestran qué flecha va en la respuesta
+      const MD = run.mods, twist = MD.reverse || MD.delay;
+      const showDots = !MD.audio && (phase === 'call' || run.di === 0 || run.song.tut || L('s_m_root'));
+      const showLanes = phase === 'call' || (!twist && (run.song.tut || L('s_m_root')));
+      if (showDots) (phase === 'call' ? R.callSlots : R.slots).forEach((sl, k) => {
         if (phase === 'call' && sl.off > local) return;   // en la llamada aparecen a medida que suenan
-        const x = tx0 + tw * sl.off / ch.len, n = run.roundNotes[rIdx][k];
-        const hitOk = phase === 'resp' && n.judged && !n.missed, missed = phase === 'resp' && n.missed;
+        const x = tx0 + tw * sl.off / ch.len, n = phase === 'resp' ? run.roundNotes[rIdx][k] : null;
+        const hitOk = n && n.judged && !n.missed, missed = n && n.missed;
         if (showLanes) {
           arrow(x, ty - U * 0.06, U * 0.05, ANG[sl.lane]);
           ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : phase === 'call' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
@@ -110,7 +111,8 @@
       });
       ctx.fillStyle = phase === 'resp' ? '#ffffff' : 'rgba(255,255,255,0.5)'; ctx.fillRect(px - 1, ty - 14, 2, 28);
       ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.textAlign = 'left';
-      ctx.fillText(`Patrón ${rIdx + 1}/${run.rounds.length} · ${R.n} ${R.n > 1 ? 'notas' : 'nota'}`, tx0, ty + U * 0.06);
+      const nn = phase === 'call' ? R.callSlots.length : R.n;
+      ctx.fillText(`Patrón ${rIdx + 1}/${run.rounds.length} · ${nn} ${nn > 1 ? 'notas' : 'nota'}${phase === 'resp' && MD.delay && rIdx > 0 ? ' · repetí el anterior' : ''}`, tx0, ty + U * 0.06);
       ctx.textAlign = 'right';
       ctx.fillText(`Decodificados ${run.decoded}${run.streak > 1 ? ` · racha ${run.streak}` : ''}`, tx1, ty + U * 0.06);
     }
@@ -138,7 +140,7 @@
     if (!run || !W) return;
     const now = performance.now(), t = gameT(), ch = run.ch, U = Math.min(W, H * 0.68);
     drawSky(t);
-    drawHud(U, `${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`);
+    drawHud(U);
     const cs = Math.floor(Math.min((W * 0.64) / COLS, (H * 0.74) / ROWS)), bx = Math.round(W * 0.05), by = Math.round(H * 0.1);
     const bw = cs * COLS, bh = cs * ROWS;
     // pulso del tiempo en el borde del tablero
@@ -155,8 +157,10 @@
     }
     run.fx = run.fx.filter(f => now - f.at < 350);
     const p = run.piece;
-    if (p) {
-      if (L('e_d_ghost')) {
+    // Destello: la pieza (y su proyección) solo se ve al principio de cada tiempo
+    const lit = !run.mods.flash || t < LEAD || ((t - LEAD) % beat) / beat < 0.3;
+    if (p && lit) {
+      if (L('e_d_ghost') && !run.mods.flash) {
         let gy = 0; while (fits(p, 0, gy + 1)) gy++;
         ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
         for (const [cx, cy] of cellsOf(p.type, p.rot)) { const y = p.y + cy + gy; if (y >= 0) ctx.strokeRect(bx + (p.x + cx) * cs + 2.5, by + y * cs + 2.5, cs - 5, cs - 5); }
