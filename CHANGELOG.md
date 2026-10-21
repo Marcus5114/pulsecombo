@@ -7,13 +7,15 @@ Formato: cada versión agrupa sus cambios por tipo.
 - **Corregido**: un error arreglado.
 - **Quitado**: algo que se sacó del juego.
 
-Numeración: `x.y.z`. Cada cambio chico sube `z` (v0.2.2, v0.2.3…). Un paquete con algo nuevo grande sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube un paquete a GitHub.
+Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
-## Sin publicar
+## Sin publicar — próxima versión: v0.2.2
 
-### v0.2.2
-#### Corregido
+### Corregido
 - Árboles de mejoras: los nombres de las mejoras ya no se cortan a mitad de palabra. Ocupan una o dos líneas y las mejoras principales de cada rama usan todo el ancho de su fila.
+
+### Cambiado
+- Tutorial de Muelle (Ensamble): se completa con una sola fila en vez de dos, para que sea accesible para cualquiera.
 
 ## v0.2.1
 ### Cambiado

@@ -193,7 +193,7 @@
     ctx.fillStyle = jf > 0 ? (good ? `rgba(255,255,255,${0.5 + 0.5 * jf})` : `rgba(120,120,126,${0.5 + 0.5 * jf})`) : 'rgba(255,255,255,0.5)';
     ctx.fillRect(cx0 - 2, sy - 16, 4, 32);
     drawJudge(U, by + bh * 0.42);
-    if (run.song.tut) tutMsg(t, U, sy + U * 0.07, [[0, 'Movés con ← →, girás con ↑ y soltás con Espacio'], [0.15, 'Cada movimiento tiene que caer sobre una marca de la tira de abajo'], [0.45, 'Completá filas enteras para ganar piezas'], [0.8, 'Hacé 2 filas para abrir el mapa']]);
+    if (run.song.tut) tutMsg(t, U, sy + U * 0.07, [[0, 'Movés con ← →, girás con ↑ y soltás con Espacio'], [0.15, 'Cada movimiento tiene que caer sobre una marca de la tira de abajo'], [0.45, 'Completá filas enteras para ganar piezas'], [0.8, 'Con una fila completa ya abrís el mapa']]);
     drawCountdown(t, U, by + bh * 0.4, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
     const prog = Math.max(0, Math.min(1, t / ch.end));
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = '#8a8a90'; ctx.fillRect(0, H - 3, W * prog, 3);

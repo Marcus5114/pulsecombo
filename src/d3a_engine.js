@@ -363,12 +363,12 @@
   function finishStack() {
     if (run.over) return; run.over = true;
     const tot = run.on + run.off, acc = tot ? run.on / tot * 100 : 0;
-    const tutFail = run.song.tut && run.lines < 2;
+    const tutFail = run.song.tut && run.lines < 1;
     if (tutFail) run.failed = true;
     const fc = !run.failed && run.off === 0 && tot > 0;
     const grade = run.failed ? 'E' : GRADES.find(([m]) => acc >= m)[1];
     let gain = run.earned; const notes = [];
-    if (tutFail) notes.push('Completá al menos 2 filas para terminar el tutorial');
+    if (tutFail) notes.push('Completá al menos una fila para terminar el tutorial');
     else if (run.failed) { gain *= 0.5; notes.push('El casco no aguantó: te quedás con el 50%'); }
     const rows = [['A tiempo', run.on], ['Fuera de tiempo', run.off], ['Filas', run.lines], ['Cuádruples', run.tetras], ['Racha máx.', run.rmax], ['Precisión', Math.round(acc) + '%']];
     settle({ gain, grade, fc, notes, rows });
