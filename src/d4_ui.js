@@ -62,7 +62,7 @@
       : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
     $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
     $('galInfo').innerHTML = `<div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3></div>${btn}<p>${g.desc}</p>
-      <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id))}/s</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
+      <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
   $('galInfo').addEventListener('click', e => {
@@ -144,7 +144,9 @@
       const grades = ds.map(d => recOf(s, d)).filter(r => r && r.grade).map(r => r.grade);
       const best = grades.sort((a, b) => gradeRank(b) - gradeRank(a))[0] || '';
       const sel = i === S.sel, eb = ecoBest(s), iv = ecoInterval(s);
-      const eco = eb > 0 ? `<span class="eco"><i style="--dur:${iv.toFixed(1)}s;--delay:-${((Date.now() / 1000) % iv).toFixed(1)}s"></i>Eco: +${fmt(ecoPerCycle(s))} ${unit} cada ${fmtTime(iv)}</span>` : '';
+      // Eco por minuto: la barra se llena cada 60 s (sincronizada con el reloj) y al completarse destella y muestra lo ganado
+      const perMin = ecoPerCycle(s) / iv * 60;
+      const eco = eb > 0 ? `<span class="eco" style="--delay:-${((Date.now() / 1000) % 60).toFixed(2)}s"><i></i>Eco: +${fmtRate(perMin)} ${unit}/min<b class="eco-pop" aria-hidden="true">+${fmtRate(perMin)}</b></span>` : '';
       let h = `<div class="songwrap${sel ? ' sel' : ''}">
         <button class="song" data-i="${i}" aria-expanded="${sel}">
           <span class="num">${String(s.k + 1).padStart(2, '0')}</span>
@@ -382,7 +384,7 @@
     const g = GX[S.galaxy], rate = ecoRate(g.id);
     $('curName').textContent = g.curName;
     $('pts').textContent = fmt(S[g.cur]);
-    $('rate').textContent = view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate)} ${g.unit}/s` : 'Superá canciones para activar sus ecos';
+    $('rate').textContent = view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos';
     $('moLine').innerHTML = `Materia oscura: <b>${Math.floor(S.mo)}</b>`;
     $('tot').textContent = `Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`;
     const nb = TREES[S.galaxy].nodes.filter(canBuy).length, ng = TREES.global.nodes.filter(canBuy).length;

@@ -284,11 +284,15 @@ body.playing .notice { display: none; }
 .orb[data-w="sen_c"]::before { content: ""; position: absolute; left: 46%; width: 8%; top: -38%; bottom: -38%; background: linear-gradient(transparent, rgba(255,255,255,0.75) 28%, transparent 48%, transparent 52%, rgba(255,255,255,0.75) 72%, transparent); transform: rotate(28deg); }
 
 /* Ecos en la lista de canciones */
-.song .eco { grid-column: 2; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
-.song .eco i { display: inline-block; width: 46px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; position: relative; }
-.song .eco i::after { content: ""; position: absolute; inset: 0; background: var(--muted); transform-origin: left; animation: ecofill var(--dur, 60s) linear infinite; animation-delay: var(--delay, 0s); }
-@keyframes ecofill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@media (prefers-reduced-motion: reduce) { .song .eco i::after { animation: none; transform: scaleX(0.5); } }
+.song .eco { grid-column: 2; position: relative; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 7px; }
+.song .eco i { display: inline-block; flex: none; width: 56px; height: 4px; background: var(--line); border-radius: 2px; position: relative; animation: ecoglow 60s linear infinite; animation-delay: var(--delay, 0s); }
+.song .eco i::after { content: ""; position: absolute; inset: 0; border-radius: 2px; background: var(--acc); transform-origin: left; animation: ecofill 60s linear infinite; animation-delay: var(--delay, 0s); }
+.song .eco .eco-pop { position: relative; font-size: 0.72rem; font-weight: 900; color: var(--acc); pointer-events: none; opacity: 0; text-shadow: 0 0 8px var(--acc); animation: ecopop 60s ease-out infinite; animation-delay: var(--delay, 0s); }
+@keyframes ecofill { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+/* al completarse el minuto: la barra destella con el color de la galaxia y sube el "+X" */
+@keyframes ecoglow { 0% { box-shadow: 0 0 0 2px var(--acc), 0 0 14px var(--acc); } 5% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; } 100% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; } }
+@keyframes ecopop { 0% { opacity: 1; transform: translateY(2px) scale(1.15); } 6% { opacity: 0; transform: translateY(-12px) scale(1); } 100% { opacity: 0; transform: translateY(-12px); } }
+@media (prefers-reduced-motion: reduce) { .song .eco i, .song .eco i::after, .song .eco .eco-pop { animation: none; } .song .eco i::after { transform: scaleX(0.5); } }
 
 /* Pads de Ensamble */
 .pg-pads.acts { grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); }
@@ -1407,7 +1411,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
     if (newWorlds.length) notes.push(`Se abrió la ruta a ${newWorlds.map(wi => WORLDS[wi].name).join(' y ')}${gal === 'pulso' ? '. Aguante puede subir un nivel más' : ''}`);
     if (!run.failed && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
-    if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmt(ecoPerCycle(s))} ${g.unit} cada ${fmtTime(ecoInterval(s))}`);
+    if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmtRate(ecoPerCycle(s) / ecoInterval(s) * 60)} ${g.unit} por minuto`);
     showResult({ grade, paid, notes, rows, fc });
   }
   function showResult({ grade, paid, notes, rows, fc }) {
@@ -2022,7 +2026,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
       : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
     $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
     $('galInfo').innerHTML = `<div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3></div>${btn}<p>${g.desc}</p>
-      <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id))}/s</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
+      <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
   $('galInfo').addEventListener('click', e => {
@@ -2104,7 +2108,9 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
       const grades = ds.map(d => recOf(s, d)).filter(r => r && r.grade).map(r => r.grade);
       const best = grades.sort((a, b) => gradeRank(b) - gradeRank(a))[0] || '';
       const sel = i === S.sel, eb = ecoBest(s), iv = ecoInterval(s);
-      const eco = eb > 0 ? `<span class="eco"><i style="--dur:${iv.toFixed(1)}s;--delay:-${((Date.now() / 1000) % iv).toFixed(1)}s"></i>Eco: +${fmt(ecoPerCycle(s))} ${unit} cada ${fmtTime(iv)}</span>` : '';
+      // Eco por minuto: la barra se llena cada 60 s (sincronizada con el reloj) y al completarse destella y muestra lo ganado
+      const perMin = ecoPerCycle(s) / iv * 60;
+      const eco = eb > 0 ? `<span class="eco" style="--delay:-${((Date.now() / 1000) % 60).toFixed(2)}s"><i></i>Eco: +${fmtRate(perMin)} ${unit}/min<b class="eco-pop" aria-hidden="true">+${fmtRate(perMin)}</b></span>` : '';
       let h = `<div class="songwrap${sel ? ' sel' : ''}">
         <button class="song" data-i="${i}" aria-expanded="${sel}">
           <span class="num">${String(s.k + 1).padStart(2, '0')}</span>
@@ -2342,7 +2348,7 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
     const g = GX[S.galaxy], rate = ecoRate(g.id);
     $('curName').textContent = g.curName;
     $('pts').textContent = fmt(S[g.cur]);
-    $('rate').textContent = view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate)} ${g.unit}/s` : 'Superá canciones para activar sus ecos';
+    $('rate').textContent = view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos';
     $('moLine').innerHTML = `Materia oscura: <b>${Math.floor(S.mo)}</b>`;
     $('tot').textContent = `Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`;
     const nb = TREES[S.galaxy].nodes.filter(canBuy).length, ng = TREES.global.nodes.filter(canBuy).length;

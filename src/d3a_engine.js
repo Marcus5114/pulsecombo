@@ -247,7 +247,7 @@
     if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
     if (newWorlds.length) notes.push(`Se abrió la ruta a ${newWorlds.map(wi => WORLDS[wi].name).join(' y ')}${gal === 'pulso' ? '. Aguante puede subir un nivel más' : ''}`);
     if (!run.failed && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
-    if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmt(ecoPerCycle(s))} ${g.unit} cada ${fmtTime(ecoInterval(s))}`);
+    if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmtRate(ecoPerCycle(s) / ecoInterval(s) * 60)} ${g.unit} por minuto`);
     showResult({ grade, paid, notes, rows, fc });
   }
   function showResult({ grade, paid, notes, rows, fc }) {

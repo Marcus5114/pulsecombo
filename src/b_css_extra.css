@@ -42,11 +42,15 @@ body.playing .notice { display: none; }
 .orb[data-w="sen_c"]::before { content: ""; position: absolute; left: 46%; width: 8%; top: -38%; bottom: -38%; background: linear-gradient(transparent, rgba(255,255,255,0.75) 28%, transparent 48%, transparent 52%, rgba(255,255,255,0.75) 72%, transparent); transform: rotate(28deg); }
 
 /* Ecos en la lista de canciones */
-.song .eco { grid-column: 2; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
-.song .eco i { display: inline-block; width: 46px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; position: relative; }
-.song .eco i::after { content: ""; position: absolute; inset: 0; background: var(--muted); transform-origin: left; animation: ecofill var(--dur, 60s) linear infinite; animation-delay: var(--delay, 0s); }
-@keyframes ecofill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@media (prefers-reduced-motion: reduce) { .song .eco i::after { animation: none; transform: scaleX(0.5); } }
+.song .eco { grid-column: 2; position: relative; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 7px; }
+.song .eco i { display: inline-block; flex: none; width: 56px; height: 4px; background: var(--line); border-radius: 2px; position: relative; animation: ecoglow 60s linear infinite; animation-delay: var(--delay, 0s); }
+.song .eco i::after { content: ""; position: absolute; inset: 0; border-radius: 2px; background: var(--acc); transform-origin: left; animation: ecofill 60s linear infinite; animation-delay: var(--delay, 0s); }
+.song .eco .eco-pop { position: relative; font-size: 0.72rem; font-weight: 900; color: var(--acc); pointer-events: none; opacity: 0; text-shadow: 0 0 8px var(--acc); animation: ecopop 60s ease-out infinite; animation-delay: var(--delay, 0s); }
+@keyframes ecofill { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+/* al completarse el minuto: la barra destella con el color de la galaxia y sube el "+X" */
+@keyframes ecoglow { 0% { box-shadow: 0 0 0 2px var(--acc), 0 0 14px var(--acc); } 5% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; } 100% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; } }
+@keyframes ecopop { 0% { opacity: 1; transform: translateY(2px) scale(1.15); } 6% { opacity: 0; transform: translateY(-12px) scale(1); } 100% { opacity: 0; transform: translateY(-12px); } }
+@media (prefers-reduced-motion: reduce) { .song .eco i, .song .eco i::after, .song .eco .eco-pop { animation: none; } .song .eco i::after { transform: scaleX(0.5); } }
 
 /* Pads de Ensamble */
 .pg-pads.acts { grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); }
