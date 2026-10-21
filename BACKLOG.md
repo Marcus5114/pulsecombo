@@ -45,6 +45,58 @@ Notas que hay que **evitar** en vez de tocar. Va como un modificador más de la 
   - `hit()`: en la respuesta, un toque en una ventana bomba explota en vez de contar como golpe al aire.
   - `drawSignal`: flecha tachada en la línea de tiempo.
 
+## Nuevas galaxias
+
+Cada galaxia nueva sigue el mismo molde que las actuales:
+- Tutorial y 3 planetas de 3 canciones, con un género musical propio en el compositor.
+- Moneda y árbol propios, de 2 ramas.
+- Ecos, condensador, sus propios modificadores, y se abre con materia oscura.
+- El patrón sale de la semilla de la canción.
+- Todo se juzga contra el tiempo de la música.
+- Se juega con las mismas teclas: flechas, WASD o IJKL, más Espacio; en el celular, con pads.
+
+### Salto (plataformero rítmico, estilo Rayman Legends / Geometry Dash)
+- **Cómo se juega:** una nave-robot corre sola hacia la derecha a velocidad fija, sincronizada con el tempo: un compás equivale a un ancho de pantalla. Los obstáculos aparecen justo sobre los tiempos de la música. ↑ salta, ↓ se agacha o desliza, → da un dash, ← frena medio tiempo (en dificultades altas). Saltar a tiempo da PERFECTO, GENIAL o BIEN según la cercanía al tiempo ideal, igual que en Vía Pulso. Chocar resta aguante y te deja pasar, para no frustrar.
+- **Patrón:** una lista de eventos `{t, tipo}` (pozo, pared baja, techo, enemigo, plataforma alta). Cada tipo pide una acción. Los saltos dobles (dos eventos seguidos) aparecen desde Normal.
+- **Ramas del árbol:** *Impulso* (salto más largo, doble salto, ventana más amplia) y *Coleccionables* (monedas en el aire, a contratiempo, que son opcionales como las notas extra).
+- **Modificadores:**
+  - Oscuridad: solo se ve un círculo alrededor del personaje.
+  - Espejo: corre hacia la izquierda.
+  - Gravedad invertida en el estribillo.
+  - Bombas: monedas trampa.
+- **Cómo implementarlo:** modo `run` nuevo, con `buildRun()`, `drawRun()` (scroll horizontal por tiempo, `x = (t − gameT) · velocidad`) y un juicio que reusa `hit()`, con carriles convertidos en acciones. El personaje se anima por estado (correr, saltar, deslizar) a partir del tiempo del evento, así que no hace falta física real: la trayectoria del salto es una parábola entre `t` y `t + duración`.
+
+### Órbita (bullet hell invertido, estilo Super Hexagon al revés)
+- **Cómo se juega:** la nave gira por una órbita en el borde de un círculo. Desde el centro, un núcleo dispara proyectiles al ritmo, en anillos con huecos, ráfagas en espiral o rayos que se cargan un tiempo antes. ← y → mueven la nave por la órbita, en pasos de 1/8 de vuelta o en movimiento continuo según la dificultad. Espacio hace un esquive corto con enfriamiento.
+- **Juicio:** no se tocan notas, se sobrevive. Cada proyectil esquivado suma. Rozarlo sin que te dé (pasar cerca) suma más y sube una racha de *roce*, que multiplica como el combo. Un impacto resta escudo. Los proyectiles salen siempre en los tiempos o corcheas, así que el patrón se lee con el oído.
+- **Patrón:** lista de oleadas `{t, forma, ángulo, huecos, velocidad}`. En el estribillo, más anillos y espirales que giran. En Difícil, anillos dobles a destiempo de una corchea.
+- **Ramas del árbol:** *Casco* (más escudo, regenera escudo con la racha) y *Roce* (más valor por roce, ventana de roce más grande).
+- **Modificadores:**
+  - Órbita estrecha: menos lugar.
+  - Contragiro: el centro gira y arrastra la órbita.
+  - Destellos: los proyectiles se ven solo en los tiempos.
+  - Bombas: anillos que hay que atravesar en el momento justo, en vez de esquivarlos.
+- **Cómo implementarlo:** modo `orbit` nuevo, con `buildOrbit()` y `drawOrbit()` en coordenadas polares. La colisión se calcula analíticamente: ángulo de la nave contra el ángulo del hueco cuando el anillo llega al radio de la órbita, sin física. Es la más vistosa de las tres y se presta para el color de la galaxia.
+
+### Compás (estilo A Dance of Fire and Ice)
+- **Cómo se juega:** dos planetas unidos giran uno alrededor del otro. En cada tiempo hay que tocar una tecla, cualquiera, para fijar el planeta que gira y soltar el otro, que avanza por un camino de baldosas. El ángulo de cada baldosa indica cuánto falta para el próximo toque: 180° es un tiempo, 90° una corchea y 270° un tiempo y medio. El camino es literalmente el ritmo de la canción.
+- **Juicio:** igual que Vía Pulso (PERFECTO, GENIAL, BIEN, FALLO). Tocar muy temprano o muy tarde te saca del camino: resta aguante y vuelve a la última baldosa segura.
+- **Patrón:** una secuencia de intervalos sacada de la melodía de la canción, que el compositor ya genera. Tocar el camino es tocar la melodía, así que esta galaxia aprovecha especialmente la música nueva. Hay baldosas especiales:
+  - Giro: invierte el sentido.
+  - Pausa: un tiempo sin tocar.
+  - Velocidad: cambia el tempo a ×2 o ×½ en el estribillo.
+- **Ramas del árbol:** *Ritmo* (ventana más amplia, baldosas de control) y *Camino* (bonus por tramos perfectos, atajos opcionales que valen más).
+- **Modificadores:**
+  - Ciego: el camino se ve solo unas pocas baldosas adelante.
+  - Sin giro visual: los planetas no se ven, solo el camino.
+  - Bombas: baldosas trampa a destiempo, que aparecen como un toque falso y hay que dejar pasar.
+- **Cómo implementarlo:** modo `path` nuevo. El camino se arma desde `music.sec[*].mel` (los ritmos de la melodía). `drawPath()` usa una cámara que sigue al planeta. El juicio es un solo carril con la ventana de `hit()`, y cualquier tecla cuenta.
+
+### Orden sugerido
+1. **Compás:** reusa casi todo (un carril, la melodía ya compuesta) y tiene la identidad rítmica más fuerte.
+2. **Órbita:** dibujo y colisión simples, y es muy distinta a todo lo anterior.
+3. **Salto:** la más costosa de animar y de equilibrar, porque hay que sincronizar los obstáculos con un movimiento que se ve continuo.
+
 ## Modificadores propuestos y todavía no elegidos
 - **Vía Pulso:**
   - Sigilo (flechas invisibles, +1,5★ como referencia).
