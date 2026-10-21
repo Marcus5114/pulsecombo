@@ -1,0 +1,134 @@
+<header class="top">
+  <div class="brand">
+    <h1>Combo Pulso <span>v0.2.1</span></h1>
+    <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
+  </div>
+  <div class="bank">
+    <h2 id="curName">Pulsos</h2>
+    <span class="big" id="pts">0</span>
+    <span class="rate" id="rate"></span>
+    <span class="mo" id="moLine"></span>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab" id="tabGal" aria-pressed="false">Galaxias</button>
+  <button class="tab" id="tabMap" aria-pressed="true">Mapa</button>
+  <button class="tab" id="tabTree" aria-pressed="false">Mejoras <span class="badge" id="badge" hidden></span></button>
+  <button class="tab" id="tabGlobal" aria-pressed="false"><span class="long">Árbol global</span><span class="short">Global</span> <span class="badge" id="badgeG" hidden></span></button>
+</nav>
+
+<div class="notice" id="notice" hidden><span id="noticeText"></span><button class="link" id="noticeClose">Cerrar</button></div>
+
+<main>
+  <section class="view" id="vGal" hidden>
+    <div class="map" id="galMap">
+      <svg class="map-svg" id="galSvg" aria-hidden="true"></svg>
+      <div id="galaxies"></div>
+    </div>
+    <div class="gal-info" id="galInfo"></div>
+    <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La materia oscura se gana con hitos en cualquier galaxia: sirve para abrir galaxias nuevas y comprar el árbol global.</p>
+  </section>
+
+  <section class="view" id="vMap">
+    <div class="map" id="map">
+      <svg class="map-svg" id="mapSvg" aria-hidden="true"></svg>
+      <div id="planets"></div>
+    </div>
+    <p class="hint" id="mapHint"></p>
+  </section>
+
+  <section class="view" id="vMenu">
+    <div class="world-head">
+      <button class="ghost-btn back" id="backMap">← Mapa</button>
+      <span class="orb sm" id="whOrb"></span>
+      <div class="wh-text"><div class="wh-genre" id="whGenre"></div><h3 id="whName"></h3></div>
+    </div>
+    <p class="hint" id="whDesc"></p>
+    <h2>Elegí canción y dificultad</h2>
+    <div class="songs" id="songs"></div>
+    <div class="keycfg" id="keycfg" hidden>
+      <h2>Teclas en Doble</h2>
+      <div class="kc-row"><span>Tablero izquierdo</span><div class="seg" data-side="L"></div></div>
+      <div class="kc-row"><span>Tablero derecho</span><div class="seg" data-side="R"></div></div>
+    </div>
+    <button class="play-btn" id="playBtn">Jugar</button>
+    <div class="mech-box" id="mechBox">
+      <h2>Mecánicas en las canciones</h2>
+      <div class="mech" id="mech"></div>
+      <p class="hint" id="mechHint" hidden>Tocá una mecánica para apagarla o encenderla. Apagada baja la dificultad y las estrellas (y el multiplicador). La mejora sigue comprada.</p>
+    </div>
+    <p class="hint" id="menuHint"></p>
+  </section>
+
+  <section class="view" id="vPlay" hidden>
+    <div class="stage" id="stage">
+    <div class="cv-wrap">
+      <canvas id="cv" aria-label="Pantalla de juego"></canvas>
+      <div class="pause" id="pauseBox" hidden>
+        <div class="pause-card" id="pauseCard">
+          <h3>Pausa</h3>
+          <p class="hint" id="pauseSong"></p>
+          <button class="play-btn" id="resumeBtn">Continuar</button>
+          <button class="ghost-btn" id="restartBtn">Reiniciar canción</button>
+          <button class="ghost-btn" id="endBtn">Terminar canción</button>
+          <p class="hint" id="endWarn">Si terminás ahora, no te quedás con lo ganado en esta canción.</p>
+        </div>
+        <div class="count" id="countNum" hidden></div>
+      </div>
+    </div>
+    <div class="pads" id="pads"></div>
+    <button class="ghost-btn" id="quitBtn">Pausa <span class="kbd-hint">Esc</span></button>
+    </div>
+  </section>
+
+  <section class="view" id="vResult" hidden>
+    <div class="result">
+      <div class="r-head">
+        <div>
+          <div class="r-song" id="rSong"></div>
+          <div class="r-status" id="rStatus"></div>
+        </div>
+        <div class="r-grade" id="rGrade"></div>
+      </div>
+      <div>
+        <h2 id="rGainLbl">Ganado</h2>
+        <div class="r-gain" id="rGain"></div>
+        <div class="r-calc" id="rCalc"></div>
+      </div>
+      <div class="r-rows" id="rRows"></div>
+      <div class="r-actions">
+        <button class="ghost-btn" id="retryBtn">Reintentar</button>
+        <button class="play-btn" id="worldBtn">Volver al mundo</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="vTree" hidden>
+    <div class="tree-bar">
+      <span class="hint" id="spentInfo"></span>
+      <span class="respec" id="respecBox"></span>
+    </div>
+    <div class="tree" id="tree">
+      <svg id="treeSvg" aria-hidden="true"></svg>
+      <div class="core" id="coreGrid"></div>
+      <div class="branches" id="branches"></div>
+    </div>
+    <p class="hint">Pasá el mouse sobre una mejora para ver el detalle (o tocala en el celular).</p>
+    <div class="tip" id="detail" role="dialog" aria-labelledby="dName" hidden>
+      <div>
+        <div class="d-br" id="dBr"></div>
+        <div class="d-name" id="dName"></div>
+      </div>
+      <p class="d-desc" id="dDesc"></p>
+      <div class="d-fx" id="dFx"></div>
+      <div class="d-req" id="dReq"></div>
+      <div class="d-actions"><button class="ghost-btn" id="togBtn" hidden></button><button class="play-btn" id="buyBtn">Comprar</button></div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span id="tot"></span>
+  <span id="resetBox"><button class="link" id="reset">Reiniciar progreso</button></span>
+</footer>

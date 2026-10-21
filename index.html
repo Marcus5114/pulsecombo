@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Combo Pulso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap">
 <style>
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0}
@@ -10,9 +13,6 @@ html,body{margin:0}
 body{font-size:14px;-webkit-text-size-adjust:100%}
 [hidden]{display:none!important}
 </style>
-<title>Combo Pulso</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap">
 <style>
 /* Layout: encabezado con banco de la galaxia activa + pestañas (Galaxias / Mapa / Mejoras / Árbol global). Cada vista centrada con su propio ancho. Look oscuro único (pantalla de arcade), dorado solo para las notas extra. */
 :root {
@@ -352,7 +352,7 @@ body.land.playing #quitBtn { display: none; }
 <body>
 <header class="top">
   <div class="brand">
-    <h1>Combo Pulso <span>v0.2</span></h1>
+    <h1>Combo Pulso <span>v0.2.1</span></h1>
     <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
@@ -2387,5 +2387,6 @@ body.land.playing #quitBtn { display: none; }
   window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot();
 })();
 </script>
+
 </body>
 </html>

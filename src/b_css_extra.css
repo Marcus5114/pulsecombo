@@ -1,0 +1,107 @@
+
+/* ---------- v0.2: galaxias, planetas nuevos, monedas, ecos ---------- */
+.bank .mo { font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bank .mo b { color: var(--fg); }
+.notice { flex: none; width: 100%; max-width: 940px; margin: 0 auto 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; line-height: 1.45; }
+.notice .link { flex: none; }
+body.playing .notice { display: none; }
+
+/* Mapa de galaxias */
+.gxbtn { --sz: clamp(80px, 14vw, 150px); position: absolute; transform: translate(-50%, calc(-4px - var(--sz) * 0.3)); display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; color: var(--fg); cursor: pointer; padding: 6px; border-radius: 12px; }
+.gxbtn:focus-visible { outline: 2px solid var(--hi); }
+.gxbtn .gxw { width: var(--sz); height: calc(var(--sz) * 0.6); display: grid; place-items: center; transform: rotate(-16deg); transition: transform 0.25s; }
+.gxbtn:hover .gxw, .gxbtn.sel .gxw { transform: rotate(-16deg) scale(1.08); }
+.gx { width: var(--sz); height: var(--sz); border-radius: 50%; transform: scaleY(0.55); position: relative; }
+.gx::before { content: ""; position: absolute; inset: 0; border-radius: 50%; animation: spin 60s linear infinite; }
+.gx[data-g="pulso"]::before { background: radial-gradient(circle, #ffffff 0 5%, rgba(255,255,255,0.75) 9%, rgba(255,255,255,0) 32%), conic-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,0.42) 8%, rgba(255,255,255,0) 20%, rgba(255,255,255,0.36) 42%, rgba(255,255,255,0) 55%, rgba(255,255,255,0.32) 76%, rgba(255,255,255,0) 92%); -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); }
+.gx[data-g="ens"]::before { background: radial-gradient(circle, #ffffff 0 5%, rgba(255,255,255,0.7) 9%, rgba(255,255,255,0) 28%), linear-gradient(90deg, transparent 22%, rgba(255,255,255,0.55) 40% 60%, transparent 78%) center / 100% 14% no-repeat, conic-gradient(from 90deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.35) 12%, rgba(255,255,255,0) 26%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.35) 62%, rgba(255,255,255,0) 76%); -webkit-mask: radial-gradient(circle, #000 32%, transparent 70%); mask: radial-gradient(circle, #000 32%, transparent 70%); }
+.gx[data-g="sen"]::before { background: radial-gradient(circle, #ffffff 0 6%, rgba(255,255,255,0.6) 10%, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 44%, rgba(255,255,255,0.45) 52%, rgba(255,255,255,0.1) 60%, rgba(255,255,255,0) 68%); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .gx::before { animation: none; } }
+.gxbtn .pn { font-size: 1rem; }
+.gxbtn.locked .gx { filter: brightness(0.35); }
+.gxbtn.locked .pn, .gxbtn.locked .pgn { opacity: 0.5; }
+.gxbtn.here .pp { color: var(--fg); }
+.gal-info { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.gal-info h3 { margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
+.gal-info .gi-mode { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.gal-info p { grid-column: 1 / -1; margin: 0; font-size: 0.82rem; line-height: 1.45; }
+.gal-info .gi-stats { grid-column: 1 / -1; display: flex; gap: 4px 18px; flex-wrap: wrap; font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gal-info .gi-stats b { color: var(--fg); }
+.gal-info .play-btn { padding: 11px 16px; font-size: 0.8rem; }
+@media (max-width: 520px) { .gal-info { grid-template-columns: minmax(0, 1fr); } }
+
+/* Planetas de Ensamble y Señal */
+.orb[data-w="ens_a"] { background: radial-gradient(circle at 62% 40%, #2e2e32 0 7%, transparent 8%), radial-gradient(circle at 34% 66%, #46464a 0 9%, transparent 10%), repeating-linear-gradient(45deg, rgba(0,0,0,0.2) 0 3px, transparent 3px 8px), radial-gradient(circle at 35% 30%, #a8a8ac, #58585c 55%, #222226); }
+.orb[data-w="ens_b"] { background: radial-gradient(circle at 50% 55%, #ffffff 0 5%, #bdbdc2 11%, transparent 30%), repeating-conic-gradient(from 10deg at 50% 55%, rgba(255,255,255,0.22) 0 5deg, transparent 5deg 30deg), radial-gradient(circle at 35% 30%, #4a4a50, #18181b 72%); }
+.orb[data-w="ens_c"] { background: linear-gradient(90deg, rgba(0,0,0,0.28) 0 1px, transparent 1px) 0 0 / 18% 100%, radial-gradient(circle at 35% 30%, #e2e2e6, #8a8a90 50%, #2e2e32); }
+.orb[data-w="ens_c"]::after { content: ""; position: absolute; left: -26%; right: -26%; top: 44%; height: 12%; border: 2px solid #bdbdc2; border-radius: 50%; transform: rotate(12deg); }
+.orb[data-w="sen_a"] { background: repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.32) 0 2px, transparent 2px 8px), radial-gradient(circle at 35% 30%, #9a9aa0, #3a3a40 60%, #18181a); }
+.orb[data-w="sen_b"] { background: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1.5px) 0 0 / 6px 6px, radial-gradient(circle at 35% 30%, #7a7a80, #2e2e34 65%, #121214); }
+.orb[data-w="sen_c"] { background: radial-gradient(circle, #ffffff 0 10%, #9a9aa0 22%, #2a2a2e 55%, #0e0e10); }
+.orb[data-w="sen_c"]::before { content: ""; position: absolute; left: 46%; width: 8%; top: -38%; bottom: -38%; background: linear-gradient(transparent, rgba(255,255,255,0.75) 28%, transparent 48%, transparent 52%, rgba(255,255,255,0.75) 72%, transparent); transform: rotate(28deg); }
+
+/* Ecos en la lista de canciones */
+.song .eco { grid-column: 2; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.song .eco i { display: inline-block; width: 46px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; position: relative; }
+.song .eco i::after { content: ""; position: absolute; inset: 0; background: var(--muted); transform-origin: left; animation: ecofill var(--dur, 60s) linear infinite; animation-delay: var(--delay, 0s); }
+@keyframes ecofill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .song .eco i::after { animation: none; transform: scaleX(0.5); } }
+
+/* Pads de Ensamble */
+.pg-pads.acts { grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); }
+.pad small { display: block; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); margin-top: 2px; }
+.pad.on small { color: #55555b; }
+.branches.two { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 700px; margin: 0 auto; width: 100%; }
+@media (max-width: 760px) { .branches.two { grid-template-columns: minmax(0, 1fr); max-width: 420px; } }
+
+/* ---------- Celulares: encabezado compacto, pestañas parejas, mapas que llenan la pantalla ---------- */
+.tab .short { display: none; }
+@media (hover: none) { .keys, .kbd-hint { display: none; } }
+@media (pointer: coarse) { .pad { padding: 18px 0; } }
+@media (max-width: 600px), (max-height: 500px) {
+  body { padding-block: 8px; }
+  header.top { flex-wrap: nowrap; align-items: center; gap: 10px; }
+  h1 { font-size: 1.05rem; }
+  .brand .keys { display: none; }
+  .bank { align-items: flex-end; text-align: right; }
+  .bank h2 { font-size: 0.56rem; }
+  .big { font-size: 1.35rem; }
+  .rate, .bank .mo { font-size: 0.64rem; }
+  .tabs { margin: 6px auto 8px; gap: 0; }
+  .tab { flex: 1 1 0; min-width: 0; justify-content: center; padding: 10px 2px; font-size: 0.66rem; letter-spacing: 0.02em; gap: 4px; }
+  .tab .long { display: none; } .tab .short { display: inline; }
+  .badge { font-size: 0.6rem; padding: 0 5px; }
+  body:not([data-view="gal"]) .foot { display: none; }
+  .notice { font-size: 0.72rem; padding: 8px 10px; }
+  .pl .pn { font-size: 0.72rem; }
+  .pl .pgn { font-size: 0.55rem; }
+  .pl .pp { font-size: 0.6rem; max-width: 120px; text-align: center; }
+  .world-head { gap: 10px; }
+  .world-head h3 { font-size: 1.05rem; }
+  .gal-info { padding: 12px; }
+  .result { padding: 14px; gap: 12px; }
+  .r-grade { font-size: 3.6rem; }
+  .r-gain { font-size: 1.6rem; }
+}
+
+/* Celular horizontal jugando: botones a los costados de la pista */
+body.land { padding-block: 4px; }
+body.land.playing #quitBtn { display: none; }
+.stage.land-stage { flex-direction: row; align-items: center; justify-content: center; gap: 12px; }
+.land-pads { display: contents; }
+.pg.side { align-self: stretch; justify-content: center; }
+.pg.side.left { order: 0; }
+.stage.land-stage .cv-wrap { order: 1; }
+.pg.side.right { order: 2; }
+.pg.side .pg-pads { grid-template-columns: repeat(var(--c, 1), minmax(64px, 84px)); grid-auto-rows: minmax(52px, 1fr); flex: 1; }
+.pg.side .pg-label { margin-bottom: 2px; }
+.pad.pause-pad { flex: none; font-size: 0.7rem; letter-spacing: 0.1em; padding: 9px 0; color: var(--muted); text-align: center; }
+.pad.pause-pad.gap { visibility: hidden; }
+@media (max-height: 500px) {
+  .pl { --sz: clamp(28px, 9vh, 60px); }
+  .pl.tutw { --sz: clamp(24px, 7vh, 48px); }
+  .gxbtn { --sz: clamp(60px, 20vh, 150px); }
+  .map { min-height: 200px; }
+  #playBtn { padding: 10px; font-size: 0.8rem; }
+}

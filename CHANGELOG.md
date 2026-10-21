@@ -13,3 +13,8 @@
 - Materia oscura: moneda intergaláctica que se gana con hitos; abre galaxias y compra el árbol global.
 - Árbol global con multiplicadores por galaxia, resonancia, afinación y mejoras de ecos.
 - Ecos: los mejores resultados de cada canción se repiten solos y siguen rindiendo con el juego cerrado.
+
+## v0.2.1
+- Adaptado a celulares: encabezado compacto, pestañas que entran completas, mapas que llenan la pantalla.
+- Celular acostado: la pista al centro y los botones a los costados para jugar con los pulgares.
+- Código fuente separado en `src/` y script de armado en `tools/build.py`.
