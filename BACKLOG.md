@@ -78,7 +78,7 @@ Cada galaxia nueva sigue el mismo molde que las actuales:
   - Bombas: anillos que hay que atravesar en el momento justo, en vez de esquivarlos.
 - **Cómo implementarlo:** modo `orbit` nuevo, con `buildOrbit()` y `drawOrbit()` en coordenadas polares. La colisión se calcula analíticamente: ángulo de la nave contra el ángulo del hueco cuando el anillo llega al radio de la órbita, sin física. Es la más vistosa de las tres y se presta para el color de la galaxia.
 
-### Compás (estilo A Dance of Fire and Ice)
+### Compás (estilo A Dance of Fire and Ice) — implementada en v0.4
 - **Cómo se juega:** dos planetas unidos giran uno alrededor del otro. En cada tiempo hay que tocar una tecla, cualquiera, para fijar el planeta que gira y soltar el otro, que avanza por un camino de baldosas. El ángulo de cada baldosa indica cuánto falta para el próximo toque: 180° es un tiempo, 90° una corchea y 270° un tiempo y medio. El camino es literalmente el ritmo de la canción.
 - **Juicio:** igual que Vía Pulso (PERFECTO, GENIAL, BIEN, FALLO). Tocar muy temprano o muy tarde te saca del camino: resta aguante y vuelve a la última baldosa segura.
 - **Patrón:** una secuencia de intervalos sacada de la melodía de la canción, que el compositor ya genera. Tocar el camino es tocar la melodía, así que esta galaxia aprovecha especialmente la música nueva. Hay baldosas especiales:

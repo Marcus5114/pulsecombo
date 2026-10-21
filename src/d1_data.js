@@ -22,9 +22,11 @@
       desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar piezas.' },
     { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
       desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
+    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
+      desc: 'Dos planetas unidos que giran uno alrededor del otro. En cada nota de la melodía tocás para fijar uno y soltar el otro: el ángulo de cada baldosa te dice cuándo.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
-  const GAL_LINKS = [['pulso', 'ens'], ['pulso', 'sen'], ['ens', 'sen']];
+  const GAL_LINKS = [['pulso', 'ens'], ['pulso', 'sen'], ['ens', 'sen'], ['ens', 'com'], ['sen', 'com']];
 
   // ---------- Mundos y canciones ----------
   // style: género musical (ver GEN en d2c_music.js). Cada canción compone su propia pieza dentro de ese género.
@@ -73,11 +75,24 @@
     { gal: 'sen', id: 'sen_c', style: 'electro', name: 'Cuásar', genre: 'Electro', root: 40,
       desc: 'El emisor más potente del universo. Mensajes rápidos y densos.',
       songs: [['Código Morse', 120], ['Transmisión Cruzada', 132], ['Mensaje Final', 144]] },
+
+    { gal: 'com', id: 'com_base', style: 'base', name: 'Péndulo', genre: 'Tutorial', tutorial: true, root: 43,
+      desc: 'Un péndulo doble que marca el tiempo. Aprendé a tocar en cada baldosa para que los planetas sigan el camino.',
+      songs: [['Primer Giro', 88]] },
+    { gal: 'com', id: 'com_a', style: 'bossa', name: 'Brisa', genre: 'Bossa nova', root: 45,
+      desc: 'Un planeta de playas lentas y guitarras suaves. Caminos que se curvan con las síncopas.',
+      songs: [['Garúa Lunar', 100], ['Ola Quieta', 110], ['Mar de Cuarzo', 120]] },
+    { gal: 'com', id: 'com_b', style: 'tango', name: 'Arrabal', genre: 'Tango electrónico', root: 40,
+      desc: 'Calles de neón y bandoneón. Marcato en cada tiempo y arrastres que cambian el giro.',
+      songs: [['Milonga Orbital', 116], ['Bandoneón Solar', 124], ['Último Tango en Titán', 134]] },
+    { gal: 'com', id: 'com_c', style: 'dnb', name: 'Vértigo', genre: 'Drum and bass', root: 38,
+      desc: 'Una estrella que gira a toda velocidad. Caminos largos y rápidos sobre baterías quebradas.',
+      songs: [['Rompeondas', 150], ['Amen Cósmico', 162], ['Caída Libre', 174]] },
   ];
   const SONGS = [];
   WORLDS.forEach((w, wi) => {
     w.idx = []; w.style = w.style || w.id; w.boost = w.boost || 0; w.qb = w.qb || 0; w.jb = w.jb || 0;
-    const tier = w.gal === 'pulso' ? 0 : ['ens_a', 'sen_a'].includes(w.id) ? 0 : ['ens_b', 'sen_b'].includes(w.id) ? 1 : 2;
+    const tier = w.gal === 'pulso' ? 0 : ['ens_a', 'sen_a', 'com_a'].includes(w.id) ? 0 : ['ens_b', 'sen_b', 'com_b'].includes(w.id) ? 1 : 2;
     w.songs.forEach(([name, bpm], k) => {
       const lvl = w.gal === 'pulso' ? 1 + k * 1.5 + w.boost : 1 + k + tier * 1.5;
       w.idx.push(SONGS.length);
@@ -189,6 +204,27 @@
         { id: 's_t_metro', br: 'st', pos: [3, 2], name: 'Metrónomo de respuesta', max: 1, cost: [90, 1], req: [['s_t_gain', 1]], desc: 'Durante la respuesta suena un clic en cada corchea para guiarte.', fx: lv => lv ? 'Clic activo' : 'Sin clic' },
       ],
     },
+    com: {
+      title: 'Mejoras de Compás', wallet: 'giros',
+      branches: [
+        { id: 'pr', name: 'Ritmo', tag: 'Tocar seguido y preciso multiplica lo que ganás por baldosa.' },
+        { id: 'pc', name: 'Camino', tag: 'Premios por tramos sin fallas y baldosas doradas.' },
+      ],
+      nodes: [
+        { id: 'p_core', br: 'core', name: 'Eje', max: 1, desc: 'El eje que une a los dos planetas. De acá salen todas las mejoras de Compás.', fx: () => 'Activo' },
+        { id: 'p_base', br: 'core', parent: 'p_core', name: 'Impulso', cost: [10, 1.8], desc: 'Cada baldosa que tocás a tiempo vale más giros.', fx: lv => `${1 + lv} giros por baldosa` },
+        { id: 'p_win',  br: 'core', parent: 'p_core', name: 'Precisión', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing al tocar cada baldosa.', fx: lv => `+${10 * lv}% de margen` },
+        { id: 'p_life', br: 'core', parent: 'p_core', name: 'Órbita estable', max: 5, cost: [180, 7.3], desc: 'Salirte del camino vacía menos la barra de equilibrio.', fx: lv => `Un fallo resta ${100 - 12 * lv}% de lo normal` },
+        { id: 'p_r_root', br: 'pr', pos: [2, 1], root: true, name: 'Racha', max: 1, cost: [80, 1], req: [['p_core', 1]], desc: 'Cada 16 baldosas seguidas sin fallar suben el multiplicador de racha en +0,25, hasta x1,5.', fx: lv => lv ? 'Racha hasta x1,5' : 'La racha no multiplica' },
+        { id: 'p_r_rank', br: 'pr', pos: [1, 2], name: 'Inercia', max: 4, cost: [560, 8.7], req: [['p_r_root', 1]], desc: 'Sube el tope del multiplicador de racha.', fx: lv => `Racha hasta x${dec(1.5 + 0.5 * lv)}` },
+        { id: 'p_r_perf', br: 'pr', pos: [3, 2], name: 'Centro exacto', max: 3, cost: [480, 8], req: [['p_r_root', 1]], desc: 'Los PERFECTO dan más giros.', fx: lv => `+${20 * lv}% por PERFECTO` },
+        { id: 'p_r_safe', br: 'pr', pos: [2, 3], name: 'Red de seguridad', max: 3, cost: [800, 10.8], req: [['p_r_rank', 1]], desc: 'Algunos fallos por canción no cortan la racha.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por canción` : 'Sin red' },
+        { id: 'p_c_root', br: 'pc', pos: [2, 1], root: true, name: 'Tramo perfecto', max: 1, cost: [100, 1], req: [['p_core', 1]], desc: 'Cada tramo de 8 compases sin fallar da un bonus del 25% de lo que ganaste en ese tramo.', fx: lv => lv ? 'Bonus de 25% por tramo' : 'Sin bonus' },
+        { id: 'p_c_sec', br: 'pc', pos: [1, 2], name: 'Tramo brillante', max: 4, cost: [400, 8.7], req: [['p_c_root', 1]], desc: 'Los tramos perfectos dan un bonus más grande.', fx: lv => `Bonus de ${25 + 25 * lv}% por tramo` },
+        { id: 'p_c_gold', br: 'pc', pos: [3, 2], name: 'Baldosas doradas', max: 1, cost: [300, 1], req: [['p_c_root', 1]], desc: 'Aparecen baldosas doradas en el camino. Un PERFECTO sobre una dorada vale mucho más.', fx: lv => lv ? 'Doradas activas' : 'Sin doradas' },
+        { id: 'p_c_goldv', br: 'pc', pos: [3, 3], name: 'Oro fundido', max: 3, cost: [600, 9.4], req: [['p_c_gold', 1]], desc: 'Las baldosas doradas valen más.', fx: lv => `Un PERFECTO en dorada vale x${3 + lv}` },
+      ],
+    },
     global: {
       title: 'Árbol global', wallet: 'mo',
       branches: [
@@ -204,7 +240,8 @@
         { id: 'g_amp_pulso', br: 'ga', pos: [2, 1], root: true, name: 'Amplificador Pulso', max: 8, cost: [2, 1.35], req: [['g_core', 1]], desc: 'Más pulsos en Vía Pulso.', fx: lv => `+${25 * lv}% pulsos` },
         { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más piezas en Ensamble.', fx: lv => `+${25 * lv}% piezas` },
         { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más datos en Señal.', fx: lv => `+${25 * lv}% datos` },
-        { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3]], desc: 'Con las tres galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
+        { id: 'g_amp_com', br: 'ga', pos: [2, 2], name: 'Amplificador Compás', max: 8, cost: [4, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más giros en Compás.', fx: lv => `+${25 * lv}% giros` },
+        { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3], ['g_amp_com', 3]], desc: 'Con todas las galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
         { id: 'g_mods', br: 'gm', pos: [2, 1], root: true, name: 'Modificadores', max: 1, cost: [3, 1], req: [['g_core', 1]], desc: 'Abre los modificadores en el menú de cada canción. Cada uno se habilita al superar Difícil en un planeta de su galaxia.', fx: lv => lv ? 'Modificadores abiertos' : 'Cerrados' },
         { id: 'g_mod_amp', br: 'gm', pos: [2, 2], name: 'Maestría', max: 4, cost: [5, 1.6], req: [['g_mods', 1]], desc: 'Los modificadores que suben la dificultad suman más estrellas. No cambia los que restan.', fx: lv => `Suman ${100 + 25 * lv}% de lo normal` },
         { id: 'g_eco_eff', br: 'ge', pos: [2, 1], root: true, name: 'Ecos persistentes', max: 6, cost: [2, 1.6], req: [['g_core', 1]], desc: 'Cada eco rinde un porcentaje mayor de tu mejor resultado.', fx: lv => `Rinden ${10 + 5 * lv}%` },
@@ -217,12 +254,12 @@
   const ALL_NODES = [];
   for (const [tid, t] of Object.entries(TREES)) for (const n of t.nodes) { n.tree = tid; if (n.br === 'core' && !n.parent) n.isCore = true; ALL_NODES.push(n); }
   const N = Object.fromEntries(ALL_NODES.map(n => [n.id, n]));
-  const BR_NAME = { gm: 'Desafíos', core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas', ed: 'Diseño', ec: 'Cadencia', sm: 'Memoria', st: 'Transmisión', ga: 'Amplificadores', ge: 'Ecos' };
+  const BR_NAME = { pr: 'Ritmo', pc: 'Camino', gm: 'Desafíos', core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas', ed: 'Diseño', ec: 'Cadencia', sm: 'Memoria', st: 'Transmisión', ga: 'Amplificadores', ge: 'Ecos' };
   const CORE_IDS = new Set(ALL_NODES.filter(n => n.isCore).map(n => n.id));
 
   // ---------- Estado ----------
   const KEY = 'comboPulso_v3';
-  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, cond: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
+  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, giros: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0, com: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, cond: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
   let S = fresh();
   try {
     const raw = localStorage.getItem(KEY);
@@ -230,7 +267,7 @@
       const d = JSON.parse(raw);
       S = { ...fresh(), ...d, moInit: d.moInit || false };
       S.n = S.n || {}; S.rec = S.rec || {}; S.off = S.off || {}; S.mods = S.mods || {}; S.cond = S.cond || {};
-      S.tot = { pulso: 0, ens: 0, sen: 0, ...(d.tot || {}) };
+      S.tot = { pulso: 0, ens: 0, sen: 0, com: 0, ...(d.tot || {}) };
       if (d.total && !d.tot) S.tot.pulso = d.total;
       S.galOpen = { pulso: true, ...(d.galOpen || {}) };
       if (!d.seen) S.seen = Date.now();
@@ -280,6 +317,8 @@
     narrow:  { gal: 'ens', label: 'Pozo angosto', pct: 0.15, desc: 'Tablero de 8 columnas en vez de 10.' },
     audio:   { gal: 'sen', label: 'Solo audio', pct: 0.35, desc: 'La llamada no se ve: solo se escucha.' },
     reverse: { gal: 'sen', label: 'Al revés', pct: 0.25, desc: 'Repetís la llamada en orden inverso.' },
+    blind:   { gal: 'com', label: 'Ciego', pct: 0.2, desc: 'Solo ves las próximas 3 baldosas del camino.' },
+    still:   { gal: 'com', label: 'Sin órbita', pct: 0.15, desc: 'Los planetas no se ven: solo el camino y el pulso de la baldosa en la que estás.' },
     delay:   { gal: 'sen', label: 'Memoria diferida', pct: 0.4, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
   };
   const galHardClear = gal => SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
@@ -295,6 +334,7 @@
     pulso: [['base', 'rock'], ['rock', 'pop'], ['rock', 'jazz'], ['pop', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']],
     ens: [['ens_base', 'ens_a'], ['ens_a', 'ens_b'], ['ens_a', 'ens_c'], ['ens_b', 'ens_c']],
     sen: [['sen_base', 'sen_a'], ['sen_a', 'sen_b'], ['sen_a', 'sen_c'], ['sen_b', 'sen_c']],
+    com: [['com_base', 'com_a'], ['com_a', 'com_b'], ['com_a', 'com_c'], ['com_b', 'com_c']],
   };
   function openWorlds(gal) {
     const open = new Set([WORLDS.findIndex(w => w.gal === gal && w.tutorial)]);

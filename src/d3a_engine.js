@@ -13,10 +13,12 @@
   const press = Array(8).fill(0), flash = Array(8).fill(0), keyDown = Array(8).fill(false);
   const TRAVEL = 1.45;
   const gameT = () => clock() - run.t0;
-  const modeWin = () => (run.mode === 'signal' ? 1 + 0.1 * L('s_win') : run.mode === 'stack' ? 1 + 0.1 * L('e_win') : 1 + 0.1 * L('win')) + tuneWin();
-  const lifeLv = () => run.mode === 'signal' ? L('s_life') : run.mode === 'stack' ? L('e_life') : L('life');
+  const modeWin = () => (run.mode === 'signal' ? 1 + 0.1 * L('s_win') : run.mode === 'stack' ? 1 + 0.1 * L('e_win') : run.mode === 'path' ? 1 + 0.1 * L('p_win') : 1 + 0.1 * L('win')) + tuneWin();
+  const lifeLv = () => run.mode === 'signal' ? L('s_life') : run.mode === 'stack' ? L('e_life') : run.mode === 'path' ? L('p_life') : L('life');
   const missDmg = () => (6 + run.stars * 0.6) * (1 - 0.12 * lifeLv());
-  const basePts = () => run && run.mode === 'signal' ? 1 + L('s_base') : 1 + L('base');
+  const basePts = () => run && run.mode === 'signal' ? 1 + L('s_base') : run && run.mode === 'path' ? 1 + L('p_base') : 1 + L('base');
+  // Compás: racha que multiplica cada 16 baldosas seguidas
+  const pathMult = () => L('p_r_root') ? Math.min(1 + Math.floor(run.combo / 16) * 0.25, 1.5 + 0.5 * L('p_r_rank')) : 1;
   function rankOf(c) {
     if (!L('c_root')) return 0;
     const avail = 1 + L('c_rank'), k = 1 - 0.2 * L('c_asc');
@@ -28,7 +30,7 @@
   const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
   const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
   const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
-    dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO' };
+    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO' };
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
   const gradeRank = g => 'EDCBAS'.indexOf(g);
 
@@ -44,7 +46,8 @@
     if (mode === 'stack') initStack(run);
     else {
       Object.assign(run, { notes: ch.notes.map(n => ({ ...n })), active: [], counts: { perfect: 0, great: 0, good: 0, miss: 0 },
-        xHit: 0, xStreak: 0, feverUntil: -1, holdsDone: 0, drops: 0, ghost: 0, ghostTimes: [], shields: mode === 'arrows' ? L('c_shield') : 0 });
+        xHit: 0, xStreak: 0, feverUntil: -1, holdsDone: 0, drops: 0, ghost: 0, ghostTimes: [], shields: mode === 'arrows' ? L('c_shield') : mode === 'path' ? L('p_r_safe') : 0 });
+      if (mode === 'path') Object.assign(run, { secIdx: 0, secMiss: 0, secEarn: 0, tramos: 0, goldHit: 0, pk: 0 });
       if (mode === 'signal') {
         run.rounds = ch.rounds.map(r => ({ ...r })); run.streak = 0; run.decoded = 0;
         run.roundNotes = run.rounds.map(() => []); for (const n of run.notes) run.roundNotes[n.r].push(n);
@@ -88,6 +91,10 @@
   const sigStreakMult = () => 1 + Math.min(0.1 * run.streak, 0.5 * L('s_m_streak'));
   function award(v, j) {
     if (run.mode === 'signal') { run.earned += v * sigStreakMult() * run.mult * (1 + 0.25 * L('s_t_gain')); return; }
+    if (run.mode === 'path') {
+      v *= pathMult() * run.mult; if (j === 'perfect' && L('p_r_perf')) v *= 1 + 0.2 * L('p_r_perf');
+      run.earned += v; run.secEarn += v; return;
+    }
     v *= multFor(run.combo) * run.mult;
     if (j === 'perfect' && L('c_perf')) v *= 1 + 0.2 * L('c_perf');
     if (gameT() < run.feverUntil) v *= 2;
@@ -129,7 +136,7 @@
       if (best.t < t) return;
       best.judged = true; best.missed = true;
       if (best.kind === 'x') { run.xStreak = 0; setJudge('early', true); return; }
-      run.counts.miss++; setJudge('early'); breakCombo(); roundNote(best, false); hurt(missDmg()); return;
+      run.counts.miss++; if (run.mode === 'path') run.secMiss++; setJudge('early'); breakCombo(); roundNote(best, false); hurt(missDmg()); return;
     }
     const j = bd <= WIN.perfect * sc ? 'perfect' : bd <= WIN.great * sc ? 'great' : 'good';
     best.judged = true; flash[lane] = performance.now();
@@ -147,7 +154,8 @@
     run.counts[j]++; addCombo(1);
     award(basePts() * JVAL[j], j);
     run.life = Math.min(100, run.life + (j === 'perfect' ? 1.2 : j === 'great' ? 0.6 : 0));
-    setJudge(j); blip(lane, j);
+    if (best.gold && j === 'perfect') { award(basePts() * (2 + L('p_c_goldv')), j); run.goldHit++; setJudge(j, true); blip(best.pl, j, true); }
+    else { setJudge(j); blip(run.mode === 'path' ? best.pl : lane, j); }
     roundNote(best, true);
     if (best.kind === 'h') { best.holding = true; best.relAt = null; best.nextTick = best.t + run.ch.step; run.active.push(best); }
   }
@@ -176,15 +184,23 @@
     setJudge('drop'); breakCombo(); hurt(missDmg() * 0.5);
   }
 
+  // Compás: al terminar cada tramo de 8 compases sin fallas, bonus sobre lo ganado en ese tramo
+  function closeSection() {
+    if (run.secMiss === 0 && run.secEarn > 0 && L('p_c_root')) {
+      run.earned += run.secEarn * (0.25 + 0.25 * L('p_c_sec')); run.tramos++; setJudge('tramo');
+    }
+    run.secMiss = 0; run.secEarn = 0;
+  }
   function update(t) {
     scheduleAudio(t);
+    if (run.mode === 'path') { const sec = Math.floor((t - LEAD - WIN.good * 2) / (128 * run.ch.step)); if (sec > run.secIdx) { closeSection(); run.secIdx = sec; } }
     const lim = WIN.good * modeWin();
     for (const n of run.notes) {
       if (n.t > t) break;
       if (n.judged || t - n.t <= lim) continue;
       n.judged = true; n.missed = true;
       if (n.kind === 'x') { run.xStreak = 0; continue; }
-      run.counts.miss++; setJudge('miss'); breakCombo(); roundNote(n, false); hurt(missDmg());
+      run.counts.miss++; if (run.mode === 'path') run.secMiss++; setJudge('miss'); breakCombo(); roundNote(n, false); hurt(missDmg());
       if (run.over) return;
     }
     const grace = 0.1 * L('l_grip'), tickVal = basePts() * (0.3 + 0.15 * L('l_tick'));
@@ -207,6 +223,7 @@
 
   function finish() {
     if (run.over) return; run.over = true;
+    if (run.mode === 'path' && !run.failed) closeSection();
     const c = run.counts, all = c.perfect + c.great + c.good + c.miss, hits = c.perfect + c.great + c.good;
     const den = all + run.ghost * 0.5;
     const acc = den ? (c.perfect + c.great * 0.7 + c.good * 0.4) / den * 100 : 0;
@@ -215,8 +232,8 @@
     const fc = !run.failed && c.miss === 0 && run.drops === 0;
     const grade = run.failed || run.vfail ? 'E' : GRADES.find(([min]) => acc >= min)[1];
     let gain = run.earned; const notes = [];
-    if (tutFail) notes.push(run.mode === 'signal' ? 'Repetí bien al menos la mitad de las notas para completar el tutorial' : 'Acertá al menos la mitad de las flechas para completar el tutorial');
-    else if (run.failed) { gain *= 0.5; notes.push(`${run.mode === 'signal' ? 'Señal perdida' : 'Aguante agotado'}: te quedás con el 50%`); }
+    if (tutFail) notes.push(run.mode === 'path' ? 'Tocá a tiempo al menos la mitad de las baldosas para completar el tutorial' : run.mode === 'signal' ? 'Repetí bien al menos la mitad de las notas para completar el tutorial' : 'Acertá al menos la mitad de las flechas para completar el tutorial');
+    else if (run.failed) { gain *= 0.5; notes.push(`${run.mode === 'signal' ? 'Señal perdida' : run.mode === 'path' ? 'Te saliste del camino' : 'Aguante agotado'}: te quedás con el 50%`); }
     if (fc && run.mode === 'arrows') {
       if (L('c_fc')) { const b = 0.25 * L('c_fc'); gain *= 1 + b; notes.push(`Bonus Full Combo: +${Math.round(b * 100)}%`); }
       else notes.push('Full Combo sin bonus: desbloquealo en la rama Combo');
@@ -224,6 +241,7 @@
     const ch = run.ch;
     const rows = [['Perfecto', c.perfect], ['Genial', c.great], ['Bien', c.good], ['Fallo', c.miss], ['Combo máx.', run.maxCombo], ['Precisión', Math.round(acc) + '%']];
     if (run.mode === 'signal') rows.push(['Patrones', `${run.decoded}/${run.rounds.length}`]);
+    if (run.mode === 'path') { rows.push(['Tramos perfectos', `${run.tramos}/${ch.secs}`]); if (ch.golds) rows.push(['Doradas', `${run.goldHit}/${ch.golds}`]); }
     if (ch.extras) rows.push(['Notas extra', `${run.xHit}/${ch.extras}`]);
     if (ch.holds) rows.push(['Largas', `${run.holdsDone}/${ch.holds}`]);
     rows.push(['Golpes al aire', run.ghost]);

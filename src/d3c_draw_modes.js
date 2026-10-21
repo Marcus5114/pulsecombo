@@ -203,6 +203,74 @@
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
   }
 
+  // ---------- Dibujo: Compás ----------
+  // El planeta pivote está en la baldosa actual; el otro gira 180° por tiempo hasta la próxima.
+  function drawPath() {
+    if (!run || !W) return;
+    const now = performance.now(), t = gameT(), ch = run.ch, st = ch.step, U = Math.min(W, H * 0.68), MD = run.mods;
+    const tiles = ch.tiles, n = tiles.length, acc = XC(), w = Math.PI / (4 * st);
+    drawSky(t);
+    while (run.pk + 1 < n && tiles[run.pk + 1].t <= t) run.pk++;
+    const k = run.pk, P = tiles[k], N1 = tiles[k + 1];
+    const a = P.dir + Math.PI + (N1 ? N1.s : P.s) * w * (t - P.t);
+    // cámara: sigue al pivote y se desliza hacia la próxima baldosa
+    const fr = N1 ? Math.max(0, Math.min(1, (t - P.t) / (N1.t - P.t))) : 0, e = fr * fr * (3 - 2 * fr);
+    const cx = P.x + (N1 ? (N1.x - P.x) * e : 0), cy = P.y + (N1 ? (N1.y - P.y) * e : 0);
+    const R = U * 0.17, ox = W / 2, oy = H * 0.56;
+    const SX = x => ox + (x - cx) * R, SY = y => oy + (y - cy) * R;
+    const from = Math.max(0, k - 3), to = Math.min(n - 1, MD.blind ? k + 3 : k + 40);
+    // camino
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = R * 0.34; ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.beginPath(); for (let q = from; q <= to; q++) { const T = tiles[q]; q === from ? ctx.moveTo(SX(T.x), SY(T.y)) : ctx.lineTo(SX(T.x), SY(T.y)); } ctx.stroke();
+    // baldosas: blancas si las tocaste, oscuras si fallaste; la próxima con borde de color
+    for (let q = to; q >= from; q--) {
+      const T = tiles[q], x = SX(T.x), y = SY(T.y); if (x < -R || x > W + R || y < -R || y > H + R) continue;
+      const nt = q > 0 ? run.notes[q - 1] : null, sz = R * 0.56;
+      const fade = q < k ? 0.35 - 0.08 * (k - q) : MD.blind && q > k + 1 ? 1 - (q - k - 1) / 3 : q > k + 12 ? Math.max(0.25, 1 - (q - k - 12) / 20) : 1;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(T.dir); ctx.globalAlpha = Math.max(0.15, fade);
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-sz / 2, -sz / 2, sz, sz, sz * 0.22) : ctx.rect(-sz / 2, -sz / 2, sz, sz);
+      const judged = nt && nt.judged, hitOk = judged && !nt.missed;
+      ctx.fillStyle = !nt ? 'rgba(255,255,255,0.5)' : hitOk ? (T.gold ? `rgba(${acc},0.9)` : 'rgba(255,255,255,0.78)') : judged ? '#2e2e33' : T.gold ? `rgba(${acc},0.28)` : 'rgba(255,255,255,0.13)';
+      ctx.fill();
+      ctx.lineWidth = q === k + 1 ? 3 : 1.5;
+      ctx.strokeStyle = q === k + 1 ? `rgb(${acc})` : T.gold ? `rgba(${acc},0.9)` : 'rgba(255,255,255,0.35)'; ctx.stroke();
+      if (T.twirl) { ctx.rotate(-T.dir); ctx.strokeStyle = hitOk ? '#0d0d0e' : 'rgba(255,255,255,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, sz * 0.24, 0.3, Math.PI * 1.6); ctx.stroke(); }
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    // planetas (Sin órbita: solo un pulso en la baldosa actual)
+    const px = SX(P.x), py = SY(P.y), mx = px + Math.cos(a) * R, my = py + Math.sin(a) * R, pr = R * 0.24;
+    if (MD.still) {
+      const bl = 60 / run.song.bpm, bp = t > LEAD ? 1 - (((t - LEAD) % bl) / bl) : 0;
+      ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.5 * bp})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, R * (0.35 + 0.15 * bp), 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(px, py, R, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(mx, my); ctx.stroke();
+      const pivA = k % 2 === 0, f = Math.max(0, 1 - (now - flash[0]) / 220);
+      const col = A => A ? '#f2f2f4' : `rgb(${acc})`;
+      for (let s = 1; s <= 5; s++) {   // estela del planeta que gira
+        const aa = a - (N1 ? N1.s : P.s) * s * 0.09;
+        ctx.globalAlpha = 0.18 * (1 - s / 6); ctx.fillStyle = col(!pivA);
+        ctx.beginPath(); ctx.arc(px + Math.cos(aa) * R, py + Math.sin(aa) * R, pr * (1 - s * 0.1), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = col(pivA); ctx.beginPath(); ctx.arc(px, py, pr * (1 + 0.25 * f), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col(!pivA); ctx.beginPath(); ctx.arc(mx, my, pr, 0, Math.PI * 2); ctx.fill();
+    }
+    drawHud(U);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (run.combo >= 4) {
+      ctx.font = F(900, U * 0.09); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillText(run.combo, W / 2, H * 0.17);
+      ctx.font = F(600, U * 0.032); ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText(L('p_r_root') ? `RACHA x${dec(pathMult())}` : 'SEGUIDAS', W / 2, H * 0.17 + U * 0.07);
+    }
+    drawJudge(U, H * 0.3);
+    if (run.song.tut) tutMsg(t, U, H * 0.88, [[0, 'El planeta de color gira alrededor del blanco: tocá cualquier tecla cuando llegue a la próxima baldosa'], [0.25, 'Camino recto = un tiempo. Un giro de 90° = una corchea: tocá antes'], [0.55, 'Las baldosas siguen la melodía de la canción'], [0.85, 'Terminá el camino para abrir el mapa']]);
+    drawCountdown(t, U, H * 0.3, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
+    const prog = Math.max(0, Math.min(1, t / ch.end));
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
+  }
+
   // ---------- Pads táctiles ----------
   // Vertical: botones debajo de la pista. Horizontal (celular acostado): un grupo a cada lado, para jugar con los pulgares.
   const ARROWS = ['←', '↓', '↑', '→'], ARIA = ['Izquierda', 'Abajo', 'Arriba', 'Derecha'];
@@ -212,7 +280,13 @@
   const PAUSE_PAD = '<button class="pad pause-pad" data-act="P" aria-label="Pausa">PAUSA</button>', PAUSE_GAP = '<span class="pad pause-pad gap" aria-hidden="true">PAUSA</span>';
   function renderPads() {
     const pads = $('pads'), land = isLand();
-    if (run.mode === 'stack') {
+    if (run.mode === 'path') {   // Compás: un solo botón grande (dos en el celular acostado)
+      const big = (id, side) => `<button class="pad pad-tap" id="${id}" data-l="0" aria-label="Tocar">TOCAR</button>`;
+      if (land) {
+        pads.className = 'pads land-pads';
+        pads.innerHTML = `<div class="pg side left">${PAUSE_GAP}<div class="pg-pads">${big('pad0')}</div></div><div class="pg side right">${PAUSE_PAD}<div class="pg-pads">${big('pad0b')}</div></div>`;
+      } else { pads.className = 'pads'; pads.innerHTML = `<div class="pg"><div class="pg-pads one">${big('pad0')}</div></div>`; }
+    } else if (run.mode === 'stack') {
       const acts = [['L', '←', 'Mover'], ['U', '↻', 'Girar'], ['R', '→', 'Mover'], ['D', '↓', 'Bajar'], ['H', '⤓', 'Soltar']];
       if (L('e_d_hold')) acts.push(['C', '⇄', 'Bodega']);
       if (land) {

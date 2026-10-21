@@ -358,6 +358,7 @@ body { --gold: var(--acc); }   /* las notas extra usan el color de la galaxia */
 body[data-acc="pulso"] { --acc: #5cd0e6; --acc-ink: #06181c; }
 body[data-acc="ens"] { --acc: #ff8c5a; --acc-ink: #1f0d05; }
 body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
+body[data-acc="com"] { --acc: #f2c14e; --acc-ink: #1f1604; }
 .tab[aria-pressed="true"] { color: var(--acc); border-bottom-color: var(--acc); }
 .badge { background: var(--acc); color: var(--acc-ink); }
 .bank h2 { color: var(--acc); }
@@ -420,12 +421,24 @@ button.chip.mod:hover { border-color: var(--fg); }
 .cond b { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
 .cond span { color: var(--muted); }
 .cond .play-btn { padding: 9px 14px; font-size: 0.72rem; }
+
+/* ---------- Compás ---------- */
+.gx[data-g="com"]::before { background: radial-gradient(circle at 36% 50%, #ffffff 0 7%, rgba(255,255,255,0.5) 10%, transparent 16%), radial-gradient(circle at 66% 50%, #ffffff 0 5%, rgba(255,255,255,0.45) 8%, transparent 13%), conic-gradient(from 20deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.3) 10%, rgba(255,255,255,0) 24%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.3) 60%, rgba(255,255,255,0) 74%); -webkit-mask: radial-gradient(circle, #000 34%, transparent 70%); mask: radial-gradient(circle, #000 34%, transparent 70%); }
+.orb[data-w="com_a"] { background: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.35) 0 10%, transparent 30%), repeating-linear-gradient(170deg, #9a9aa0 0 12%, #c8c8cc 12% 16%, #6e6e74 16% 30%), #555; }
+.orb[data-w="com_b"] { background: radial-gradient(circle at 50% 50%, transparent 0 30%, rgba(0,0,0,0.35) 31% 34%, transparent 35% 52%, rgba(0,0,0,0.35) 53% 56%, transparent 57%), radial-gradient(circle at 35% 30%, #8a8a90, #3a3a40 60%, #141416); }
+.orb[data-w="com_b"]::after { content: ""; position: absolute; inset: 44% -18%; background: repeating-linear-gradient(90deg, #d4d4d8 0 6%, transparent 6% 12%); border-radius: 3px; transform: rotate(-10deg); opacity: 0.8; }
+.orb[data-w="com_c"] { background: conic-gradient(from 0deg, #f0f0f2, #3a3a40 25%, #f0f0f2 50%, #3a3a40 75%, #f0f0f2); animation: spin 2.4s linear infinite; }
+.orb[data-w="com_base"] { background: radial-gradient(circle at 35% 50%, #ffffff 0 14%, transparent 15%), radial-gradient(circle at 70% 50%, #bdbdc2 0 10%, transparent 11%), radial-gradient(circle at 35% 30%, #4a4a50, #18181b 72%); }
+@media (prefers-reduced-motion: reduce) { .orb[data-w="com_c"] { animation: none; } }
+.pg-pads.one { grid-template-columns: minmax(0, 1fr); }
+.pad.pad-tap { font-size: 1rem; font-weight: 900; letter-spacing: 0.2em; padding: 22px 0; }
+.pg.side .pad.pad-tap { padding: 0; min-height: 120px; }
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <h1>Combo Pulso <span>v0.3</span></h1>
+    <h1>Combo Pulso <span>v0.4</span></h1>
     <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
@@ -588,9 +601,11 @@ button.chip.mod:hover { border-color: var(--fg); }
       desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar piezas.' },
     { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
       desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
+    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
+      desc: 'Dos planetas unidos que giran uno alrededor del otro. En cada nota de la melodía tocás para fijar uno y soltar el otro: el ángulo de cada baldosa te dice cuándo.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
-  const GAL_LINKS = [['pulso', 'ens'], ['pulso', 'sen'], ['ens', 'sen']];
+  const GAL_LINKS = [['pulso', 'ens'], ['pulso', 'sen'], ['ens', 'sen'], ['ens', 'com'], ['sen', 'com']];
 
   // ---------- Mundos y canciones ----------
   // style: género musical (ver GEN en d2c_music.js). Cada canción compone su propia pieza dentro de ese género.
@@ -639,11 +654,24 @@ button.chip.mod:hover { border-color: var(--fg); }
     { gal: 'sen', id: 'sen_c', style: 'electro', name: 'Cuásar', genre: 'Electro', root: 40,
       desc: 'El emisor más potente del universo. Mensajes rápidos y densos.',
       songs: [['Código Morse', 120], ['Transmisión Cruzada', 132], ['Mensaje Final', 144]] },
+
+    { gal: 'com', id: 'com_base', style: 'base', name: 'Péndulo', genre: 'Tutorial', tutorial: true, root: 43,
+      desc: 'Un péndulo doble que marca el tiempo. Aprendé a tocar en cada baldosa para que los planetas sigan el camino.',
+      songs: [['Primer Giro', 88]] },
+    { gal: 'com', id: 'com_a', style: 'bossa', name: 'Brisa', genre: 'Bossa nova', root: 45,
+      desc: 'Un planeta de playas lentas y guitarras suaves. Caminos que se curvan con las síncopas.',
+      songs: [['Garúa Lunar', 100], ['Ola Quieta', 110], ['Mar de Cuarzo', 120]] },
+    { gal: 'com', id: 'com_b', style: 'tango', name: 'Arrabal', genre: 'Tango electrónico', root: 40,
+      desc: 'Calles de neón y bandoneón. Marcato en cada tiempo y arrastres que cambian el giro.',
+      songs: [['Milonga Orbital', 116], ['Bandoneón Solar', 124], ['Último Tango en Titán', 134]] },
+    { gal: 'com', id: 'com_c', style: 'dnb', name: 'Vértigo', genre: 'Drum and bass', root: 38,
+      desc: 'Una estrella que gira a toda velocidad. Caminos largos y rápidos sobre baterías quebradas.',
+      songs: [['Rompeondas', 150], ['Amen Cósmico', 162], ['Caída Libre', 174]] },
   ];
   const SONGS = [];
   WORLDS.forEach((w, wi) => {
     w.idx = []; w.style = w.style || w.id; w.boost = w.boost || 0; w.qb = w.qb || 0; w.jb = w.jb || 0;
-    const tier = w.gal === 'pulso' ? 0 : ['ens_a', 'sen_a'].includes(w.id) ? 0 : ['ens_b', 'sen_b'].includes(w.id) ? 1 : 2;
+    const tier = w.gal === 'pulso' ? 0 : ['ens_a', 'sen_a', 'com_a'].includes(w.id) ? 0 : ['ens_b', 'sen_b', 'com_b'].includes(w.id) ? 1 : 2;
     w.songs.forEach(([name, bpm], k) => {
       const lvl = w.gal === 'pulso' ? 1 + k * 1.5 + w.boost : 1 + k + tier * 1.5;
       w.idx.push(SONGS.length);
@@ -755,6 +783,27 @@ button.chip.mod:hover { border-color: var(--fg); }
         { id: 's_t_metro', br: 'st', pos: [3, 2], name: 'Metrónomo de respuesta', max: 1, cost: [90, 1], req: [['s_t_gain', 1]], desc: 'Durante la respuesta suena un clic en cada corchea para guiarte.', fx: lv => lv ? 'Clic activo' : 'Sin clic' },
       ],
     },
+    com: {
+      title: 'Mejoras de Compás', wallet: 'giros',
+      branches: [
+        { id: 'pr', name: 'Ritmo', tag: 'Tocar seguido y preciso multiplica lo que ganás por baldosa.' },
+        { id: 'pc', name: 'Camino', tag: 'Premios por tramos sin fallas y baldosas doradas.' },
+      ],
+      nodes: [
+        { id: 'p_core', br: 'core', name: 'Eje', max: 1, desc: 'El eje que une a los dos planetas. De acá salen todas las mejoras de Compás.', fx: () => 'Activo' },
+        { id: 'p_base', br: 'core', parent: 'p_core', name: 'Impulso', cost: [10, 1.8], desc: 'Cada baldosa que tocás a tiempo vale más giros.', fx: lv => `${1 + lv} giros por baldosa` },
+        { id: 'p_win',  br: 'core', parent: 'p_core', name: 'Precisión', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing al tocar cada baldosa.', fx: lv => `+${10 * lv}% de margen` },
+        { id: 'p_life', br: 'core', parent: 'p_core', name: 'Órbita estable', max: 5, cost: [180, 7.3], desc: 'Salirte del camino vacía menos la barra de equilibrio.', fx: lv => `Un fallo resta ${100 - 12 * lv}% de lo normal` },
+        { id: 'p_r_root', br: 'pr', pos: [2, 1], root: true, name: 'Racha', max: 1, cost: [80, 1], req: [['p_core', 1]], desc: 'Cada 16 baldosas seguidas sin fallar suben el multiplicador de racha en +0,25, hasta x1,5.', fx: lv => lv ? 'Racha hasta x1,5' : 'La racha no multiplica' },
+        { id: 'p_r_rank', br: 'pr', pos: [1, 2], name: 'Inercia', max: 4, cost: [560, 8.7], req: [['p_r_root', 1]], desc: 'Sube el tope del multiplicador de racha.', fx: lv => `Racha hasta x${dec(1.5 + 0.5 * lv)}` },
+        { id: 'p_r_perf', br: 'pr', pos: [3, 2], name: 'Centro exacto', max: 3, cost: [480, 8], req: [['p_r_root', 1]], desc: 'Los PERFECTO dan más giros.', fx: lv => `+${20 * lv}% por PERFECTO` },
+        { id: 'p_r_safe', br: 'pr', pos: [2, 3], name: 'Red de seguridad', max: 3, cost: [800, 10.8], req: [['p_r_rank', 1]], desc: 'Algunos fallos por canción no cortan la racha.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por canción` : 'Sin red' },
+        { id: 'p_c_root', br: 'pc', pos: [2, 1], root: true, name: 'Tramo perfecto', max: 1, cost: [100, 1], req: [['p_core', 1]], desc: 'Cada tramo de 8 compases sin fallar da un bonus del 25% de lo que ganaste en ese tramo.', fx: lv => lv ? 'Bonus de 25% por tramo' : 'Sin bonus' },
+        { id: 'p_c_sec', br: 'pc', pos: [1, 2], name: 'Tramo brillante', max: 4, cost: [400, 8.7], req: [['p_c_root', 1]], desc: 'Los tramos perfectos dan un bonus más grande.', fx: lv => `Bonus de ${25 + 25 * lv}% por tramo` },
+        { id: 'p_c_gold', br: 'pc', pos: [3, 2], name: 'Baldosas doradas', max: 1, cost: [300, 1], req: [['p_c_root', 1]], desc: 'Aparecen baldosas doradas en el camino. Un PERFECTO sobre una dorada vale mucho más.', fx: lv => lv ? 'Doradas activas' : 'Sin doradas' },
+        { id: 'p_c_goldv', br: 'pc', pos: [3, 3], name: 'Oro fundido', max: 3, cost: [600, 9.4], req: [['p_c_gold', 1]], desc: 'Las baldosas doradas valen más.', fx: lv => `Un PERFECTO en dorada vale x${3 + lv}` },
+      ],
+    },
     global: {
       title: 'Árbol global', wallet: 'mo',
       branches: [
@@ -770,7 +819,8 @@ button.chip.mod:hover { border-color: var(--fg); }
         { id: 'g_amp_pulso', br: 'ga', pos: [2, 1], root: true, name: 'Amplificador Pulso', max: 8, cost: [2, 1.35], req: [['g_core', 1]], desc: 'Más pulsos en Vía Pulso.', fx: lv => `+${25 * lv}% pulsos` },
         { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más piezas en Ensamble.', fx: lv => `+${25 * lv}% piezas` },
         { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más datos en Señal.', fx: lv => `+${25 * lv}% datos` },
-        { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3]], desc: 'Con las tres galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
+        { id: 'g_amp_com', br: 'ga', pos: [2, 2], name: 'Amplificador Compás', max: 8, cost: [4, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más giros en Compás.', fx: lv => `+${25 * lv}% giros` },
+        { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3], ['g_amp_com', 3]], desc: 'Con todas las galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
         { id: 'g_mods', br: 'gm', pos: [2, 1], root: true, name: 'Modificadores', max: 1, cost: [3, 1], req: [['g_core', 1]], desc: 'Abre los modificadores en el menú de cada canción. Cada uno se habilita al superar Difícil en un planeta de su galaxia.', fx: lv => lv ? 'Modificadores abiertos' : 'Cerrados' },
         { id: 'g_mod_amp', br: 'gm', pos: [2, 2], name: 'Maestría', max: 4, cost: [5, 1.6], req: [['g_mods', 1]], desc: 'Los modificadores que suben la dificultad suman más estrellas. No cambia los que restan.', fx: lv => `Suman ${100 + 25 * lv}% de lo normal` },
         { id: 'g_eco_eff', br: 'ge', pos: [2, 1], root: true, name: 'Ecos persistentes', max: 6, cost: [2, 1.6], req: [['g_core', 1]], desc: 'Cada eco rinde un porcentaje mayor de tu mejor resultado.', fx: lv => `Rinden ${10 + 5 * lv}%` },
@@ -783,12 +833,12 @@ button.chip.mod:hover { border-color: var(--fg); }
   const ALL_NODES = [];
   for (const [tid, t] of Object.entries(TREES)) for (const n of t.nodes) { n.tree = tid; if (n.br === 'core' && !n.parent) n.isCore = true; ALL_NODES.push(n); }
   const N = Object.fromEntries(ALL_NODES.map(n => [n.id, n]));
-  const BR_NAME = { gm: 'Desafíos', core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas', ed: 'Diseño', ec: 'Cadencia', sm: 'Memoria', st: 'Transmisión', ga: 'Amplificadores', ge: 'Ecos' };
+  const BR_NAME = { pr: 'Ritmo', pc: 'Camino', gm: 'Desafíos', core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas', ed: 'Diseño', ec: 'Cadencia', sm: 'Memoria', st: 'Transmisión', ga: 'Amplificadores', ge: 'Ecos' };
   const CORE_IDS = new Set(ALL_NODES.filter(n => n.isCore).map(n => n.id));
 
   // ---------- Estado ----------
   const KEY = 'comboPulso_v3';
-  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, cond: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
+  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, giros: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0, com: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, cond: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
   let S = fresh();
   try {
     const raw = localStorage.getItem(KEY);
@@ -796,7 +846,7 @@ button.chip.mod:hover { border-color: var(--fg); }
       const d = JSON.parse(raw);
       S = { ...fresh(), ...d, moInit: d.moInit || false };
       S.n = S.n || {}; S.rec = S.rec || {}; S.off = S.off || {}; S.mods = S.mods || {}; S.cond = S.cond || {};
-      S.tot = { pulso: 0, ens: 0, sen: 0, ...(d.tot || {}) };
+      S.tot = { pulso: 0, ens: 0, sen: 0, com: 0, ...(d.tot || {}) };
       if (d.total && !d.tot) S.tot.pulso = d.total;
       S.galOpen = { pulso: true, ...(d.galOpen || {}) };
       if (!d.seen) S.seen = Date.now();
@@ -846,6 +896,8 @@ button.chip.mod:hover { border-color: var(--fg); }
     narrow:  { gal: 'ens', label: 'Pozo angosto', pct: 0.15, desc: 'Tablero de 8 columnas en vez de 10.' },
     audio:   { gal: 'sen', label: 'Solo audio', pct: 0.35, desc: 'La llamada no se ve: solo se escucha.' },
     reverse: { gal: 'sen', label: 'Al revés', pct: 0.25, desc: 'Repetís la llamada en orden inverso.' },
+    blind:   { gal: 'com', label: 'Ciego', pct: 0.2, desc: 'Solo ves las próximas 3 baldosas del camino.' },
+    still:   { gal: 'com', label: 'Sin órbita', pct: 0.15, desc: 'Los planetas no se ven: solo el camino y el pulso de la baldosa en la que estás.' },
     delay:   { gal: 'sen', label: 'Memoria diferida', pct: 0.4, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
   };
   const galHardClear = gal => SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
@@ -861,6 +913,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     pulso: [['base', 'rock'], ['rock', 'pop'], ['rock', 'jazz'], ['pop', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']],
     ens: [['ens_base', 'ens_a'], ['ens_a', 'ens_b'], ['ens_a', 'ens_c'], ['ens_b', 'ens_c']],
     sen: [['sen_base', 'sen_a'], ['sen_a', 'sen_b'], ['sen_a', 'sen_c'], ['sen_b', 'sen_c']],
+    com: [['com_base', 'com_a'], ['com_a', 'com_b'], ['com_a', 'com_c'], ['com_b', 'com_c']],
   };
   function openWorlds(gal) {
     const open = new Set([WORLDS.findIndex(w => w.gal === gal && w.tutorial)]);
@@ -1259,6 +1312,33 @@ button.chip.mod:hover { border-color: var(--fg); }
       compC: [[{ t: 'chord', p: 'x--x---x--x-----', tim: 'ep' }]],
       lead: ['lbell'], cells: ['x-------x-------'], ends: ['x---------------'],
     },
+    bossa: {
+      progs: ['maj|IM7 VI7 ii7 V7', 'maj|ii7 V7 IM7 IM7', 'dor|i7 IV7 i7 IV7', 'maj|IM7 IM7 ii7 V7', 'maj|IVM7 iii7 ii7 V7'],
+      v: [{ k: 'X..x....X..x....', x: 'x..x..x...x..x..', h: 'oooooooooooooooo' }],
+      c: [{ k: 'X..x....X..x....', x: 'x..x..x...x..x..', h: 'xoxoxoxoxoxoxoxo', o: '..............o.' }],
+      fill: 'none', bass: ['R-----5-R-----5-', 'R--5--R-R--5--5-'], btim: { type: 'triangle', cut: 650, vol: 0.18 },
+      compV: [[{ t: 'chord', p: 'x.x..x.x..x..x.x', tim: 'ep' }], [{ t: 'chord', p: 'x..x..x...x..x..', tim: 'ep' }]],
+      compC: [[{ t: 'chord', p: 'x.x..x.x..x..x.x', tim: 'ep' }, { t: 'chord', p: 'x---------------', tim: 'pad' }]],
+      lead: ['ltri', 'lbell'], cells: ['x-.x.-x-x---x---', '..x-x-.x-.x-x---', 'x-x-x--x--x-----', 'x--x--x-x-x-x---'], ends: ['x-x-x-----------', 'x--x--x---------'], echo: 0.2,
+    },
+    tango: {
+      progs: ['min|i iv V7 i', 'min|i bVI V7 i', 'min|i iv bVII bIII', 'min|iv i V7 i'],
+      v: [{ k: 'X...x...x...x...', x: '....x.......x...', h: '..o...o...o...o.' }],
+      c: [{ k: 'X...x...X...x...', s: '....x.......x..o', o: '..x...x...x...x.' }, { k: 'X..x..x.X...x...', s: '....x.......x...', o: '..x...x...x...x.' }],
+      fill: 'snare', bass: ['R...R...5...R...', 'R..R..R.R..R..5.'], btim: { cut: 1000, vol: 0.13 },
+      compV: [[{ t: 'chord', p: 'x...x...x...x...', tim: 'stab' }], [{ t: 'chord', p: 'x..x..x.x..x..x.', tim: 'organ' }]],
+      compC: [[{ t: 'chord', p: 'x..x..x.x..x..x.', tim: 'organ' }, { t: 'chord', p: 'x---------------', tim: 'strings' }]],
+      lead: ['lsax', 'lsaw'], cells: ['x-x-x-x-x-------', 'x--x--x-x-x-x---', '....x-x-x-x-x-x-', 'x---x.x.x---x---'], ends: ['x-------x-------', 'x-x-x-x-x-------'],
+    },
+    dnb: {
+      progs: ['min|i i bVI bVII', 'min|i iv i bVI', 'dor|i7 i7 IV7 IV7', 'min|i bVII bVI bVII'],
+      v: [{ k: 'X.........X.....', s: '....X.......X...', h: 'x.x.x.x.x.x.x.x.' }],
+      c: [{ k: 'X.........X..x..', s: '....X..o....X...', h: 'xxxxxxxxxxxxxxxx', o: '..............x.' }, { k: 'X.x.......X.....', s: '....X.......X.o.', h: 'xoxoxoxoxoxoxoxo' }],
+      fill: 'rise', bass: ['R-------R---5---', 'R-------O-------'], btim: { cut: 600, vol: 0.15 },
+      compV: [[{ t: 'chord', p: 'x---------------', tim: 'pad' }]],
+      compC: [[{ t: 'chord', p: 'x---------------', tim: 'pad' }, { t: 'arp', p: 'xxxxxxxxxxxxxxxx', tim: 'pluck' }]],
+      lead: ['lsaw'], cells: ['x-------x---x---', 'x---x---x-x-----', 'x-x-x---x-------', 'x-----x-----x---'], ends: ['x---------------', 'x-------x-------'], echo: 0.3,
+    },
     electro: {
       progs: ['min|i i bVI bVII', 'min|i bVII bVI bVII', 'min|i iv i bVI'],
       v: [{ k: 'X.....X...X.....', c: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', b: '..x.....x.x.....' }],
@@ -1473,13 +1553,67 @@ button.chip.mod:hover { border-color: var(--fg); }
     return { step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, rpb, garbage, seed: 7000 + si * 97 + di * 13 };
   }
 
+  // ---------- Compás: camino de baldosas ----------
+  // Las baldosas siguen la melodía de la canción. Entre dos toques, el planeta que gira recorre 180° por tiempo,
+  // así que el ángulo entre baldosas dice cuánto falta para el próximo toque: recto = un tiempo, giro de 90° = una corchea.
+  function buildPath(si, di) {
+    const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16, M = getMusic(si), R = rng(11000 + si * 53 + di * 7);
+    // Fácil: corcheas con separación de un tiempo · Normal: corcheas · Difícil: semicorcheas (en canciones rápidas, solo de a pares)
+    const grid = s.tut ? 4 : di === 2 ? 1 : 2, minGap = s.tut || di === 0 ? 4 : di === 1 ? 2 : 1, maxGap = 6, end = total - 8, fast = s.bpm > 140;
+    const DRUMS = di === 1 ? 'kK' : di === 2 ? 'kKsc' : '';
+    // 1. Candidatos: la melodía (desde el compás 2) y, en Normal y Difícil, golpes de la batería; el compás 1 marca los tiempos
+    const cand = [];
+    for (let i = 16; i < end; i++) {
+      const bar = i >> 4, p = i & 15;
+      let on;
+      if (s.tut) on = p % 4 === 0 || (bar >= 8 && bar % 2 === 1 && p === 6);
+      else if (bar < 2) on = p % 4 === 0;
+      else { const S = M.sec[secAt(M, bar)]; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || S.dr[p].some(([d]) => DRUMS.includes(d))); }
+      if (on) cand.push(i);
+    }
+    // 2. Separación mínima y relleno de huecos largos con tiempos (un giro de más de 270° no se puede leer)
+    const taps = []; let last = cand[0] - 4;
+    for (const c of cand) {
+      if (c - last < minGap) continue;
+      if (c - last === 1 && taps.length > 1 && last - taps[taps.length - 2] < (fast ? 4 : 2)) continue;   // sin rachas de semicorcheas
+      let ok = true;
+      while (c - last > maxGap) { const n = last + 4; if (c - n < minGap) { ok = false; break; } taps.push(n); last = n; }
+      if (!ok) continue;
+      taps.push(c); last = c;
+    }
+    // 3. Baldosas: posición, dirección y sentido de giro (los giros invierten el sentido)
+    const golds = L('p_c_gold') && !s.tut;
+    const tiles = [{ x: 0, y: 0, dir: 0, s: 1, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, gap: 4 }];
+    let sign = 1, twirls = 0, irr = 0, nGold = 0;
+    const notes = taps.map((i, k) => {
+      const prev = tiles[k], gap = i - prev.i, bar = i >> 4;
+      const secStart = k > 0 && (i >> 7) !== (prev.i >> 7);
+      let twirl = false;
+      if (!s.tut && secStart && (di === 2 ? R() < 0.7 : di === 1 ? secAt(M, bar) === 'B' && R() < 0.5 : false)) { sign = -sign; twirl = true; }
+      // Si la baldosa cae encima de una anterior, se invierte el sentido de giro para que el camino se lea
+      const at = sg => prev.dir + Math.PI + sg * gap * Math.PI / 4;
+      const clear = sg => { const a2 = at(sg), x = prev.x + Math.cos(a2), y = prev.y + Math.sin(a2); let m = 9; for (let q = Math.max(0, tiles.length - 40); q < tiles.length - 2; q++) m = Math.min(m, Math.hypot(tiles[q].x - x, tiles[q].y - y)); return m; };
+      if (!s.tut && clear(sign) < 0.8 && clear(-sign) > clear(sign)) { sign = -sign; twirl = !twirl; }
+      if (twirl) twirls++;
+      const a = at(sign);
+      const gold = golds && k > 4 && R() < 0.12; if (gold) nGold++;
+      if (gap !== 4) irr++;
+      tiles.push({ x: prev.x + Math.cos(a), y: prev.y + Math.sin(a), dir: a, s: sign, i, t: LEAD + i * step, gap, twirl, gold });
+      return { t: LEAD + i * step, i, lane: 0, kind: 'q', k: k + 1, gold, pl: k % 4 };
+    });
+    const dur = total * step, secs = new Set(taps.map(i => i >> 7)).size;
+    let stars = 0.3 + 1.35 * notes.length / dur + 1.5 * irr / dur + 0.012 * twirls;
+    stars = Math.round(stars * 10) / 10;
+    return { notes, tiles, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, golds: nGold, secs };
+  }
+
   const chartCache = new Map();
   const sig = () => ['x_root', 'x_dens', 'x_semi', 'l_root', 'l_freq', 'l_len'].map(id => E(id)).join('');
   function getChart(si, di) {
     const s = SONGS[si], m = modeOf(s), mods = activeMods(s);
-    const k = `${si}-${di}-${m === 'arrows' ? sig() : ''}-${mods.join('.')}-${L('g_mod_amp')}`;
+    const k = `${si}-${di}-${m === 'arrows' ? sig() : m === 'path' ? L('p_c_gold') : ''}-${mods.join('.')}-${L('g_mod_amp')}`;
     if (!chartCache.has(k)) {
-      const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : buildStack(si, di);
+      const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : m === 'path' ? buildPath(si, di) : buildStack(si, di);
       c.baseStars = c.stars; c.mods = mods;
       if (mods.length) { c.stars = Math.max(0.5, Math.round(c.stars * modFactor(mods) * 10) / 10); c.mult = starMult(c.stars); }
       chartCache.set(k, c);
@@ -1501,10 +1635,12 @@ button.chip.mod:hover { border-color: var(--fg); }
   const press = Array(8).fill(0), flash = Array(8).fill(0), keyDown = Array(8).fill(false);
   const TRAVEL = 1.45;
   const gameT = () => clock() - run.t0;
-  const modeWin = () => (run.mode === 'signal' ? 1 + 0.1 * L('s_win') : run.mode === 'stack' ? 1 + 0.1 * L('e_win') : 1 + 0.1 * L('win')) + tuneWin();
-  const lifeLv = () => run.mode === 'signal' ? L('s_life') : run.mode === 'stack' ? L('e_life') : L('life');
+  const modeWin = () => (run.mode === 'signal' ? 1 + 0.1 * L('s_win') : run.mode === 'stack' ? 1 + 0.1 * L('e_win') : run.mode === 'path' ? 1 + 0.1 * L('p_win') : 1 + 0.1 * L('win')) + tuneWin();
+  const lifeLv = () => run.mode === 'signal' ? L('s_life') : run.mode === 'stack' ? L('e_life') : run.mode === 'path' ? L('p_life') : L('life');
   const missDmg = () => (6 + run.stars * 0.6) * (1 - 0.12 * lifeLv());
-  const basePts = () => run && run.mode === 'signal' ? 1 + L('s_base') : 1 + L('base');
+  const basePts = () => run && run.mode === 'signal' ? 1 + L('s_base') : run && run.mode === 'path' ? 1 + L('p_base') : 1 + L('base');
+  // Compás: racha que multiplica cada 16 baldosas seguidas
+  const pathMult = () => L('p_r_root') ? Math.min(1 + Math.floor(run.combo / 16) * 0.25, 1.5 + 0.5 * L('p_r_rank')) : 1;
   function rankOf(c) {
     if (!L('c_root')) return 0;
     const avail = 1 + L('c_rank'), k = 1 - 0.2 * L('c_asc');
@@ -1516,7 +1652,7 @@ button.chip.mod:hover { border-color: var(--fg); }
   const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
   const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
   const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
-    dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO' };
+    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO' };
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
   const gradeRank = g => 'EDCBAS'.indexOf(g);
 
@@ -1532,7 +1668,8 @@ button.chip.mod:hover { border-color: var(--fg); }
     if (mode === 'stack') initStack(run);
     else {
       Object.assign(run, { notes: ch.notes.map(n => ({ ...n })), active: [], counts: { perfect: 0, great: 0, good: 0, miss: 0 },
-        xHit: 0, xStreak: 0, feverUntil: -1, holdsDone: 0, drops: 0, ghost: 0, ghostTimes: [], shields: mode === 'arrows' ? L('c_shield') : 0 });
+        xHit: 0, xStreak: 0, feverUntil: -1, holdsDone: 0, drops: 0, ghost: 0, ghostTimes: [], shields: mode === 'arrows' ? L('c_shield') : mode === 'path' ? L('p_r_safe') : 0 });
+      if (mode === 'path') Object.assign(run, { secIdx: 0, secMiss: 0, secEarn: 0, tramos: 0, goldHit: 0, pk: 0 });
       if (mode === 'signal') {
         run.rounds = ch.rounds.map(r => ({ ...r })); run.streak = 0; run.decoded = 0;
         run.roundNotes = run.rounds.map(() => []); for (const n of run.notes) run.roundNotes[n.r].push(n);
@@ -1576,6 +1713,10 @@ button.chip.mod:hover { border-color: var(--fg); }
   const sigStreakMult = () => 1 + Math.min(0.1 * run.streak, 0.5 * L('s_m_streak'));
   function award(v, j) {
     if (run.mode === 'signal') { run.earned += v * sigStreakMult() * run.mult * (1 + 0.25 * L('s_t_gain')); return; }
+    if (run.mode === 'path') {
+      v *= pathMult() * run.mult; if (j === 'perfect' && L('p_r_perf')) v *= 1 + 0.2 * L('p_r_perf');
+      run.earned += v; run.secEarn += v; return;
+    }
     v *= multFor(run.combo) * run.mult;
     if (j === 'perfect' && L('c_perf')) v *= 1 + 0.2 * L('c_perf');
     if (gameT() < run.feverUntil) v *= 2;
@@ -1617,7 +1758,7 @@ button.chip.mod:hover { border-color: var(--fg); }
       if (best.t < t) return;
       best.judged = true; best.missed = true;
       if (best.kind === 'x') { run.xStreak = 0; setJudge('early', true); return; }
-      run.counts.miss++; setJudge('early'); breakCombo(); roundNote(best, false); hurt(missDmg()); return;
+      run.counts.miss++; if (run.mode === 'path') run.secMiss++; setJudge('early'); breakCombo(); roundNote(best, false); hurt(missDmg()); return;
     }
     const j = bd <= WIN.perfect * sc ? 'perfect' : bd <= WIN.great * sc ? 'great' : 'good';
     best.judged = true; flash[lane] = performance.now();
@@ -1635,7 +1776,8 @@ button.chip.mod:hover { border-color: var(--fg); }
     run.counts[j]++; addCombo(1);
     award(basePts() * JVAL[j], j);
     run.life = Math.min(100, run.life + (j === 'perfect' ? 1.2 : j === 'great' ? 0.6 : 0));
-    setJudge(j); blip(lane, j);
+    if (best.gold && j === 'perfect') { award(basePts() * (2 + L('p_c_goldv')), j); run.goldHit++; setJudge(j, true); blip(best.pl, j, true); }
+    else { setJudge(j); blip(run.mode === 'path' ? best.pl : lane, j); }
     roundNote(best, true);
     if (best.kind === 'h') { best.holding = true; best.relAt = null; best.nextTick = best.t + run.ch.step; run.active.push(best); }
   }
@@ -1664,15 +1806,23 @@ button.chip.mod:hover { border-color: var(--fg); }
     setJudge('drop'); breakCombo(); hurt(missDmg() * 0.5);
   }
 
+  // Compás: al terminar cada tramo de 8 compases sin fallas, bonus sobre lo ganado en ese tramo
+  function closeSection() {
+    if (run.secMiss === 0 && run.secEarn > 0 && L('p_c_root')) {
+      run.earned += run.secEarn * (0.25 + 0.25 * L('p_c_sec')); run.tramos++; setJudge('tramo');
+    }
+    run.secMiss = 0; run.secEarn = 0;
+  }
   function update(t) {
     scheduleAudio(t);
+    if (run.mode === 'path') { const sec = Math.floor((t - LEAD - WIN.good * 2) / (128 * run.ch.step)); if (sec > run.secIdx) { closeSection(); run.secIdx = sec; } }
     const lim = WIN.good * modeWin();
     for (const n of run.notes) {
       if (n.t > t) break;
       if (n.judged || t - n.t <= lim) continue;
       n.judged = true; n.missed = true;
       if (n.kind === 'x') { run.xStreak = 0; continue; }
-      run.counts.miss++; setJudge('miss'); breakCombo(); roundNote(n, false); hurt(missDmg());
+      run.counts.miss++; if (run.mode === 'path') run.secMiss++; setJudge('miss'); breakCombo(); roundNote(n, false); hurt(missDmg());
       if (run.over) return;
     }
     const grace = 0.1 * L('l_grip'), tickVal = basePts() * (0.3 + 0.15 * L('l_tick'));
@@ -1695,6 +1845,7 @@ button.chip.mod:hover { border-color: var(--fg); }
 
   function finish() {
     if (run.over) return; run.over = true;
+    if (run.mode === 'path' && !run.failed) closeSection();
     const c = run.counts, all = c.perfect + c.great + c.good + c.miss, hits = c.perfect + c.great + c.good;
     const den = all + run.ghost * 0.5;
     const acc = den ? (c.perfect + c.great * 0.7 + c.good * 0.4) / den * 100 : 0;
@@ -1703,8 +1854,8 @@ button.chip.mod:hover { border-color: var(--fg); }
     const fc = !run.failed && c.miss === 0 && run.drops === 0;
     const grade = run.failed || run.vfail ? 'E' : GRADES.find(([min]) => acc >= min)[1];
     let gain = run.earned; const notes = [];
-    if (tutFail) notes.push(run.mode === 'signal' ? 'Repetí bien al menos la mitad de las notas para completar el tutorial' : 'Acertá al menos la mitad de las flechas para completar el tutorial');
-    else if (run.failed) { gain *= 0.5; notes.push(`${run.mode === 'signal' ? 'Señal perdida' : 'Aguante agotado'}: te quedás con el 50%`); }
+    if (tutFail) notes.push(run.mode === 'path' ? 'Tocá a tiempo al menos la mitad de las baldosas para completar el tutorial' : run.mode === 'signal' ? 'Repetí bien al menos la mitad de las notas para completar el tutorial' : 'Acertá al menos la mitad de las flechas para completar el tutorial');
+    else if (run.failed) { gain *= 0.5; notes.push(`${run.mode === 'signal' ? 'Señal perdida' : run.mode === 'path' ? 'Te saliste del camino' : 'Aguante agotado'}: te quedás con el 50%`); }
     if (fc && run.mode === 'arrows') {
       if (L('c_fc')) { const b = 0.25 * L('c_fc'); gain *= 1 + b; notes.push(`Bonus Full Combo: +${Math.round(b * 100)}%`); }
       else notes.push('Full Combo sin bonus: desbloquealo en la rama Combo');
@@ -1712,6 +1863,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     const ch = run.ch;
     const rows = [['Perfecto', c.perfect], ['Genial', c.great], ['Bien', c.good], ['Fallo', c.miss], ['Combo máx.', run.maxCombo], ['Precisión', Math.round(acc) + '%']];
     if (run.mode === 'signal') rows.push(['Patrones', `${run.decoded}/${run.rounds.length}`]);
+    if (run.mode === 'path') { rows.push(['Tramos perfectos', `${run.tramos}/${ch.secs}`]); if (ch.golds) rows.push(['Doradas', `${run.goldHit}/${ch.golds}`]); }
     if (ch.extras) rows.push(['Notas extra', `${run.xHit}/${ch.extras}`]);
     if (ch.holds) rows.push(['Largas', `${run.holdsDone}/${ch.holds}`]);
     rows.push(['Golpes al aire', run.ghost]);
@@ -2265,6 +2417,74 @@ button.chip.mod:hover { border-color: var(--fg); }
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
   }
 
+  // ---------- Dibujo: Compás ----------
+  // El planeta pivote está en la baldosa actual; el otro gira 180° por tiempo hasta la próxima.
+  function drawPath() {
+    if (!run || !W) return;
+    const now = performance.now(), t = gameT(), ch = run.ch, st = ch.step, U = Math.min(W, H * 0.68), MD = run.mods;
+    const tiles = ch.tiles, n = tiles.length, acc = XC(), w = Math.PI / (4 * st);
+    drawSky(t);
+    while (run.pk + 1 < n && tiles[run.pk + 1].t <= t) run.pk++;
+    const k = run.pk, P = tiles[k], N1 = tiles[k + 1];
+    const a = P.dir + Math.PI + (N1 ? N1.s : P.s) * w * (t - P.t);
+    // cámara: sigue al pivote y se desliza hacia la próxima baldosa
+    const fr = N1 ? Math.max(0, Math.min(1, (t - P.t) / (N1.t - P.t))) : 0, e = fr * fr * (3 - 2 * fr);
+    const cx = P.x + (N1 ? (N1.x - P.x) * e : 0), cy = P.y + (N1 ? (N1.y - P.y) * e : 0);
+    const R = U * 0.17, ox = W / 2, oy = H * 0.56;
+    const SX = x => ox + (x - cx) * R, SY = y => oy + (y - cy) * R;
+    const from = Math.max(0, k - 3), to = Math.min(n - 1, MD.blind ? k + 3 : k + 40);
+    // camino
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = R * 0.34; ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.beginPath(); for (let q = from; q <= to; q++) { const T = tiles[q]; q === from ? ctx.moveTo(SX(T.x), SY(T.y)) : ctx.lineTo(SX(T.x), SY(T.y)); } ctx.stroke();
+    // baldosas: blancas si las tocaste, oscuras si fallaste; la próxima con borde de color
+    for (let q = to; q >= from; q--) {
+      const T = tiles[q], x = SX(T.x), y = SY(T.y); if (x < -R || x > W + R || y < -R || y > H + R) continue;
+      const nt = q > 0 ? run.notes[q - 1] : null, sz = R * 0.56;
+      const fade = q < k ? 0.35 - 0.08 * (k - q) : MD.blind && q > k + 1 ? 1 - (q - k - 1) / 3 : q > k + 12 ? Math.max(0.25, 1 - (q - k - 12) / 20) : 1;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(T.dir); ctx.globalAlpha = Math.max(0.15, fade);
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-sz / 2, -sz / 2, sz, sz, sz * 0.22) : ctx.rect(-sz / 2, -sz / 2, sz, sz);
+      const judged = nt && nt.judged, hitOk = judged && !nt.missed;
+      ctx.fillStyle = !nt ? 'rgba(255,255,255,0.5)' : hitOk ? (T.gold ? `rgba(${acc},0.9)` : 'rgba(255,255,255,0.78)') : judged ? '#2e2e33' : T.gold ? `rgba(${acc},0.28)` : 'rgba(255,255,255,0.13)';
+      ctx.fill();
+      ctx.lineWidth = q === k + 1 ? 3 : 1.5;
+      ctx.strokeStyle = q === k + 1 ? `rgb(${acc})` : T.gold ? `rgba(${acc},0.9)` : 'rgba(255,255,255,0.35)'; ctx.stroke();
+      if (T.twirl) { ctx.rotate(-T.dir); ctx.strokeStyle = hitOk ? '#0d0d0e' : 'rgba(255,255,255,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, sz * 0.24, 0.3, Math.PI * 1.6); ctx.stroke(); }
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    // planetas (Sin órbita: solo un pulso en la baldosa actual)
+    const px = SX(P.x), py = SY(P.y), mx = px + Math.cos(a) * R, my = py + Math.sin(a) * R, pr = R * 0.24;
+    if (MD.still) {
+      const bl = 60 / run.song.bpm, bp = t > LEAD ? 1 - (((t - LEAD) % bl) / bl) : 0;
+      ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.5 * bp})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, R * (0.35 + 0.15 * bp), 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(px, py, R, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(mx, my); ctx.stroke();
+      const pivA = k % 2 === 0, f = Math.max(0, 1 - (now - flash[0]) / 220);
+      const col = A => A ? '#f2f2f4' : `rgb(${acc})`;
+      for (let s = 1; s <= 5; s++) {   // estela del planeta que gira
+        const aa = a - (N1 ? N1.s : P.s) * s * 0.09;
+        ctx.globalAlpha = 0.18 * (1 - s / 6); ctx.fillStyle = col(!pivA);
+        ctx.beginPath(); ctx.arc(px + Math.cos(aa) * R, py + Math.sin(aa) * R, pr * (1 - s * 0.1), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = col(pivA); ctx.beginPath(); ctx.arc(px, py, pr * (1 + 0.25 * f), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col(!pivA); ctx.beginPath(); ctx.arc(mx, my, pr, 0, Math.PI * 2); ctx.fill();
+    }
+    drawHud(U);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (run.combo >= 4) {
+      ctx.font = F(900, U * 0.09); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillText(run.combo, W / 2, H * 0.17);
+      ctx.font = F(600, U * 0.032); ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText(L('p_r_root') ? `RACHA x${dec(pathMult())}` : 'SEGUIDAS', W / 2, H * 0.17 + U * 0.07);
+    }
+    drawJudge(U, H * 0.3);
+    if (run.song.tut) tutMsg(t, U, H * 0.88, [[0, 'El planeta de color gira alrededor del blanco: tocá cualquier tecla cuando llegue a la próxima baldosa'], [0.25, 'Camino recto = un tiempo. Un giro de 90° = una corchea: tocá antes'], [0.55, 'Las baldosas siguen la melodía de la canción'], [0.85, 'Terminá el camino para abrir el mapa']]);
+    drawCountdown(t, U, H * 0.3, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
+    const prog = Math.max(0, Math.min(1, t / ch.end));
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
+  }
+
   // ---------- Pads táctiles ----------
   // Vertical: botones debajo de la pista. Horizontal (celular acostado): un grupo a cada lado, para jugar con los pulgares.
   const ARROWS = ['←', '↓', '↑', '→'], ARIA = ['Izquierda', 'Abajo', 'Arriba', 'Derecha'];
@@ -2274,7 +2494,13 @@ button.chip.mod:hover { border-color: var(--fg); }
   const PAUSE_PAD = '<button class="pad pause-pad" data-act="P" aria-label="Pausa">PAUSA</button>', PAUSE_GAP = '<span class="pad pause-pad gap" aria-hidden="true">PAUSA</span>';
   function renderPads() {
     const pads = $('pads'), land = isLand();
-    if (run.mode === 'stack') {
+    if (run.mode === 'path') {   // Compás: un solo botón grande (dos en el celular acostado)
+      const big = (id, side) => `<button class="pad pad-tap" id="${id}" data-l="0" aria-label="Tocar">TOCAR</button>`;
+      if (land) {
+        pads.className = 'pads land-pads';
+        pads.innerHTML = `<div class="pg side left">${PAUSE_GAP}<div class="pg-pads">${big('pad0')}</div></div><div class="pg side right">${PAUSE_PAD}<div class="pg-pads">${big('pad0b')}</div></div>`;
+      } else { pads.className = 'pads'; pads.innerHTML = `<div class="pg"><div class="pg-pads one">${big('pad0')}</div></div>`; }
+    } else if (run.mode === 'stack') {
       const acts = [['L', '←', 'Mover'], ['U', '↻', 'Girar'], ['R', '→', 'Mover'], ['D', '↓', 'Bajar'], ['H', '⤓', 'Soltar']];
       if (L('e_d_hold')) acts.push(['C', '⇄', 'Bodega']);
       if (land) {
@@ -2337,6 +2563,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     const g = GX[S.galaxy];
     $('keysHint').innerHTML = g.mode === 'stack'
       ? '<kbd>←</kbd><kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> bajar · <kbd>Espacio</kbd> soltar · <kbd>Esc</kbd> pausa'
+      : g.mode === 'path' ? 'Cualquier tecla: <kbd>Espacio</kbd>, flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa'
       : 'Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa';
     renderUI(true);
   }
@@ -2346,7 +2573,7 @@ button.chip.mod:hover { border-color: var(--fg); }
   }
 
   // ---------- Mapa de galaxias ----------
-  const GLAYOUT = { wide: { pulso: [22, 60], ens: [55, 30], sen: [80, 70] }, tall: { pulso: [50, 16], ens: [30, 46], sen: [68, 76] }, short: { pulso: [18, 34], ens: [50, 28], sen: [82, 40] } };
+  const GLAYOUT = { wide: { pulso: [14, 60], ens: [40, 28], sen: [62, 72], com: [86, 34] }, tall: { pulso: [50, 10], ens: [24, 33], sen: [74, 52], com: [32, 75] }, short: { pulso: [12, 36], ens: [37, 22], sen: [62, 40], com: [87, 22] } };
   const MAP_STARS = (() => { const r = rng(777); return Array.from({ length: 110 }, () => [r() * 100, r() * 100, r() < 0.88 ? 0.7 : 1.4, 0.2 + r() * 0.6]); })();
   const starsSvg = () => MAP_STARS.map(([x, y, r, a]) => `<circle cx="${x.toFixed(1)}%" cy="${y.toFixed(1)}%" r="${r}" fill="#ffffff" fill-opacity="${a.toFixed(2)}"/>`).join('');
   const narrow = () => window.matchMedia('(max-width: 600px)').matches;
@@ -2397,6 +2624,9 @@ button.chip.mod:hover { border-color: var(--fg); }
     ens: { wide: { ens_base: [12, 30], ens_a: [36, 66], ens_b: [64, 30], ens_c: [85, 68] },
            tall: { ens_base: [50, 8], ens_a: [28, 34], ens_b: [72, 54], ens_c: [36, 80] },
            short: { ens_base: [10, 24], ens_a: [36, 60], ens_b: [62, 20], ens_c: [86, 58] } },
+    com: { wide: { com_base: [12, 50], com_a: [36, 26], com_b: [62, 70], com_c: [86, 30] },
+           tall: { com_base: [50, 8], com_a: [30, 32], com_b: [70, 54], com_c: [34, 80] },
+           short: { com_base: [10, 40], com_a: [36, 20], com_b: [62, 58], com_c: [86, 22] } },
     sen: { wide: { sen_base: [12, 66], sen_a: [36, 30], sen_b: [62, 68], sen_c: [86, 32] },
            tall: { sen_base: [50, 8], sen_a: [72, 32], sen_b: [28, 56], sen_c: [66, 80] },
            short: { sen_base: [10, 58], sen_a: [36, 20], sen_b: [62, 58], sen_c: [86, 20] } },
@@ -2432,6 +2662,9 @@ button.chip.mod:hover { border-color: var(--fg); }
     if (m === 'stack') return ['<b>Fácil:</b> la pieza baja una fila por tiempo y el margen para moverse a tiempo es más amplio.',
       '<b>Normal:</b> la pieza baja dos filas por tiempo.',
       '<b>Difícil:</b> dos filas por tiempo y cada 4 compases sube una fila de chatarra desde abajo.'][di];
+    if (m === 'path') return ['<b>Fácil:</b> una baldosa por tiempo o cada pocos tiempos: el camino casi siempre va recto.',
+      '<b>Normal:</b> la melodía en corcheas, con giros de 90°. En los estribillos el sentido de giro puede invertirse.',
+      '<b>Difícil:</b> la melodía completa, con semicorcheas (en canciones lentas) y giros que se invierten en cada tramo.'][di];
     if (m === 'signal') return ['<b>Fácil:</b> patrones en negras de un compás. La línea de tiempo marca cuándo tocar.',
       '<b>Normal:</b> patrones de un compás que pasan a corcheas. Sin marcas en la respuesta (salvo con Eco visual).',
       '<b>Difícil:</b> llamadas de dos compases con corcheas y semicorcheas.'][di];
@@ -2446,6 +2679,7 @@ button.chip.mod:hover { border-color: var(--fg); }
   const MENU_HINT = {
     arrows: 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras incluidas: más estrellas, más multiplicador. Tocar donde no hay flecha resta aguante. Si se vacía, te quedás con la mitad de lo ganado.',
     stack: 'Cada movimiento se juzga contra las corcheas de la canción: a tiempo suma racha, fuera de tiempo daña el casco. Si el casco se rompe o las piezas llegan arriba, te quedás con la mitad.',
+    path: 'Tocá cualquier tecla cuando el planeta que gira llegue a la próxima baldosa. El ángulo del camino marca el ritmo: recto es un tiempo, más cerrado es más rápido. Si fallás, el equilibrio baja; si se vacía, te quedás con la mitad.',
     signal: 'Durante la llamada podés tocar libremente para practicar. En la respuesta, cada nota se juzga como en Vía Pulso. Repetir un patrón entero da un bonus.',
   };
   function renderSongs() {
@@ -2751,6 +2985,7 @@ button.chip.mod:hover { border-color: var(--fg); }
   const STACK_KEYS = { ArrowLeft: 'L', KeyA: 'L', KeyJ: 'L', ArrowRight: 'R', KeyD: 'R', KeyL: 'R', ArrowUp: 'U', KeyW: 'U', KeyI: 'U', KeyX: 'U', ArrowDown: 'D', KeyS: 'D', KeyK: 'D', Space: 'H', KeyC: 'C', ShiftLeft: 'C', ShiftRight: 'C' };
   function mapKey(code) {
     if (!run || run.mode === 'stack') return undefined;
+    if (run.mode === 'path') return code === 'Space' || Object.values(GROUPS).some(g => code in g) ? 0 : undefined;   // Compás: cualquier tecla
     if (run.boards === 1) { for (const g of Object.values(GROUPS)) if (code in g) return g[code]; return undefined; }
     if (code in GROUPS[S.keysL]) return GROUPS[S.keysL][code];
     if (code in GROUPS[S.keysR]) return 4 + GROUPS[S.keysR][code];
@@ -2827,7 +3062,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     const dt = Math.min(1, (now - lastFrame) / 1000); lastFrame = now;
     creditEcos(dt);
     if (view === 'play' && run && !run.over && !run.paused) (run.mode === 'stack' ? updateStack : update)(gameT());
-    if (view === 'play' && run && !run.paused) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : draw)();
+    if (view === 'play' && run && !run.paused) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)();
     renderUI(false);
     if (now - lastSave > 3000) { save(); lastSave = now; }
     requestAnimationFrame(frame);

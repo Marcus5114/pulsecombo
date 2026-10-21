@@ -58,13 +58,67 @@
     return { step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, rpb, garbage, seed: 7000 + si * 97 + di * 13 };
   }
 
+  // ---------- Compás: camino de baldosas ----------
+  // Las baldosas siguen la melodía de la canción. Entre dos toques, el planeta que gira recorre 180° por tiempo,
+  // así que el ángulo entre baldosas dice cuánto falta para el próximo toque: recto = un tiempo, giro de 90° = una corchea.
+  function buildPath(si, di) {
+    const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16, M = getMusic(si), R = rng(11000 + si * 53 + di * 7);
+    // Fácil: corcheas con separación de un tiempo · Normal: corcheas · Difícil: semicorcheas (en canciones rápidas, solo de a pares)
+    const grid = s.tut ? 4 : di === 2 ? 1 : 2, minGap = s.tut || di === 0 ? 4 : di === 1 ? 2 : 1, maxGap = 6, end = total - 8, fast = s.bpm > 140;
+    const DRUMS = di === 1 ? 'kK' : di === 2 ? 'kKsc' : '';
+    // 1. Candidatos: la melodía (desde el compás 2) y, en Normal y Difícil, golpes de la batería; el compás 1 marca los tiempos
+    const cand = [];
+    for (let i = 16; i < end; i++) {
+      const bar = i >> 4, p = i & 15;
+      let on;
+      if (s.tut) on = p % 4 === 0 || (bar >= 8 && bar % 2 === 1 && p === 6);
+      else if (bar < 2) on = p % 4 === 0;
+      else { const S = M.sec[secAt(M, bar)]; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || S.dr[p].some(([d]) => DRUMS.includes(d))); }
+      if (on) cand.push(i);
+    }
+    // 2. Separación mínima y relleno de huecos largos con tiempos (un giro de más de 270° no se puede leer)
+    const taps = []; let last = cand[0] - 4;
+    for (const c of cand) {
+      if (c - last < minGap) continue;
+      if (c - last === 1 && taps.length > 1 && last - taps[taps.length - 2] < (fast ? 4 : 2)) continue;   // sin rachas de semicorcheas
+      let ok = true;
+      while (c - last > maxGap) { const n = last + 4; if (c - n < minGap) { ok = false; break; } taps.push(n); last = n; }
+      if (!ok) continue;
+      taps.push(c); last = c;
+    }
+    // 3. Baldosas: posición, dirección y sentido de giro (los giros invierten el sentido)
+    const golds = L('p_c_gold') && !s.tut;
+    const tiles = [{ x: 0, y: 0, dir: 0, s: 1, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, gap: 4 }];
+    let sign = 1, twirls = 0, irr = 0, nGold = 0;
+    const notes = taps.map((i, k) => {
+      const prev = tiles[k], gap = i - prev.i, bar = i >> 4;
+      const secStart = k > 0 && (i >> 7) !== (prev.i >> 7);
+      let twirl = false;
+      if (!s.tut && secStart && (di === 2 ? R() < 0.7 : di === 1 ? secAt(M, bar) === 'B' && R() < 0.5 : false)) { sign = -sign; twirl = true; }
+      // Si la baldosa cae encima de una anterior, se invierte el sentido de giro para que el camino se lea
+      const at = sg => prev.dir + Math.PI + sg * gap * Math.PI / 4;
+      const clear = sg => { const a2 = at(sg), x = prev.x + Math.cos(a2), y = prev.y + Math.sin(a2); let m = 9; for (let q = Math.max(0, tiles.length - 40); q < tiles.length - 2; q++) m = Math.min(m, Math.hypot(tiles[q].x - x, tiles[q].y - y)); return m; };
+      if (!s.tut && clear(sign) < 0.8 && clear(-sign) > clear(sign)) { sign = -sign; twirl = !twirl; }
+      if (twirl) twirls++;
+      const a = at(sign);
+      const gold = golds && k > 4 && R() < 0.12; if (gold) nGold++;
+      if (gap !== 4) irr++;
+      tiles.push({ x: prev.x + Math.cos(a), y: prev.y + Math.sin(a), dir: a, s: sign, i, t: LEAD + i * step, gap, twirl, gold });
+      return { t: LEAD + i * step, i, lane: 0, kind: 'q', k: k + 1, gold, pl: k % 4 };
+    });
+    const dur = total * step, secs = new Set(taps.map(i => i >> 7)).size;
+    let stars = 0.3 + 1.35 * notes.length / dur + 1.5 * irr / dur + 0.012 * twirls;
+    stars = Math.round(stars * 10) / 10;
+    return { notes, tiles, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, golds: nGold, secs };
+  }
+
   const chartCache = new Map();
   const sig = () => ['x_root', 'x_dens', 'x_semi', 'l_root', 'l_freq', 'l_len'].map(id => E(id)).join('');
   function getChart(si, di) {
     const s = SONGS[si], m = modeOf(s), mods = activeMods(s);
-    const k = `${si}-${di}-${m === 'arrows' ? sig() : ''}-${mods.join('.')}-${L('g_mod_amp')}`;
+    const k = `${si}-${di}-${m === 'arrows' ? sig() : m === 'path' ? L('p_c_gold') : ''}-${mods.join('.')}-${L('g_mod_amp')}`;
     if (!chartCache.has(k)) {
-      const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : buildStack(si, di);
+      const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : m === 'path' ? buildPath(si, di) : buildStack(si, di);
       c.baseStars = c.stars; c.mods = mods;
       if (mods.length) { c.stars = Math.max(0.5, Math.round(c.stars * modFactor(mods) * 10) / 10); c.mult = starMult(c.stars); }
       chartCache.set(k, c);

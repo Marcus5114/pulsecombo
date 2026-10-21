@@ -20,6 +20,7 @@
     const g = GX[S.galaxy];
     $('keysHint').innerHTML = g.mode === 'stack'
       ? '<kbd>←</kbd><kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> bajar · <kbd>Espacio</kbd> soltar · <kbd>Esc</kbd> pausa'
+      : g.mode === 'path' ? 'Cualquier tecla: <kbd>Espacio</kbd>, flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa'
       : 'Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa';
     renderUI(true);
   }
@@ -29,7 +30,7 @@
   }
 
   // ---------- Mapa de galaxias ----------
-  const GLAYOUT = { wide: { pulso: [22, 60], ens: [55, 30], sen: [80, 70] }, tall: { pulso: [50, 16], ens: [30, 46], sen: [68, 76] }, short: { pulso: [18, 34], ens: [50, 28], sen: [82, 40] } };
+  const GLAYOUT = { wide: { pulso: [14, 60], ens: [40, 28], sen: [62, 72], com: [86, 34] }, tall: { pulso: [50, 10], ens: [24, 33], sen: [74, 52], com: [32, 75] }, short: { pulso: [12, 36], ens: [37, 22], sen: [62, 40], com: [87, 22] } };
   const MAP_STARS = (() => { const r = rng(777); return Array.from({ length: 110 }, () => [r() * 100, r() * 100, r() < 0.88 ? 0.7 : 1.4, 0.2 + r() * 0.6]); })();
   const starsSvg = () => MAP_STARS.map(([x, y, r, a]) => `<circle cx="${x.toFixed(1)}%" cy="${y.toFixed(1)}%" r="${r}" fill="#ffffff" fill-opacity="${a.toFixed(2)}"/>`).join('');
   const narrow = () => window.matchMedia('(max-width: 600px)').matches;
@@ -80,6 +81,9 @@
     ens: { wide: { ens_base: [12, 30], ens_a: [36, 66], ens_b: [64, 30], ens_c: [85, 68] },
            tall: { ens_base: [50, 8], ens_a: [28, 34], ens_b: [72, 54], ens_c: [36, 80] },
            short: { ens_base: [10, 24], ens_a: [36, 60], ens_b: [62, 20], ens_c: [86, 58] } },
+    com: { wide: { com_base: [12, 50], com_a: [36, 26], com_b: [62, 70], com_c: [86, 30] },
+           tall: { com_base: [50, 8], com_a: [30, 32], com_b: [70, 54], com_c: [34, 80] },
+           short: { com_base: [10, 40], com_a: [36, 20], com_b: [62, 58], com_c: [86, 22] } },
     sen: { wide: { sen_base: [12, 66], sen_a: [36, 30], sen_b: [62, 68], sen_c: [86, 32] },
            tall: { sen_base: [50, 8], sen_a: [72, 32], sen_b: [28, 56], sen_c: [66, 80] },
            short: { sen_base: [10, 58], sen_a: [36, 20], sen_b: [62, 58], sen_c: [86, 20] } },
@@ -115,6 +119,9 @@
     if (m === 'stack') return ['<b>Fácil:</b> la pieza baja una fila por tiempo y el margen para moverse a tiempo es más amplio.',
       '<b>Normal:</b> la pieza baja dos filas por tiempo.',
       '<b>Difícil:</b> dos filas por tiempo y cada 4 compases sube una fila de chatarra desde abajo.'][di];
+    if (m === 'path') return ['<b>Fácil:</b> una baldosa por tiempo o cada pocos tiempos: el camino casi siempre va recto.',
+      '<b>Normal:</b> la melodía en corcheas, con giros de 90°. En los estribillos el sentido de giro puede invertirse.',
+      '<b>Difícil:</b> la melodía completa, con semicorcheas (en canciones lentas) y giros que se invierten en cada tramo.'][di];
     if (m === 'signal') return ['<b>Fácil:</b> patrones en negras de un compás. La línea de tiempo marca cuándo tocar.',
       '<b>Normal:</b> patrones de un compás que pasan a corcheas. Sin marcas en la respuesta (salvo con Eco visual).',
       '<b>Difícil:</b> llamadas de dos compases con corcheas y semicorcheas.'][di];
@@ -129,6 +136,7 @@
   const MENU_HINT = {
     arrows: 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras incluidas: más estrellas, más multiplicador. Tocar donde no hay flecha resta aguante. Si se vacía, te quedás con la mitad de lo ganado.',
     stack: 'Cada movimiento se juzga contra las corcheas de la canción: a tiempo suma racha, fuera de tiempo daña el casco. Si el casco se rompe o las piezas llegan arriba, te quedás con la mitad.',
+    path: 'Tocá cualquier tecla cuando el planeta que gira llegue a la próxima baldosa. El ángulo del camino marca el ritmo: recto es un tiempo, más cerrado es más rápido. Si fallás, el equilibrio baja; si se vacía, te quedás con la mitad.',
     signal: 'Durante la llamada podés tocar libremente para practicar. En la respuesta, cada nota se juzga como en Vía Pulso. Repetir un patrón entero da un bonus.',
   };
   function renderSongs() {
@@ -434,6 +442,7 @@
   const STACK_KEYS = { ArrowLeft: 'L', KeyA: 'L', KeyJ: 'L', ArrowRight: 'R', KeyD: 'R', KeyL: 'R', ArrowUp: 'U', KeyW: 'U', KeyI: 'U', KeyX: 'U', ArrowDown: 'D', KeyS: 'D', KeyK: 'D', Space: 'H', KeyC: 'C', ShiftLeft: 'C', ShiftRight: 'C' };
   function mapKey(code) {
     if (!run || run.mode === 'stack') return undefined;
+    if (run.mode === 'path') return code === 'Space' || Object.values(GROUPS).some(g => code in g) ? 0 : undefined;   // Compás: cualquier tecla
     if (run.boards === 1) { for (const g of Object.values(GROUPS)) if (code in g) return g[code]; return undefined; }
     if (code in GROUPS[S.keysL]) return GROUPS[S.keysL][code];
     if (code in GROUPS[S.keysR]) return 4 + GROUPS[S.keysR][code];
@@ -510,7 +519,7 @@
     const dt = Math.min(1, (now - lastFrame) / 1000); lastFrame = now;
     creditEcos(dt);
     if (view === 'play' && run && !run.over && !run.paused) (run.mode === 'stack' ? updateStack : update)(gameT());
-    if (view === 'play' && run && !run.paused) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : draw)();
+    if (view === 'play' && run && !run.paused) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)();
     renderUI(false);
     if (now - lastSave > 3000) { save(); lastSave = now; }
     requestAnimationFrame(frame);

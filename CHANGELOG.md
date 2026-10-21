@@ -9,6 +9,19 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
+## Sin publicar — próxima versión: v0.4
+
+### Agregado
+- Galaxia nueva, **Compás** (camino de baldosas, estilo A Dance of Fire and Ice): dos planetas unidos giran uno alrededor del otro, y en cada nota tocás cualquier tecla para fijar uno y soltar el otro. El ángulo de cada baldosa marca el ritmo: recto es un tiempo, un giro de 90° es una corchea. El camino sale de la melodía compuesta de cada canción y, en Normal y Difícil, también de la batería.
+  - Tutorial Péndulo y tres planetas: Brisa (bossa nova), Arrabal (tango electrónico) y Vértigo (drum and bass), con 3 canciones cada uno. Los tres géneros son nuevos en el compositor.
+  - Fácil, Normal y Difícil. Hay giros que invierten el sentido, y el camino se acomoda solo para no pisarse.
+  - Moneda propia (giros), color propio (ámbar) y árbol con las ramas Ritmo (racha que multiplica, Inercia, Centro exacto, Red de seguridad) y Camino (Tramo perfecto cada 8 compases, Tramo brillante, Baldosas doradas, Oro fundido).
+  - Ecos, condensador, Amplificador Compás en el árbol global y dos modificadores: Ciego (+20% de estrellas) y Sin órbita (+15%).
+  - Se abre con 8 de materia oscura y se conecta con Ensamble y Señal en el mapa de galaxias.
+
+### Cambiado
+- Sinfonía pide también el Amplificador Compás en nivel 3.
+
 ## v0.3
 
 ### Agregado
