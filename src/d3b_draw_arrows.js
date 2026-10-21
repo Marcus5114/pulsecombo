@@ -40,7 +40,7 @@
 
     // HUD
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
-    ctx.fillStyle = run.life > 25 ? '#ececee' : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
+    ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(fmt(run.earned), 10, 22);
     ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
@@ -66,7 +66,7 @@
       for (let k = 0; k < 4; k++) ctx.fillText(`${'ASWD'[k]} · ${'JKIL'[k]}`, laneX(k), rY + size * 0.8);
     }
     const prog = Math.max(0, Math.min(1, t / run.ch.end));
-    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = '#8a8a90'; ctx.fillRect(0, H - 3, W * prog, 3);
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
 
     // receptores
     let beatPulse = 0;

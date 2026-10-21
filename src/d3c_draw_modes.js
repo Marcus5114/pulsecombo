@@ -9,7 +9,7 @@
   }
   function drawHud(U, label) {
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
-    ctx.fillStyle = run.life > 25 ? '#ececee' : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
+    ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(fmt(run.earned), 10, 22);
     ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
@@ -119,7 +119,7 @@
     if (run.song.tut) tutMsg(t, U, H * 0.92, [[0, 'La antena toca un patrón: mirá qué luces se prenden y escuchá el ritmo'], [0.2, 'Cuando dice REPETÍ, tocá las mismas flechas con el mismo ritmo'], [0.55, 'Los puntos de la línea muestran cuándo tocar'], [0.85, 'Terminá la transmisión para abrir el mapa']]);
     drawCountdown(t, U, H * 0.58, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
     const prog = Math.max(0, Math.min(1, t / ch.end));
-    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = '#8a8a90'; ctx.fillRect(0, H - 3, W * prog, 3);
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
   }
 
   // ---------- Dibujo: Ensamble ----------
@@ -196,7 +196,7 @@
     if (run.song.tut) tutMsg(t, U, sy + U * 0.07, [[0, 'Movés con ← →, girás con ↑ y soltás con Espacio'], [0.15, 'Cada movimiento tiene que caer sobre una marca de la tira de abajo'], [0.45, 'Completá filas enteras para ganar piezas'], [0.8, 'Con una fila completa ya abrís el mapa']]);
     drawCountdown(t, U, by + bh * 0.4, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
     const prog = Math.max(0, Math.min(1, t / ch.end));
-    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = '#8a8a90'; ctx.fillRect(0, H - 3, W * prog, 3);
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
   }
 
   // ---------- Pads táctiles ----------

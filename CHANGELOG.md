@@ -11,6 +11,10 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 
 ## Sin publicar — próxima versión: v0.2.2
 
+### Agregado
+- Mapa de galaxias: la galaxia en la que estás se marca con corchetes de mira y una nave en órbita.
+- Color propio para cada galaxia: Vía Pulso en cian, Ensamble en naranja y Señal en violeta. Tiñe pestañas, botones, dificultades, árboles y las barras de la partida. El árbol global queda neutro.
+
 ### Corregido
 - Árboles de mejoras: los nombres de las mejoras ya no se cortan a mitad de palabra. Ocupan una o dos líneas y las mejoras principales de cada rama usan todo el ancho de su fila.
 

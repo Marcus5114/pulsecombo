@@ -16,11 +16,11 @@
   // ---------- Galaxias ----------
   // Cada galaxia cambia la forma de jugar (mode), tiene su moneda (cur = campo en el estado) y su árbol.
   const GALAXIES = [
-    { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: 'pulsos', cost: 0, need: 4,
+    { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: 'pulsos', cost: 0, need: 4, color: '#5cd0e6',
       desc: 'Flechas que suben hasta los receptores al ritmo de cada género. Cinco planetas, cinco estilos.' },
-    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2,
+    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2, color: '#ff8c5a',
       desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar piezas.' },
-    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2,
+    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, color: '#b892ff',
       desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));

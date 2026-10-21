@@ -3,6 +3,7 @@
   let treeId = S.galaxy;
   function setView(v) {
     view = v; document.body.dataset.view = v;
+    document.body.dataset.acc = v === 'tree' && treeId === 'global' ? 'global' : S.galaxy;
     for (const [id, name] of [['vGal', 'gal'], ['vMap', 'map'], ['vMenu', 'menu'], ['vPlay', 'play'], ['vResult', 'result'], ['vTree', 'tree']]) $(id).hidden = v !== name;
     $('tabs').hidden = v === 'play';
     document.body.classList.toggle('playing', v === 'play');
@@ -35,14 +36,18 @@
   // En pantallas bajas (celular acostado) se comprime la altura del mapa para que entren las etiquetas
   const layoutKey = () => window.innerHeight < 500 && !narrow() ? 'short' : narrow() ? 'tall' : 'wide';
   let galSel = S.galaxy;
+  // Marcador de "estás acá": corchetes de mira y una nave en órbita alrededor de la galaxia actual
+  const HERE_MARK = `<span class="here-mark" aria-hidden="true"><i></i><i></i><i></i><i></i>
+    <svg class="ship" viewBox="0 0 24 24"><path d="M3 21 L12 2 L21 21 L12 16 Z"/></svg></span>`;
   function renderGal() {
     const pos = GLAYOUT[layoutKey()];
     $('galSvg').innerHTML = starsSvg() + GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('galaxies').innerHTML = GALAXIES.map(g => {
       const open = !!S.galOpen[g.id], here = S.galaxy === g.id;
       const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : `${g.cost} de materia oscura`;
-      return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%" aria-label="${g.name}, ${status}">
+      return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%;--g-acc:${g.color}" aria-label="${g.name}, ${status}">
         <span class="gxw"><span class="gx" data-g="${g.id}"></span></span>
+        ${here ? HERE_MARK : ''}
         <span class="pgn">${g.modeName}</span><span class="pn">${g.name}</span><span class="pp">${status}</span>
       </button>`;
     }).join('');
@@ -55,6 +60,7 @@
       : open ? '<button class="play-btn" id="galGo">Viajar</button>'
       : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de materia oscura</button>`
       : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
+    $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
     $('galInfo').innerHTML = `<div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3></div>${btn}<p>${g.desc}</p>
       <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id))}/s</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
   }

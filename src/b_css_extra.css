@@ -105,3 +105,51 @@ body.land.playing #quitBtn { display: none; }
   .map { min-height: 200px; }
   #playBtn { padding: 10px; font-size: 0.8rem; }
 }
+
+/* ---------- Color por galaxia: cada galaxia tiñe sus menús; el árbol global queda neutro ---------- */
+:root { --acc: var(--fg); --acc-ink: var(--bg); }
+body[data-acc="pulso"] { --acc: #5cd0e6; --acc-ink: #06181c; }
+body[data-acc="ens"] { --acc: #ff8c5a; --acc-ink: #1f0d05; }
+body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
+.tab[aria-pressed="true"] { color: var(--acc); border-bottom-color: var(--acc); }
+.badge { background: var(--acc); color: var(--acc-ink); }
+.bank h2 { color: var(--acc); }
+.play-btn { background: var(--acc); color: var(--acc-ink); }
+.play-btn:disabled { background: var(--surface2); color: var(--muted); }
+.songwrap.sel { border-color: var(--acc); }
+.diff.on { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+.diff.on .dn, .diff.on .dm { color: var(--acc-ink); opacity: 0.7; }
+.diff.on .dbar { background: rgba(0,0,0,0.2); } .diff.on .dbar i { background: var(--acc-ink); }
+.diff .dbar i { background: var(--acc); }
+.wh-genre, .pl .pgn { color: var(--acc); }
+.map { border-color: color-mix(in srgb, var(--acc) 35%, var(--line)); }
+.seg button[aria-pressed="true"] { background: var(--acc); color: var(--acc-ink); }
+.node.avail { border-color: var(--acc); }
+.node.avail::after { background: var(--acc); }
+.node.maxed { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+.node.maxed .nl { color: var(--acc-ink); opacity: 0.7; }
+.node.owned { border-color: color-mix(in srgb, var(--acc) 55%, var(--line)); }
+.tree path.on { stroke: var(--acc); }
+.node .ring circle { stroke: var(--acc); }
+.gal-info { border-color: color-mix(in srgb, var(--acc) 45%, var(--line)); }
+.gal-info .gi-mode { color: var(--acc); }
+
+/* Galaxias con su color en el mapa */
+.gx { background: radial-gradient(circle, color-mix(in srgb, var(--g-acc) 45%, transparent) 0, transparent 62%); }
+.gxbtn .pgn { color: var(--g-acc); }
+.gxbtn.sel:not(.here) .pn { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--g-acc); }
+
+/* Marcador "estás acá": corchetes de mira y nave en órbita */
+.here-mark { position: absolute; left: 50%; top: -2px; width: calc(var(--sz) + 34px); height: calc(var(--sz) * 0.6 + 26px); transform: translateX(-50%); pointer-events: none; }
+.here-mark i { position: absolute; width: 16px; height: 16px; border: 2px solid var(--g-acc); animation: lockon 1.8s ease-in-out infinite; }
+.here-mark i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.here-mark i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.here-mark i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; }
+.here-mark i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+@keyframes lockon { 50% { opacity: 0.45; } }
+.here-mark .ship { position: absolute; width: 14px; height: 14px; left: 50%; top: 50%; margin: -7px 0 0 -7px; fill: var(--g-acc); filter: drop-shadow(0 0 4px var(--g-acc)); animation: orbit 6s linear infinite; }
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(calc(var(--sz) * 0.55)) rotate(90deg) scaleY(1); }
+  to { transform: rotate(360deg) translateX(calc(var(--sz) * 0.55)) rotate(90deg) scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) { .here-mark i, .here-mark .ship { animation: none; } .here-mark .ship { transform: translateX(calc(var(--sz) * 0.55)) rotate(90deg); } }

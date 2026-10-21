@@ -347,6 +347,54 @@ body.land.playing #quitBtn { display: none; }
   .map { min-height: 200px; }
   #playBtn { padding: 10px; font-size: 0.8rem; }
 }
+
+/* ---------- Color por galaxia: cada galaxia tiñe sus menús; el árbol global queda neutro ---------- */
+:root { --acc: var(--fg); --acc-ink: var(--bg); }
+body[data-acc="pulso"] { --acc: #5cd0e6; --acc-ink: #06181c; }
+body[data-acc="ens"] { --acc: #ff8c5a; --acc-ink: #1f0d05; }
+body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
+.tab[aria-pressed="true"] { color: var(--acc); border-bottom-color: var(--acc); }
+.badge { background: var(--acc); color: var(--acc-ink); }
+.bank h2 { color: var(--acc); }
+.play-btn { background: var(--acc); color: var(--acc-ink); }
+.play-btn:disabled { background: var(--surface2); color: var(--muted); }
+.songwrap.sel { border-color: var(--acc); }
+.diff.on { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+.diff.on .dn, .diff.on .dm { color: var(--acc-ink); opacity: 0.7; }
+.diff.on .dbar { background: rgba(0,0,0,0.2); } .diff.on .dbar i { background: var(--acc-ink); }
+.diff .dbar i { background: var(--acc); }
+.wh-genre, .pl .pgn { color: var(--acc); }
+.map { border-color: color-mix(in srgb, var(--acc) 35%, var(--line)); }
+.seg button[aria-pressed="true"] { background: var(--acc); color: var(--acc-ink); }
+.node.avail { border-color: var(--acc); }
+.node.avail::after { background: var(--acc); }
+.node.maxed { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+.node.maxed .nl { color: var(--acc-ink); opacity: 0.7; }
+.node.owned { border-color: color-mix(in srgb, var(--acc) 55%, var(--line)); }
+.tree path.on { stroke: var(--acc); }
+.node .ring circle { stroke: var(--acc); }
+.gal-info { border-color: color-mix(in srgb, var(--acc) 45%, var(--line)); }
+.gal-info .gi-mode { color: var(--acc); }
+
+/* Galaxias con su color en el mapa */
+.gx { background: radial-gradient(circle, color-mix(in srgb, var(--g-acc) 45%, transparent) 0, transparent 62%); }
+.gxbtn .pgn { color: var(--g-acc); }
+.gxbtn.sel:not(.here) .pn { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--g-acc); }
+
+/* Marcador "estás acá": corchetes de mira y nave en órbita */
+.here-mark { position: absolute; left: 50%; top: -2px; width: calc(var(--sz) + 34px); height: calc(var(--sz) * 0.6 + 26px); transform: translateX(-50%); pointer-events: none; }
+.here-mark i { position: absolute; width: 16px; height: 16px; border: 2px solid var(--g-acc); animation: lockon 1.8s ease-in-out infinite; }
+.here-mark i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.here-mark i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.here-mark i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; }
+.here-mark i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+@keyframes lockon { 50% { opacity: 0.45; } }
+.here-mark .ship { position: absolute; width: 14px; height: 14px; left: 50%; top: 50%; margin: -7px 0 0 -7px; fill: var(--g-acc); filter: drop-shadow(0 0 4px var(--g-acc)); animation: orbit 6s linear infinite; }
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(calc(var(--sz) * 0.55)) rotate(90deg) scaleY(1); }
+  to { transform: rotate(360deg) translateX(calc(var(--sz) * 0.55)) rotate(90deg) scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) { .here-mark i, .here-mark .ship { animation: none; } .here-mark .ship { transform: translateX(calc(var(--sz) * 0.55)) rotate(90deg); } }
 </style>
 </head>
 <body>
@@ -503,11 +551,11 @@ body.land.playing #quitBtn { display: none; }
   // ---------- Galaxias ----------
   // Cada galaxia cambia la forma de jugar (mode), tiene su moneda (cur = campo en el estado) y su árbol.
   const GALAXIES = [
-    { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: 'pulsos', cost: 0, need: 4,
+    { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: 'pulsos', cost: 0, need: 4, color: '#5cd0e6',
       desc: 'Flechas que suben hasta los receptores al ritmo de cada género. Cinco planetas, cinco estilos.' },
-    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2,
+    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2, color: '#ff8c5a',
       desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar piezas.' },
-    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2,
+    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, color: '#b892ff',
       desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
@@ -1553,7 +1601,7 @@ body.land.playing #quitBtn { display: none; }
 
     // HUD
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
-    ctx.fillStyle = run.life > 25 ? '#ececee' : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
+    ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(fmt(run.earned), 10, 22);
     ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
@@ -1579,7 +1627,7 @@ body.land.playing #quitBtn { display: none; }
       for (let k = 0; k < 4; k++) ctx.fillText(`${'ASWD'[k]} · ${'JKIL'[k]}`, laneX(k), rY + size * 0.8);
     }
     const prog = Math.max(0, Math.min(1, t / run.ch.end));
-    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = '#8a8a90'; ctx.fillRect(0, H - 3, W * prog, 3);
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
 
     // receptores
     let beatPulse = 0;
@@ -1665,7 +1713,7 @@ body.land.playing #quitBtn { display: none; }
   }
   function drawHud(U, label) {
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
-    ctx.fillStyle = run.life > 25 ? '#ececee' : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
+    ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(fmt(run.earned), 10, 22);
     ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
@@ -1775,7 +1823,7 @@ body.land.playing #quitBtn { display: none; }
     if (run.song.tut) tutMsg(t, U, H * 0.92, [[0, 'La antena toca un patrón: mirá qué luces se prenden y escuchá el ritmo'], [0.2, 'Cuando dice REPETÍ, tocá las mismas flechas con el mismo ritmo'], [0.55, 'Los puntos de la línea muestran cuándo tocar'], [0.85, 'Terminá la transmisión para abrir el mapa']]);
     drawCountdown(t, U, H * 0.58, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
     const prog = Math.max(0, Math.min(1, t / ch.end));
-    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = '#8a8a90'; ctx.fillRect(0, H - 3, W * prog, 3);
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
   }
 
   // ---------- Dibujo: Ensamble ----------
@@ -1852,7 +1900,7 @@ body.land.playing #quitBtn { display: none; }
     if (run.song.tut) tutMsg(t, U, sy + U * 0.07, [[0, 'Movés con ← →, girás con ↑ y soltás con Espacio'], [0.15, 'Cada movimiento tiene que caer sobre una marca de la tira de abajo'], [0.45, 'Completá filas enteras para ganar piezas'], [0.8, 'Con una fila completa ya abrís el mapa']]);
     drawCountdown(t, U, by + bh * 0.4, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
     const prog = Math.max(0, Math.min(1, t / ch.end));
-    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = '#8a8a90'; ctx.fillRect(0, H - 3, W * prog, 3);
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
   }
 
   // ---------- Pads táctiles ----------
@@ -1910,6 +1958,7 @@ body.land.playing #quitBtn { display: none; }
   let treeId = S.galaxy;
   function setView(v) {
     view = v; document.body.dataset.view = v;
+    document.body.dataset.acc = v === 'tree' && treeId === 'global' ? 'global' : S.galaxy;
     for (const [id, name] of [['vGal', 'gal'], ['vMap', 'map'], ['vMenu', 'menu'], ['vPlay', 'play'], ['vResult', 'result'], ['vTree', 'tree']]) $(id).hidden = v !== name;
     $('tabs').hidden = v === 'play';
     document.body.classList.toggle('playing', v === 'play');
@@ -1942,14 +1991,18 @@ body.land.playing #quitBtn { display: none; }
   // En pantallas bajas (celular acostado) se comprime la altura del mapa para que entren las etiquetas
   const layoutKey = () => window.innerHeight < 500 && !narrow() ? 'short' : narrow() ? 'tall' : 'wide';
   let galSel = S.galaxy;
+  // Marcador de "estás acá": corchetes de mira y una nave en órbita alrededor de la galaxia actual
+  const HERE_MARK = `<span class="here-mark" aria-hidden="true"><i></i><i></i><i></i><i></i>
+    <svg class="ship" viewBox="0 0 24 24"><path d="M3 21 L12 2 L21 21 L12 16 Z"/></svg></span>`;
   function renderGal() {
     const pos = GLAYOUT[layoutKey()];
     $('galSvg').innerHTML = starsSvg() + GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('galaxies').innerHTML = GALAXIES.map(g => {
       const open = !!S.galOpen[g.id], here = S.galaxy === g.id;
       const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : `${g.cost} de materia oscura`;
-      return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%" aria-label="${g.name}, ${status}">
+      return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%;--g-acc:${g.color}" aria-label="${g.name}, ${status}">
         <span class="gxw"><span class="gx" data-g="${g.id}"></span></span>
+        ${here ? HERE_MARK : ''}
         <span class="pgn">${g.modeName}</span><span class="pn">${g.name}</span><span class="pp">${status}</span>
       </button>`;
     }).join('');
@@ -1962,6 +2015,7 @@ body.land.playing #quitBtn { display: none; }
       : open ? '<button class="play-btn" id="galGo">Viajar</button>'
       : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de materia oscura</button>`
       : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
+    $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
     $('galInfo').innerHTML = `<div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3></div>${btn}<p>${g.desc}</p>
       <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id))}/s</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
   }
