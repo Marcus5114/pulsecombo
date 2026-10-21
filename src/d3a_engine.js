@@ -36,9 +36,10 @@
     const s = SONGS[si];
     if (!s || !diffsOf(s).includes(di) || !diffOpen(s, di) || !worldOpen(s.wi)) return;
     ensureAudio();
-    const ch = getChart(si, di), mode = modeOf(s);
+    const ch = getChart(si, di), mode = modeOf(s), music = getMusic(si);
+    LANE_NOW = music.lanes; musicStart(ch.step);
     run = { si, di, song: s, mode, ch, boards: ch.boards, stars: ch.stars, mult: ch.mult, audioStep: 0, t0: clock() + 0.1,
-      life: 100, earned: 0, combo: 0, maxCombo: 0, rank: 0, failed: false, over: false, callIdx: 0 };
+      life: 100, earned: 0, combo: 0, maxCombo: 0, rank: 0, failed: false, over: false, callIdx: 0, music };
     if (mode === 'stack') initStack(run);
     else {
       Object.assign(run, { notes: ch.notes.map(n => ({ ...n })), active: [], counts: { perfect: 0, great: 0, good: 0, miss: 0 },
@@ -60,9 +61,8 @@
     const { ch, song } = run, w = WORLDS[song.wi], st = ch.step;
     while (run.audioStep < ch.total && LEAD + run.audioStep * st < t + 0.2) {
       const i = run.audioStep, pos = i % 4, beat = Math.floor(i / 4) % 4, bar = Math.floor(i / 16);
-      const [cr, cq] = w.prog[bar % 4];
       const at = run.t0 + LEAD + i * st + (w.swing && pos === 2 ? st * 0.667 : 0);
-      PLAY[w.style](at, { i, pos, beat, bar, root: song.root + cr, tones: QUAL[cq], st, w, song });
+      playMusic(run.music, at, i, st, ch.total, run.mode === 'signal');
       if (run.mode === 'signal') {
         while (run.callIdx < ch.calls.length && ch.calls[run.callIdx].i === i) beacon(at, ch.calls[run.callIdx++].lane);
         if (L('s_t_metro') && pos % 2 === 0 && inResponse(i)) click(at, pos === 0);

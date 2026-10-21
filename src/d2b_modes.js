@@ -1,7 +1,7 @@
 
   // ---------- Señal: llamada y respuesta ----------
   // Cada ronda: la baliza toca un patrón (llamada) y en el mismo largo siguiente hay que repetirlo (respuesta).
-  const beacon = (at, lane) => { tone(at, 'sine', LANE_HZ[lane] * 0.5, 0.16, 0.26); tone(at, 'triangle', LANE_HZ[lane], 0.04, 0.14); };
+  const beacon = (at, lane) => { tone(at, 'sine', LANE_NOW[lane] * 0.5, 0.16, 0.26); tone(at, 'triangle', LANE_NOW[lane], 0.04, 0.14); };
   const click = (at, strong) => tone(at, 'square', strong ? 1760 : 1320, strong ? 0.035 : 0.022, 0.03);
   function buildSignal(si, di) {
     const s = SONGS[si], step = 60 / s.bpm / 4, R = rng(3000 + si * 131 + di * 17);
@@ -38,7 +38,7 @@
     const dur = total * step;
     let stars = 0.4 + 1.9 * notes.length / dur + (sumN / nR) * 0.12 + (bars === 2 ? 0.5 : 0);
     stars = Math.round(stars * 10) / 10;
-    return { notes, calls, rounds, step, total, prog: WORLDS[s.wi].prog, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, bars, len };
+    return { notes, calls, rounds, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, bars, len };
   }
 
   // ---------- Ensamble: piezas que caen al compás ----------
@@ -48,7 +48,7 @@
     const garbage = !s.tut && di === 2;                   // chatarra que sube desde abajo cada 4 compases
     let stars = 0.6 + (s.bpm / 60) * rpb * 1.1 + (garbage ? 1.2 : 0) + (s.lvl - 1) * 0.15;
     stars = Math.round(stars * 10) / 10;
-    return { step, total, prog: WORLDS[s.wi].prog, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, rpb, garbage, seed: 7000 + si * 97 + di * 13 };
+    return { step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, rpb, garbage, seed: 7000 + si * 97 + di * 13 };
   }
 
   const chartCache = new Map();

@@ -12,6 +12,9 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.2.2
 
 ### Agregado
+- Música compuesta para cada canción: cada tema tiene su propia melodía, con un motivo que vuelve y un cierre, más estrofa, estribillo y a veces puente con progresiones de acordes distintas, y su propia batería, bajo y acompañamiento. Termina con un golpe final en la tónica.
+- Géneros propios para Ensamble (funk, industrial, synthwave) y Señal (ambient, lo-fi, electro), que antes reusaban los de Vía Pulso.
+- Las notas de acierto y los tonos de la baliza de Señal suenan en la tonalidad de cada canción.
 - Mapa de galaxias: la galaxia en la que estás se marca con una mirilla circular, y la que elegís con un clic se marca con las esquinas de un marco.
 - Color propio para cada galaxia: Vía Pulso en cian, Ensamble en naranja y Señal en violeta. Tiñe pestañas, botones, dificultades, árboles y las barras de la partida. El árbol global queda neutro.
 

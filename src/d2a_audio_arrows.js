@@ -49,61 +49,13 @@
   }
   function power(at, midi, dur) { bass(at, midi, dur, { cut: 1800, vol: 0.035 }); bass(at, midi + 7, dur, { cut: 1800, vol: 0.03 }); }
   const pluck = (at, midi, vol = 0.04, dur = 0.25) => tone(at, 'triangle', mtof(midi), vol, dur);
-  const QUAL = { M: [0, 4, 7], m: [0, 3, 7], m7: [0, 3, 7, 10], '7': [0, 4, 7, 10], M7: [0, 4, 7, 11] };
-  // Patrones de cada género. pos: semicorchea dentro del tiempo (0–3) · beat: tiempo del compás (0–3)
-  const PLAY = {
-    rock(at, { i, pos, beat, root, st }) {
-      if (i % 64 === 0) crash(at);
-      if (pos === 0 && beat % 2 === 0) kick(at, beat === 0);
-      if (pos === 2 && beat === 2) kick(at, false);
-      if (pos === 0 && beat % 2 === 1) snare(at, 0.32);
-      if (pos % 2 === 0) { hat(at, 0.08); bass(at, root, st * 1.8, { cut: 1400, vol: 0.12 }); }
-      if (pos === 0 && beat === 0) power(at, root + 12, st * 15);
-    },
-    pop(at, { i, pos, beat, root, tones, st }) {
-      if ((pos === 0 && beat % 2 === 0) || (pos === 2 && beat === 1)) kick(at, beat === 0 && pos === 0);
-      if (pos === 0 && beat % 2 === 1) clap(at);
-      if (pos % 2 === 0) { hat(at, 0.06); pluck(at, root + 24 + tones[(i / 2) % tones.length], 0.035, 0.3); }
-      if ((pos === 0 && beat !== 3) || (pos === 2 && beat === 1)) bass(at, root, st * 3, { cut: 800, vol: 0.13 });
-    },
-    disco(at, { pos, beat, root, tones, st }) {
-      if (pos === 0) kick(at, beat === 0);
-      if (pos === 0 && beat % 2 === 1) clap(at, 0.2);
-      if (pos === 2) ohat(at, 0.07); else if (pos % 2 === 1) hat(at, 0.03);
-      if (pos % 2 === 0) bass(at, root + (pos === 2 ? 12 : 0), st * 1.6, { cut: 1100, vol: 0.13 });
-      if (pos === 2 && beat === 3) for (const t of tones) pluck(at, root + 24 + t, 0.025, 0.18);
-    },
-    edm(at, { i, pos, beat, bar, root, st }) {
-      if (bar % 8 === 7) { snare(at, 0.06 + 0.22 * (beat * 4 + pos) / 16); if (pos === 0) kick(at, false); return; }   // subida
-      if (bar % 8 === 0 && i % 16 === 0) crash(at);
-      if (pos === 0) kick(at, false, true);
-      if (pos === 0 && beat % 2 === 1) clap(at, 0.24);
-      if (pos === 2) { ohat(at, 0.06); bass(at, root, st * 1.8, { cut: 1700, vol: 0.15 }); }
-      else if (pos % 2 === 1) hat(at, 0.035);
-    },
-    base(at, { pos, beat, root, st }) {
-      if (pos === 0) { kick(at, beat === 0); bass(at, root, st * 3.5, { cut: 700, vol: 0.12 }); }
-      if (pos === 0 && beat % 2 === 1) clap(at, 0.14);
-      if (pos === 2) hat(at, 0.07);
-    },
-    jazz(at, { pos, beat, bar, root, tones, st, w, song }) {
-      if (pos === 0 || (pos === 2 && beat % 2 === 1)) ride(at, pos === 0 ? 0.06 : 0.045);
-      if (pos === 0 && beat % 2 === 1) hat(at, 0.04);
-      if (pos === 0 && beat === 0 && bar % 2 === 0) kick(at, false);
-      if (pos === 0) {
-        const next = song.root + w.prog[(bar + 1) % 4][0];
-        const walk = [root, root + tones[1], root + tones[2], next - 1];
-        bass(at, walk[beat], st * 3.6, { type: 'triangle', cut: 700, vol: 0.2 });
-      }
-      if (pos === 2 && beat === 1 && bar % 2 === 1) for (const t of tones) pluck(at, root + 24 + t, 0.022, 0.2);
-    },
-  };
   const LANE_HZ = [523.25, 587.33, 659.25, 783.99];
+  let LANE_NOW = LANE_HZ;   // en cada canción las notas de acierto y de la baliza van en su tonalidad
   function blip(lane, j, gold) {
     if (!ac) return;
     const at = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
     o.type = gold ? 'sine' : 'triangle';
-    o.frequency.value = LANE_HZ[lane % 4] * (lane >= 4 ? 0.75 : 1) * (j === 'perfect' ? 2 : 1) * (gold ? 1.5 : 1);
+    o.frequency.value = LANE_NOW[lane % 4] * (lane >= 4 ? 0.75 : 1) * (j === 'perfect' ? 2 : 1) * (gold ? 1.5 : 1);
     g.gain.setValueAtTime(0.1, at); g.gain.exponentialRampToValueAtTime(0.001, at + 0.1);
     o.connect(g).connect(ac.destination); o.start(at); o.stop(at + 0.12);
   }
@@ -216,11 +168,10 @@
       for (const k of ['required', 'holds', 'doubles', 'extras', 'jumps', 'stairs']) acc[k] += r[k];
     }
     acc.notes.sort((a, b) => a.t - b.t);
-    const prog = WORLDS[s.wi].prog;
     // Estrellas: densidad ponderada (flechas obligatorias, largas, saltos, extras) + bonus por coordinar dos tableros
     const dur = total * step;
     let stars = 0.4 + 1.75 * (acc.required + 0.6 * acc.holds + 0.5 * acc.jumps + 0.15 * acc.extras) / dur;
     if (nb === 2) stars *= 1.35;
     stars = Math.round(stars * 10) / 10;
-    return { ...acc, step, total, prog, end: LEAD + total * step, stars, boards: nb, mult: starMult(stars) };
+    return { ...acc, step, total, end: LEAD + total * step, stars, boards: nb, mult: starMult(stars) };
   }
