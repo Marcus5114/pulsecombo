@@ -25,7 +25,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 
 ### Cambiado
 - Sinfonía pide también el Amplificador Compás en nivel 3.
-- Señal: entre la llamada y la respuesta hay una pausa de radio (clic de cambio y ruido blanco), de un tiempo en canciones lentas y dos en las rápidas. Así la primera nota de la respuesta se puede tocar a tiempo. En pantalla dice "CAMBIO…", con estática alrededor de la antena.
+- Señal: entre la llamada y la respuesta hay una pausa de radio (clic de cambio y ruido blanco), de un tiempo en canciones lentas y dos en las rápidas. Así la primera nota de la respuesta se puede tocar a tiempo. En pantalla dice "CAMBIO…", con estática alrededor de la antena, y el indicador de la barra recorre rápido todo el patrón como muestra de lo que hay que repetir.
 - Árboles de mejoras: el detalle de cada mejora aparece apenas pasás el mouse, sin la espera de 1 segundo.
 
 ## v0.3
