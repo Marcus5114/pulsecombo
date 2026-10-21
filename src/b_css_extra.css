@@ -7,11 +7,11 @@
 body.playing .notice { display: none; }
 
 /* Mapa de galaxias */
-.gxbtn { --sz: clamp(80px, 14vw, 150px); position: absolute; transform: translate(-50%, calc(-4px - var(--sz) * 0.3)); display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; color: var(--fg); cursor: pointer; padding: 6px; border-radius: 12px; }
+.gxbtn { --sz: clamp(80px, 14vw, 150px); position: absolute; transform: translate(-50%, calc(-6px - var(--sz) * 0.3)); display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; color: var(--fg); cursor: pointer; padding: 6px; border-radius: 12px; }
 .gxbtn:focus-visible { outline: 2px solid var(--hi); }
-.gxbtn .gxw { width: var(--sz); height: calc(var(--sz) * 0.6); display: grid; place-items: center; transform: rotate(-16deg); transition: transform 0.25s; }
+.gxbtn .gxw { position: relative; width: var(--sz); height: calc(var(--sz) * 0.6); display: block; transform: rotate(-16deg); transition: transform 0.25s; }
 .gxbtn:hover .gxw, .gxbtn.sel .gxw { transform: rotate(-16deg) scale(1.08); }
-.gx { width: var(--sz); height: var(--sz); border-radius: 50%; transform: scaleY(0.55); position: relative; }
+.gx { width: var(--sz); height: var(--sz); border-radius: 50%; transform: scaleY(0.55); position: absolute; left: 50%; top: 50%; margin: calc(var(--sz) / -2) 0 0 calc(var(--sz) / -2); }
 .gx::before { content: ""; position: absolute; inset: 0; border-radius: 50%; animation: spin 60s linear infinite; }
 .gx[data-g="pulso"]::before { background: radial-gradient(circle, #ffffff 0 5%, rgba(255,255,255,0.75) 9%, rgba(255,255,255,0) 32%), conic-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,0.42) 8%, rgba(255,255,255,0) 20%, rgba(255,255,255,0.36) 42%, rgba(255,255,255,0) 55%, rgba(255,255,255,0.32) 76%, rgba(255,255,255,0) 92%); -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); }
 .gx[data-g="ens"]::before { background: radial-gradient(circle, #ffffff 0 5%, rgba(255,255,255,0.7) 9%, rgba(255,255,255,0) 28%), linear-gradient(90deg, transparent 22%, rgba(255,255,255,0.55) 40% 60%, transparent 78%) center / 100% 14% no-repeat, conic-gradient(from 90deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.35) 12%, rgba(255,255,255,0) 26%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.35) 62%, rgba(255,255,255,0) 76%); -webkit-mask: radial-gradient(circle, #000 32%, transparent 70%); mask: radial-gradient(circle, #000 32%, transparent 70%); }
@@ -142,21 +142,25 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
 /* Galaxias con su color en el mapa */
 .gx { background: radial-gradient(circle, color-mix(in srgb, var(--g-acc) 45%, transparent) 0, transparent 62%); }
 .gxbtn .pgn { color: var(--g-acc); }
-.gxbtn.sel:not(.here) .pn { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--g-acc); }
 
-/* Marcador "estás acá": corchetes de mira y nave en órbita */
-.here-mark { position: absolute; left: 50%; top: -2px; width: calc(var(--sz) + 34px); height: calc(var(--sz) * 0.6 + 26px); transform: translateX(-50%); pointer-events: none; }
-.here-mark i { position: absolute; width: 16px; height: 16px; border: 2px solid var(--g-acc); animation: lockon 1.8s ease-in-out infinite; }
-.here-mark i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; }
-.here-mark i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
-.here-mark i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; }
-.here-mark i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
-@keyframes lockon { 50% { opacity: 0.45; } }
-.here-mark .ship { position: absolute; width: 14px; height: 14px; left: 50%; top: 50%; margin: -7px 0 0 -7px; fill: var(--g-acc); filter: drop-shadow(0 0 4px var(--g-acc)); animation: orbit 6s linear infinite; }
-@keyframes orbit {
-  from { transform: rotate(0deg) translateX(calc(var(--sz) * 0.55)) rotate(90deg) scaleY(1); }
-  to { transform: rotate(360deg) translateX(calc(var(--sz) * 0.55)) rotate(90deg) scaleY(1); }
-}
-@media (prefers-reduced-motion: reduce) { .here-mark i, .here-mark .ship { animation: none; } .here-mark .ship { transform: translateX(calc(var(--sz) * 0.55)) rotate(90deg); } }
+/* Marcadores del mapa de galaxias, centrados sobre la galaxia (mismo punto donde llegan las líneas) */
+.here-mark, .sel-mark { position: absolute; left: 50%; top: calc(6px + var(--sz) * 0.3); transform: translate(-50%, -50%); pointer-events: none; }
+/* Galaxia actual: mirilla circular con cuatro marcas que gira despacio */
+.here-mark { width: calc(var(--sz) * 0.68); height: calc(var(--sz) * 0.68); border: 1.5px solid var(--g-acc); border-radius: 50%; box-shadow: 0 0 12px color-mix(in srgb, var(--g-acc) 45%, transparent); animation: reticle 14s linear infinite; }
+.here-mark::after { content: ""; position: absolute; inset: 22%; border: 1px dashed color-mix(in srgb, var(--g-acc) 60%, transparent); border-radius: 50%; }
+.here-mark i { position: absolute; background: var(--g-acc); }
+.here-mark i:nth-child(1), .here-mark i:nth-child(2) { left: 50%; width: 2px; height: 12px; margin-left: -1px; }
+.here-mark i:nth-child(1) { top: -7px; } .here-mark i:nth-child(2) { bottom: -7px; }
+.here-mark i:nth-child(3), .here-mark i:nth-child(4) { top: 50%; height: 2px; width: 12px; margin-top: -1px; }
+.here-mark i:nth-child(3) { left: -7px; } .here-mark i:nth-child(4) { right: -7px; }
+@keyframes reticle { to { transform: translate(-50%, -50%) rotate(360deg); } }
+/* Galaxia seleccionada: esquinas de marco */
+.sel-mark { width: calc(var(--sz) + 22px); height: calc(var(--sz) * 0.6 + 26px); }
+.sel-mark i { position: absolute; width: 14px; height: 14px; border: 2px solid var(--g-acc); }
+.sel-mark i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.sel-mark i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.sel-mark i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; }
+.sel-mark i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+@media (prefers-reduced-motion: reduce) { .here-mark { animation: none; } }
 /* El contador del árbol global es siempre neutro (blanco), en cualquier galaxia */
 #badgeG { background: var(--fg); color: var(--bg); }

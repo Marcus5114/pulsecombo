@@ -36,9 +36,9 @@
   // En pantallas bajas (celular acostado) se comprime la altura del mapa para que entren las etiquetas
   const layoutKey = () => window.innerHeight < 500 && !narrow() ? 'short' : narrow() ? 'tall' : 'wide';
   let galSel = S.galaxy;
-  // Marcador de "estás acá": corchetes de mira y una nave en órbita alrededor de la galaxia actual
-  const HERE_MARK = `<span class="here-mark" aria-hidden="true"><i></i><i></i><i></i><i></i>
-    <svg class="ship" viewBox="0 0 24 24"><path d="M3 21 L12 2 L21 21 L12 16 Z"/></svg></span>`;
+  // Marcadores: mirilla circular en la galaxia actual; esquinas de marco en la galaxia seleccionada
+  const HERE_MARK = '<span class="here-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
+  const SEL_MARK = '<span class="sel-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
   function renderGal() {
     const pos = GLAYOUT[layoutKey()];
     $('galSvg').innerHTML = starsSvg() + GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
@@ -47,7 +47,7 @@
       const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : `${g.cost} de materia oscura`;
       return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%;--g-acc:${g.color}" aria-label="${g.name}, ${status}">
         <span class="gxw"><span class="gx" data-g="${g.id}"></span></span>
-        ${here ? HERE_MARK : ''}
+        ${here ? HERE_MARK : ''}${galSel === g.id ? SEL_MARK : ''}
         <span class="pgn">${g.modeName}</span><span class="pn">${g.name}</span><span class="pp">${status}</span>
       </button>`;
     }).join('');
