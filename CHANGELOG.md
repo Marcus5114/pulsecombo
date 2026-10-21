@@ -12,6 +12,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.4
 
 ### Agregado
+- Campo para código de desarrollador (botón "Código" al pie, junto a Reiniciar progreso): abre todas las galaxias y da moneda y materia oscura para comprar todas las mejoras con tope. El código no queda escrito en el archivo; se compara un hash.
 - Señal, tres modificadores nuevos: Sin cambio (+15%, la respuesta empieza sin pausa, como antes), Acordes (+20%, algunas notas son dos flechas a la vez, que se ven apiladas en la línea de tiempo) y Ráfagas (+20%, un tiempo de cada patrón trae dos o tres notas en semicorcheas).
 - Galaxia nueva, **Compás** (camino de baldosas sobre un panal hexagonal). Dos planetas unidos: uno queda fijo y el otro recorre una órbita hexagonal, un lado por unidad de tiempo, hasta la próxima baldosa. Ahí tocás cualquier tecla.
   - El ritmo se cuenta en lados: derecho son 3, y cada lado más o menos dobla 60°. La forma de la baldosa marca cuánto vale cada lado: hexágono = corchea, triángulo = semicorchea, círculo = negra. Así entran medias notas, negras con puntillo y cambios de velocidad.

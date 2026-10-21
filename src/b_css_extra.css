@@ -191,3 +191,9 @@ button.chip.mod:hover { border-color: var(--fg); }
 .pg-pads.one { grid-template-columns: minmax(0, 1fr); }
 .pad.pad-tap { font-size: 1rem; font-weight: 900; letter-spacing: 0.2em; padding: 22px 0; }
 .pg.side .pad.pad-tap { padding: 0; min-height: 120px; }
+
+/* Código de desarrollador */
+.foot-r { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.dev { display: flex; gap: 8px; align-items: center; margin: 0; }
+.dev input { font: inherit; font-size: 0.75rem; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 150px; }
+.dev input:focus { outline: 2px solid var(--acc); outline-offset: 1px; }

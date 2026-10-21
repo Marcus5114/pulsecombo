@@ -500,6 +500,32 @@
     resize();
   }
 
+  // Código de desarrollador: abre todas las galaxias y da moneda suficiente para comprar todas las mejoras con tope
+  // (se compara un hash para que el código no quede escrito en el archivo)
+  const devHash = str => { let h = 0x811c9dc5; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };
+  function devUnlock() {
+    for (const g of GALAXIES) S.galOpen[g.id] = true;
+    for (const [tid, T] of Object.entries(TREES)) {
+      let need = 0;
+      for (const n of T.nodes) if (n.cost && n.max) for (let k = L(n.id); k < n.max; k++) need += nodeCost(n, k);
+      S[T.wallet] += Math.ceil(need * 1.1) + (tid === 'global' ? 10 : 1000);
+    }
+    save(); renderUI(true); setView(view === 'play' ? 'map' : view);
+    $('noticeText').textContent = 'Código de desarrollador: todas las galaxias abiertas y moneda para comprar todas las mejoras.'; $('notice').hidden = false;
+  }
+  const devBox = $('devBox');
+  devBox.addEventListener('click', e => {
+    if (e.target.id === 'devOpen') {
+      devBox.innerHTML = '<form class="dev" id="devForm"><input id="devCode" type="password" autocomplete="off" placeholder="Código" aria-label="Código de desarrollador"><button class="link" type="submit">Canjear</button><button class="link" type="button" id="devCancel">Cancelar</button></form>';
+      $('devCode').focus();
+    } else if (e.target.id === 'devCancel') devBox.innerHTML = '<button class="link" id="devOpen">Código</button>';
+  });
+  devBox.addEventListener('submit', e => {
+    e.preventDefault();
+    const ok = devHash($('devCode').value.trim()) === '1ac84bc7';
+    if (ok) { devUnlock(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
+    else { $('devCode').value = ''; $('devCode').placeholder = 'Código incorrecto'; }
+  });
   const resetBox = $('resetBox');
   resetBox.addEventListener('click', e => {
     if (e.target.id === 'reset') {
