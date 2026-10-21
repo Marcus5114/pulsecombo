@@ -14,7 +14,7 @@ body{font-size:14px;-webkit-text-size-adjust:100%}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap">
 <style>
-/* Layout: encabezado con banco de pulsos + pestañas (Canciones / Árbol). Cada vista centrada con su propio ancho; la pista se ensancha en Doble. Look oscuro único (pantalla de arcade), dorado solo para las notas extra. */
+/* Layout: encabezado con banco de la galaxia activa + pestañas (Galaxias / Mapa / Mejoras / Árbol global). Cada vista centrada con su propio ancho. Look oscuro único (pantalla de arcade), dorado solo para las notas extra. */
 :root {
   --bg: #0d0d0e;
   --surface: #17171a;
@@ -59,9 +59,8 @@ header.top { flex: none; width: 100%; max-width: 940px; margin: 0 auto; display:
 main { flex: 1; min-height: 0; width: 100%; display: flex; }
 .view { flex: 1; min-height: 0; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; overflow-x: hidden; padding-bottom: 12px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .view > * { flex-shrink: 0; }
-#vMap { max-width: 980px; }
-.map { position: relative; flex-shrink: 0; width: min(100%, calc((100vh - 230px) * 16 / 9)); min-width: min(100%, 300px); aspect-ratio: 16 / 9; margin: 0 auto; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: radial-gradient(ellipse at 30% 40%, #18181c 0%, #0b0b0d 55%, #050506 100%); }
-@media (max-width: 600px) { .map { aspect-ratio: 3 / 4; width: min(100%, calc((100vh - 230px) * 3 / 4)); } }
+#vMap, #vGal { max-width: 980px; }
+.map { position: relative; flex: 1 1 auto; width: 100%; min-height: 240px; margin: 0 auto; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: radial-gradient(ellipse at 30% 40%, #18181c 0%, #0b0b0d 55%, #050506 100%); }
 .map-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .map-svg line { stroke: #4a4a52; stroke-width: 1.5; stroke-dasharray: 3 7; }
 .pl { --sz: clamp(46px, 8.5vw, 92px); position: absolute; transform: translate(-50%, calc(-6px - var(--sz) / 2)); display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: 0; color: var(--fg); cursor: pointer; padding: 6px; border-radius: 10px; }
@@ -85,8 +84,8 @@ main { flex: 1; min-height: 0; width: 100%; display: flex; }
 .wh-genre { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .world-head h3 { margin: 0; font-size: 1.3rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; }
 #vMenu { max-width: 600px; }
-.pl[data-wi="0"] { --sz: clamp(38px, 6.5vw, 68px); }
-.orb[data-w="base"] { background: linear-gradient(transparent 45%, rgba(0,0,0,0.5) 45% 55%, transparent 55%), radial-gradient(circle at 70% 30%, #ffffff 0 3%, transparent 4%), radial-gradient(circle at 35% 30%, #cfcfd3, #74747a 55%, #2c2c30); }
+.pl.tutw { --sz: clamp(38px, 6.5vw, 68px); }
+.orb[data-w="base"], .orb[data-w="ens_base"], .orb[data-w="sen_base"] { background: linear-gradient(transparent 45%, rgba(0,0,0,0.5) 45% 55%, transparent 55%), radial-gradient(circle at 70% 30%, #ffffff 0 3%, transparent 4%), radial-gradient(circle at 35% 30%, #cfcfd3, #74747a 55%, #2c2c30); }
 .pl.locked { cursor: default; }
 .pl.locked .orb { filter: brightness(0.35); }
 .pl.locked .pn, .pl.locked .pgn { opacity: 0.45; }
@@ -196,7 +195,7 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
 .tree path.on { stroke: var(--fg); }
 .tree path.on.gold { stroke: var(--gold); }
 .core { max-width: 380px; margin: 0 auto 36px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px 10px; }
-.core .node[data-id="core"] { grid-column: 1 / -1; max-width: 120px; }
+.core .node.is-core { grid-column: 1 / -1; max-width: 120px; }
 .branches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px 24px; }
 @media (max-width: 760px) { .branches { grid-template-columns: minmax(0, 1fr); max-width: 420px; margin: 0 auto; width: 100%; } }
 .branch { display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--line); padding-top: 12px; min-width: 0; }
@@ -241,27 +240,148 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
 .foot { flex: none; width: 100%; max-width: 940px; margin: 8px auto 0; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 0.75rem; color: var(--muted); }
 .link { background: none; border: 0; color: var(--muted); font: 600 0.75rem var(--font); text-decoration: underline; cursor: pointer; padding: 0; }
 .confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ---------- v0.2: galaxias, planetas nuevos, monedas, ecos ---------- */
+.bank .mo { font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bank .mo b { color: var(--fg); }
+.notice { flex: none; width: 100%; max-width: 940px; margin: 0 auto 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; line-height: 1.45; }
+.notice .link { flex: none; }
+body.playing .notice { display: none; }
+
+/* Mapa de galaxias */
+.gxbtn { --sz: clamp(80px, 14vw, 150px); position: absolute; transform: translate(-50%, calc(-4px - var(--sz) * 0.3)); display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; color: var(--fg); cursor: pointer; padding: 6px; border-radius: 12px; }
+.gxbtn:focus-visible { outline: 2px solid var(--hi); }
+.gxbtn .gxw { width: var(--sz); height: calc(var(--sz) * 0.6); display: grid; place-items: center; transform: rotate(-16deg); transition: transform 0.25s; }
+.gxbtn:hover .gxw, .gxbtn.sel .gxw { transform: rotate(-16deg) scale(1.08); }
+.gx { width: var(--sz); height: var(--sz); border-radius: 50%; transform: scaleY(0.55); position: relative; }
+.gx::before { content: ""; position: absolute; inset: 0; border-radius: 50%; animation: spin 60s linear infinite; }
+.gx[data-g="pulso"]::before { background: radial-gradient(circle, #ffffff 0 5%, rgba(255,255,255,0.75) 9%, rgba(255,255,255,0) 32%), conic-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,0.42) 8%, rgba(255,255,255,0) 20%, rgba(255,255,255,0.36) 42%, rgba(255,255,255,0) 55%, rgba(255,255,255,0.32) 76%, rgba(255,255,255,0) 92%); -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); }
+.gx[data-g="ens"]::before { background: radial-gradient(circle, #ffffff 0 5%, rgba(255,255,255,0.7) 9%, rgba(255,255,255,0) 28%), linear-gradient(90deg, transparent 22%, rgba(255,255,255,0.55) 40% 60%, transparent 78%) center / 100% 14% no-repeat, conic-gradient(from 90deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.35) 12%, rgba(255,255,255,0) 26%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.35) 62%, rgba(255,255,255,0) 76%); -webkit-mask: radial-gradient(circle, #000 32%, transparent 70%); mask: radial-gradient(circle, #000 32%, transparent 70%); }
+.gx[data-g="sen"]::before { background: radial-gradient(circle, #ffffff 0 6%, rgba(255,255,255,0.6) 10%, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 44%, rgba(255,255,255,0.45) 52%, rgba(255,255,255,0.1) 60%, rgba(255,255,255,0) 68%); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .gx::before { animation: none; } }
+.gxbtn .pn { font-size: 1rem; }
+.gxbtn.locked .gx { filter: brightness(0.35); }
+.gxbtn.locked .pn, .gxbtn.locked .pgn { opacity: 0.5; }
+.gxbtn.here .pp { color: var(--fg); }
+.gal-info { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.gal-info h3 { margin: 0; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
+.gal-info .gi-mode { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.gal-info p { grid-column: 1 / -1; margin: 0; font-size: 0.82rem; line-height: 1.45; }
+.gal-info .gi-stats { grid-column: 1 / -1; display: flex; gap: 4px 18px; flex-wrap: wrap; font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gal-info .gi-stats b { color: var(--fg); }
+.gal-info .play-btn { padding: 11px 16px; font-size: 0.8rem; }
+@media (max-width: 520px) { .gal-info { grid-template-columns: minmax(0, 1fr); } }
+
+/* Planetas de Ensamble y Señal */
+.orb[data-w="ens_a"] { background: radial-gradient(circle at 62% 40%, #2e2e32 0 7%, transparent 8%), radial-gradient(circle at 34% 66%, #46464a 0 9%, transparent 10%), repeating-linear-gradient(45deg, rgba(0,0,0,0.2) 0 3px, transparent 3px 8px), radial-gradient(circle at 35% 30%, #a8a8ac, #58585c 55%, #222226); }
+.orb[data-w="ens_b"] { background: radial-gradient(circle at 50% 55%, #ffffff 0 5%, #bdbdc2 11%, transparent 30%), repeating-conic-gradient(from 10deg at 50% 55%, rgba(255,255,255,0.22) 0 5deg, transparent 5deg 30deg), radial-gradient(circle at 35% 30%, #4a4a50, #18181b 72%); }
+.orb[data-w="ens_c"] { background: linear-gradient(90deg, rgba(0,0,0,0.28) 0 1px, transparent 1px) 0 0 / 18% 100%, radial-gradient(circle at 35% 30%, #e2e2e6, #8a8a90 50%, #2e2e32); }
+.orb[data-w="ens_c"]::after { content: ""; position: absolute; left: -26%; right: -26%; top: 44%; height: 12%; border: 2px solid #bdbdc2; border-radius: 50%; transform: rotate(12deg); }
+.orb[data-w="sen_a"] { background: repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.32) 0 2px, transparent 2px 8px), radial-gradient(circle at 35% 30%, #9a9aa0, #3a3a40 60%, #18181a); }
+.orb[data-w="sen_b"] { background: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1.5px) 0 0 / 6px 6px, radial-gradient(circle at 35% 30%, #7a7a80, #2e2e34 65%, #121214); }
+.orb[data-w="sen_c"] { background: radial-gradient(circle, #ffffff 0 10%, #9a9aa0 22%, #2a2a2e 55%, #0e0e10); }
+.orb[data-w="sen_c"]::before { content: ""; position: absolute; left: 46%; width: 8%; top: -38%; bottom: -38%; background: linear-gradient(transparent, rgba(255,255,255,0.75) 28%, transparent 48%, transparent 52%, rgba(255,255,255,0.75) 72%, transparent); transform: rotate(28deg); }
+
+/* Ecos en la lista de canciones */
+.song .eco { grid-column: 2; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; }
+.song .eco i { display: inline-block; width: 46px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; position: relative; }
+.song .eco i::after { content: ""; position: absolute; inset: 0; background: var(--muted); transform-origin: left; animation: ecofill var(--dur, 60s) linear infinite; animation-delay: var(--delay, 0s); }
+@keyframes ecofill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .song .eco i::after { animation: none; transform: scaleX(0.5); } }
+
+/* Pads de Ensamble */
+.pg-pads.acts { grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); }
+.pad small { display: block; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); margin-top: 2px; }
+.pad.on small { color: #55555b; }
+.branches.two { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 700px; margin: 0 auto; width: 100%; }
+@media (max-width: 760px) { .branches.two { grid-template-columns: minmax(0, 1fr); max-width: 420px; } }
+
+/* ---------- Celulares: encabezado compacto, pestañas parejas, mapas que llenan la pantalla ---------- */
+.tab .short { display: none; }
+@media (hover: none) { .keys, .kbd-hint { display: none; } }
+@media (pointer: coarse) { .pad { padding: 18px 0; } }
+@media (max-width: 600px), (max-height: 500px) {
+  body { padding-block: 8px; }
+  header.top { flex-wrap: nowrap; align-items: center; gap: 10px; }
+  h1 { font-size: 1.05rem; }
+  .brand .keys { display: none; }
+  .bank { align-items: flex-end; text-align: right; }
+  .bank h2 { font-size: 0.56rem; }
+  .big { font-size: 1.35rem; }
+  .rate, .bank .mo { font-size: 0.64rem; }
+  .tabs { margin: 6px auto 8px; gap: 0; }
+  .tab { flex: 1 1 0; min-width: 0; justify-content: center; padding: 10px 2px; font-size: 0.66rem; letter-spacing: 0.02em; gap: 4px; }
+  .tab .long { display: none; } .tab .short { display: inline; }
+  .badge { font-size: 0.6rem; padding: 0 5px; }
+  body:not([data-view="gal"]) .foot { display: none; }
+  .notice { font-size: 0.72rem; padding: 8px 10px; }
+  .pl .pn { font-size: 0.72rem; }
+  .pl .pgn { font-size: 0.55rem; }
+  .pl .pp { font-size: 0.6rem; max-width: 120px; text-align: center; }
+  .world-head { gap: 10px; }
+  .world-head h3 { font-size: 1.05rem; }
+  .gal-info { padding: 12px; }
+  .result { padding: 14px; gap: 12px; }
+  .r-grade { font-size: 3.6rem; }
+  .r-gain { font-size: 1.6rem; }
+}
+
+/* Celular horizontal jugando: botones a los costados de la pista */
+body.land { padding-block: 4px; }
+body.land.playing #quitBtn { display: none; }
+.stage.land-stage { flex-direction: row; align-items: center; justify-content: center; gap: 12px; }
+.land-pads { display: contents; }
+.pg.side { align-self: stretch; justify-content: center; }
+.pg.side.left { order: 0; }
+.stage.land-stage .cv-wrap { order: 1; }
+.pg.side.right { order: 2; }
+.pg.side .pg-pads { grid-template-columns: repeat(var(--c, 1), minmax(64px, 84px)); grid-auto-rows: minmax(52px, 1fr); flex: 1; }
+.pg.side .pg-label { margin-bottom: 2px; }
+.pad.pause-pad { flex: none; font-size: 0.7rem; letter-spacing: 0.1em; padding: 9px 0; color: var(--muted); text-align: center; }
+.pad.pause-pad.gap { visibility: hidden; }
+@media (max-height: 500px) {
+  .pl { --sz: clamp(28px, 9vh, 60px); }
+  .pl.tutw { --sz: clamp(24px, 7vh, 48px); }
+  .gxbtn { --sz: clamp(60px, 20vh, 150px); }
+  .map { min-height: 200px; }
+  #playBtn { padding: 10px; font-size: 0.8rem; }
+}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <h1>Combo Pulso <span>v0.1</span></h1>
-    <div class="keys">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
+    <h1>Combo Pulso <span>v0.2</span></h1>
+    <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
-    <h2>Pulsos</h2>
+    <h2 id="curName">Pulsos</h2>
     <span class="big" id="pts">0</span>
     <span class="rate" id="rate"></span>
+    <span class="mo" id="moLine"></span>
   </div>
 </header>
 
 <nav class="tabs" id="tabs">
+  <button class="tab" id="tabGal" aria-pressed="false">Galaxias</button>
   <button class="tab" id="tabMap" aria-pressed="true">Mapa</button>
-  <button class="tab" id="tabTree" aria-pressed="false">Árbol de mejoras <span class="badge" id="badge" hidden></span></button>
+  <button class="tab" id="tabTree" aria-pressed="false">Mejoras <span class="badge" id="badge" hidden></span></button>
+  <button class="tab" id="tabGlobal" aria-pressed="false"><span class="long">Árbol global</span><span class="short">Global</span> <span class="badge" id="badgeG" hidden></span></button>
 </nav>
 
+<div class="notice" id="notice" hidden><span id="noticeText"></span><button class="link" id="noticeClose">Cerrar</button></div>
+
 <main>
+  <section class="view" id="vGal" hidden>
+    <div class="map" id="galMap">
+      <svg class="map-svg" id="galSvg" aria-hidden="true"></svg>
+      <div id="galaxies"></div>
+    </div>
+    <div class="gal-info" id="galInfo"></div>
+    <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La materia oscura se gana con hitos en cualquier galaxia: sirve para abrir galaxias nuevas y comprar el árbol global.</p>
+  </section>
+
   <section class="view" id="vMap">
     <div class="map" id="map">
       <svg class="map-svg" id="mapSvg" aria-hidden="true"></svg>
@@ -285,18 +405,18 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
       <div class="kc-row"><span>Tablero derecho</span><div class="seg" data-side="R"></div></div>
     </div>
     <button class="play-btn" id="playBtn">Jugar</button>
-    <div class="mech-box">
+    <div class="mech-box" id="mechBox">
       <h2>Mecánicas en las canciones</h2>
       <div class="mech" id="mech"></div>
       <p class="hint" id="mechHint" hidden>Tocá una mecánica para apagarla o encenderla. Apagada baja la dificultad y las estrellas (y el multiplicador). La mejora sigue comprada.</p>
     </div>
-    <p class="hint">Las estrellas salen del patrón real de cada dificultad, con tus mejoras incluidas: más estrellas, más multiplicador. Tocar donde no hay flecha resta aguante y baja la precisión: seguí el ritmo. Si se vacía el aguante, te quedás con la mitad de lo ganado.</p>
+    <p class="hint" id="menuHint"></p>
   </section>
 
   <section class="view" id="vPlay" hidden>
     <div class="stage" id="stage">
     <div class="cv-wrap">
-      <canvas id="cv" aria-label="Pista de flechas"></canvas>
+      <canvas id="cv" aria-label="Pantalla de juego"></canvas>
       <div class="pause" id="pauseBox" hidden>
         <div class="pause-card" id="pauseCard">
           <h3>Pausa</h3>
@@ -304,7 +424,7 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
           <button class="play-btn" id="resumeBtn">Continuar</button>
           <button class="ghost-btn" id="restartBtn">Reiniciar canción</button>
           <button class="ghost-btn" id="endBtn">Terminar canción</button>
-          <p class="hint" id="endWarn">Si terminás ahora, no te quedás con los pulsos de esta canción.</p>
+          <p class="hint" id="endWarn">Si terminás ahora, no te quedás con lo ganado en esta canción.</p>
         </div>
         <div class="count" id="countNum" hidden></div>
       </div>
@@ -324,7 +444,7 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
         <div class="r-grade" id="rGrade"></div>
       </div>
       <div>
-        <h2>Pulsos ganados</h2>
+        <h2 id="rGainLbl">Ganado</h2>
         <div class="r-gain" id="rGain"></div>
         <div class="r-calc" id="rCalc"></div>
       </div>
@@ -377,48 +497,93 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     while (n >= 1000 && i < u.length - 1) { n /= 1000; i++; }
     return n.toFixed(n < 100 ? 1 : 0).replace('.', ',') + u[i];
   };
+  const fmtRate = r => r < 10 ? dec1(r) : fmt(r);
+  const fmtTime = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return h ? `${h} h ${m} min` : `${m}:${String(ss).padStart(2, '0')}`; };
+
+  // ---------- Galaxias ----------
+  // Cada galaxia cambia la forma de jugar (mode), tiene su moneda (cur = campo en el estado) y su árbol.
+  const GALAXIES = [
+    { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: 'pulsos', cost: 0, need: 4,
+      desc: 'Flechas que suben hasta los receptores al ritmo de cada género. Cinco planetas, cinco estilos.' },
+    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2,
+      desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar piezas.' },
+    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2,
+      desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
+  ];
+  const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
+  const GAL_LINKS = [['pulso', 'ens'], ['pulso', 'sen'], ['ens', 'sen']];
 
   // ---------- Mundos y canciones ----------
-  // Cada planeta es un género: su propio patrón de batería y bajo, progresión de acordes y rango de BPM.
+  // style: patrón de batería y bajo (ver PLAY). Los planetas de Vía Pulso son géneros; los demás reutilizan esos estilos.
   const WORLDS = [
-    { id: 'base', name: 'Estación', genre: 'Tutorial', tutorial: true, boost: 0, qb: 0, jb: 0, root: 43, prog: [[0, 'M'], [5, 'M'], [7, 'M'], [0, 'M']],
+    { gal: 'pulso', id: 'base', name: 'Estación', genre: 'Tutorial', tutorial: true, boost: 0, qb: 0, jb: 0, root: 43, prog: [[0, 'M'], [5, 'M'], [7, 'M'], [0, 'M']],
       desc: 'Tu punto de partida. Una canción lenta para aprender a jugar antes de salir a explorar los planetas.',
       songs: [['Primer Contacto', 84]] },
-    { id: 'rock', name: 'Magma', genre: 'Rock', boost: 0, qb: 0, jb: 0.04, root: 40, prog: [[0, 'M'], [10, 'M'], [5, 'M'], [0, 'M']],
+    { gal: 'pulso', id: 'rock', name: 'Magma', genre: 'Rock', boost: 0, qb: 0, jb: 0.04, root: 40, prog: [[0, 'M'], [10, 'M'], [5, 'M'], [0, 'M']],
       desc: 'Planeta volcánico de guitarras saturadas. Bombo y redoblante clásicos, bajo en corcheas y acordes de quinta.',
       songs: [['Riff de Magma', 96], ['Guitarra Meteoro', 108], ['Corteza Rota', 120], ['Amplificador Solar', 132], ['Estática Roja', 146], ['Erupción Final', 160]] },
-    { id: 'pop', name: 'Prisma', genre: 'Pop', boost: 0.4, qb: 0.02, jb: 0.02, root: 45, prog: [[0, 'M'], [7, 'M'], [9, 'm'], [5, 'M']],
+    { gal: 'pulso', id: 'pop', name: 'Prisma', genre: 'Pop', boost: 0.4, qb: 0.02, jb: 0.02, root: 45, prog: [[0, 'M'], [7, 'M'], [9, 'm'], [5, 'M']],
       desc: 'Un mundo brillante de estribillos pegadizos. Ritmo parejo, palmas y arpegios.',
       songs: [['Corazón Satélite', 100], ['Órbita de Verano', 108], ['Señal de Radio', 114], ['Estribillo Infinito', 120], ['Brillo Sintético', 128], ['Supernova Pop', 136]] },
-    { id: 'disco', name: 'Espejo', genre: 'Disco', boost: 0.9, qb: 0.05, jb: 0.01, root: 41, prog: [[0, 'm'], [5, 'm'], [10, 'M'], [3, 'M']],
+    { gal: 'pulso', id: 'disco', name: 'Espejo', genre: 'Disco', boost: 0.9, qb: 0.05, jb: 0.01, root: 41, prog: [[0, 'm'], [5, 'm'], [10, 'M'], [3, 'M']],
       desc: 'Una bola de espejos girando en órbita. Bombo en cada tiempo, platillo abierto y bajo de octavas.',
       songs: [['Pista Lunar', 112], ['Lentejuelas', 116], ['Fiebre de Saturno', 120], ['Bajo Funk Orbital', 123], ['Plataformas de Cristal', 126], ['Espejo Infinito', 132]] },
-    { id: 'edm', name: 'Púlsar', genre: 'EDM', boost: 1.6, qb: 0.06, jb: 0.03, root: 38, prog: [[9, 'm'], [5, 'M'], [0, 'M'], [7, 'M']],
+    { gal: 'pulso', id: 'edm', name: 'Púlsar', genre: 'EDM', boost: 1.6, qb: 0.06, jb: 0.03, root: 38, prog: [[9, 'm'], [5, 'M'], [0, 'M'], [7, 'M']],
       desc: 'Una estrella de neutrones que late sin parar. Subidas con redoblante, caídas y bajos a contratiempo.',
       songs: [['Drop Cero', 126], ['Láser Fantasma', 128], ['Rejilla de Neón', 136], ['Bajo Cuántico', 145], ['Hipervelocidad', 160], ['Breakbeat Estelar', 174]] },
-    { id: 'jazz', name: 'Nebulosa', genre: 'Jazz', swing: true, boost: 1.2, qb: -0.04, jb: -0.02, root: 36, prog: [[2, 'm7'], [7, '7'], [0, 'M7'], [9, 'm7']],
+    { gal: 'pulso', id: 'jazz', name: 'Nebulosa', genre: 'Jazz', swing: true, boost: 1.2, qb: -0.04, jb: -0.02, root: 36, prog: [[2, 'm7'], [7, '7'], [0, 'M7'], [9, 'm7']],
       desc: 'Humo azul entre las estrellas. Corcheas con swing, contrabajo caminante y platillo ride.',
       songs: [['Swing de Medianoche', 92], ['Contrabajo Lunar', 112], ['Nota Azul Orbital', 132], ['Bebop sin Gravedad', 160], ['Saxo Cometa', 188], ['Improvisación Final', 216]] },
+
+    { gal: 'ens', id: 'ens_base', style: 'base', name: 'Muelle', genre: 'Tutorial', tutorial: true, root: 41, prog: [[0, 'M'], [5, 'M'], [7, 'M'], [0, 'M']],
+      desc: 'El muelle de carga del astillero. Aprendé a mover y encastrar piezas al ritmo.',
+      songs: [['Primer Ensamble', 80]] },
+    { gal: 'ens', id: 'ens_a', style: 'disco', name: 'Chatarra', genre: 'Funk', root: 43, prog: [[0, 'm'], [5, 'm'], [10, 'M'], [3, 'M']],
+      desc: 'Un depósito de piezas sueltas con bajo funk. Ritmo firme para encastrar tranquilo.',
+      songs: [['Tuerca Suelta', 96], ['Remache', 108], ['Grúa Orbital', 118]] },
+    { gal: 'ens', id: 'ens_b', style: 'rock', name: 'Fundición', genre: 'Industrial', root: 38, prog: [[0, 'M'], [10, 'M'], [5, 'M'], [0, 'M']],
+      desc: 'Hornos y prensas golpeando a tiempo. La caída es más rápida.',
+      songs: [['Prensa Hidráulica', 112], ['Soldadura', 124], ['Martillo Estelar', 136]] },
+    { gal: 'ens', id: 'ens_c', style: 'edm', name: 'Órbita Alta', genre: 'Synthwave', root: 40, prog: [[9, 'm'], [5, 'M'], [0, 'M'], [7, 'M']],
+      desc: 'Los hangares más altos del astillero. Sintetizadores y piezas a toda velocidad.',
+      songs: [['Casco de Titanio', 118], ['Hangar 9', 128], ['Ensamble Final', 140]] },
+
+    { gal: 'sen', id: 'sen_base', style: 'base', name: 'Antena', genre: 'Tutorial', tutorial: true, root: 45, prog: [[0, 'M'], [5, 'M'], [7, 'M'], [0, 'M']],
+      desc: 'Una antena en el borde de la galaxia. Aprendé a escuchar una llamada y repetirla.',
+      songs: [['Primer Mensaje', 78]] },
+    { gal: 'sen', id: 'sen_a', style: 'pop', name: 'Eco', genre: 'Ambient', root: 47, prog: [[0, 'M'], [7, 'M'], [9, 'm'], [5, 'M']],
+      desc: 'Un planeta que devuelve todo lo que escucha. Patrones cortos y claros.',
+      songs: [['Hola, Tierra', 90], ['Frecuencia Baja', 100], ['Pulso de Radio', 110]] },
+    { gal: 'sen', id: 'sen_b', style: 'jazz', name: 'Estática', genre: 'Lo-fi', root: 38, prog: [[2, 'm7'], [7, '7'], [0, 'M7'], [9, 'm7']],
+      desc: 'Ruido de fondo y señales que se cortan. Patrones más largos.',
+      songs: [['Ruido de Fondo', 96], ['Interferencia', 106], ['Onda Corta', 118]] },
+    { gal: 'sen', id: 'sen_c', style: 'edm', name: 'Cuásar', genre: 'Electro', root: 40, prog: [[9, 'm'], [5, 'M'], [0, 'M'], [7, 'M']],
+      desc: 'El emisor más potente del universo. Mensajes rápidos y densos.',
+      songs: [['Código Morse', 120], ['Transmisión Cruzada', 132], ['Mensaje Final', 144]] },
   ];
   const SONGS = [];
   WORLDS.forEach((w, wi) => {
-    w.idx = [];
+    w.idx = []; w.style = w.style || w.id; w.boost = w.boost || 0; w.qb = w.qb || 0; w.jb = w.jb || 0;
+    const tier = w.gal === 'pulso' ? 0 : ['ens_a', 'sen_a'].includes(w.id) ? 0 : ['ens_b', 'sen_b'].includes(w.id) ? 1 : 2;
     w.songs.forEach(([name, bpm], k) => {
-      const lvl = 1 + k * 1.5 + w.boost;
+      const lvl = w.gal === 'pulso' ? 1 + k * 1.5 + w.boost : 1 + k + tier * 1.5;
       w.idx.push(SONGS.length);
       SONGS.push(w.tutorial
-        ? { id: w.id + k, wi, k, name, bpm, lvl: 1, root: w.root, tut: true, q: 1, e: 0, s: 0, j: 0 }
+        ? { id: w.id + k, gal: w.gal, wi, k, name, bpm, lvl: 1, root: w.root, tut: true, q: 1, e: 0, s: 0, j: 0 }
         : {
-          id: w.id + k, wi, k, name, bpm, lvl, root: w.root + [0, 2, -2, 3, -3, 1][k],
+          id: w.id + k, gal: w.gal, wi, k, name, bpm, lvl, root: w.root + [0, 2, -2, 3, -3, 1][k],
           q: Math.min(0.98, 0.74 + 0.035 * lvl + w.qb), e: Math.min(0.7, 0.07 * (lvl - 1)),
           s: Math.max(0, 0.025 * (lvl - 4)), j: Math.max(0, Math.min(0.24, 0.022 * (lvl - 1) + w.jb)),
         });
     });
   });
+  const modeOf = s => GX[s.gal].mode;
   const songMeasures = s => Math.round(s.bpm * 0.8 / 4);
+  const songDur = s => songMeasures(s) * 4 * 60 / s.bpm;
   const starMult = st => Math.max(1, 1 + (st - 1) * 0.5);
 
-  // Dificultades: q/j escalan flechas y saltos · req8: corcheas obligatorias · x/h: notas extra y largas · hj: largas dobles · stairs: escaleras doradas
+  // Dificultades. En Flechas: q/j escalan flechas y saltos · req8 corcheas obligatorias · x/h extras y largas · hj largas dobles · stairs escaleras.
+  // Ensamble y Señal usan solo Fácil, Normal y Difícil con sus propias reglas.
   const DIFFS = [
     { id: 0, name: 'Fácil',   q: 0.85, j: 0,   req8: 0,    x: 0.6, semi: false, h: 0.7,  hj: 0,    stairs: 0,    boards: 1 },
     { id: 1, name: 'Normal',  q: 1,    j: 1,   req8: 0,    x: 1,   semi: true,  h: 1,    hj: 0,    stairs: 0,    boards: 1 },
@@ -432,124 +597,229 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
   };
   const GNAME = { wasd: 'WASD', ijkl: 'IJKL', arrows: 'Flechas' };
 
-  // ---------- Árbol de mejoras ----------
+  // ---------- Árboles ----------
   const RANKS = [[10, 1.5], [25, 2], [50, 2.5], [100, 3], [200, 4], [350, 5]];
   const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
-  const BRANCHES = [
-    { id: 'x', name: 'Notas extra', tag: 'Notas doradas opcionales entre los tiempos. Si las tocás, suman.' },
-    { id: 'c', name: 'Combo', tag: 'Rangos de combo que multiplican, protección y bonus por Full Combo.' },
-    { id: 'l', name: 'Largas', tag: 'Flechas que hay que mantener apretadas. Cada tick sostenido suma.' },
-  ];
-  const NODES = [
-    { id: 'core', br: 'core', name: 'Núcleo', max: 1, desc: 'El punto de partida. De acá salen las mejoras generales y las tres ramas.', fx: () => 'Activo' },
-    { id: 'base', br: 'core', parent: 'core', name: 'Pulso base', cost: [10, 1.5], desc: 'Cada flecha que acertás vale más pulsos.', fx: lv => `${1 + lv} pulsos por flecha` },
-    { id: 'win',  br: 'core', parent: 'core', name: 'Ventana', max: 5, cost: [40, 1.9], desc: 'Agranda el margen de timing de todos los juicios.', fx: lv => `+${10 * lv}% de margen` },
-    { id: 'life', br: 'core', parent: 'core', name: 'Aguante', max: 5, cap: () => genreWorldsOpen(), cost: [45, 1.9], desc: 'Los fallos vacían menos la barra de aguante. Se puede mejorar un nivel por cada planeta que tengas abierto.', fx: lv => `Un fallo resta ${100 - 12 * lv}% de lo normal` },
-    { id: 'x_root', br: 'x', pos: [2, 1], root: true, name: 'Contratiempos', max: 1, cost: [100, 1], req: [['core', 1]], desc: 'Aparecen notas extra doradas entre los tiempos. Son opcionales: si las dejás pasar no perdés combo ni aguante.', fx: lv => lv ? 'Notas extra activas' : 'Sin notas extra' },
-    { id: 'x_val',  br: 'x', pos: [1, 2], name: 'Brillo', max: 5, cost: [70, 1.8], req: [['x_root', 1]], desc: 'Las notas extra valen más pulsos.', fx: lv => `Valen ${50 + 25 * lv}% de una flecha` },
-    { id: 'x_dens', br: 'x', pos: [3, 2], name: 'Densidad', max: 4, cost: [90, 1.9], req: [['x_root', 1]], desc: 'Aparecen más notas extra en cada canción.', fx: lv => `${100 + 25 * lv}% de notas extra` },
-    { id: 'x_combo', br: 'x', pos: [1, 3], name: 'Encadenar', max: 1, cost: [250, 1], req: [['x_val', 1]], desc: 'Las notas extra que tocás suman al combo.', fx: lv => lv ? 'Suman combo' : 'No suman combo' },
-    { id: 'x_semi', br: 'x', pos: [3, 3], name: 'Semicorcheas', max: 1, cost: [300, 1], req: [['x_dens', 2]], desc: 'Aparecen notas extra más rápidas, en semicorcheas. En Difícil y Doble forman escaleras doradas.', fx: lv => lv ? 'Activas' : 'Inactivas' },
-    { id: 'x_life', br: 'x', pos: [1, 4], name: 'Respiro', max: 3, cost: [120, 2], req: [['x_combo', 1]], desc: 'Cada nota extra que tocás recupera aguante.', fx: lv => lv ? `+${dec(1.5 * lv)} de aguante por nota` : 'Sin recuperación' },
-    { id: 'x_gold', br: 'x', pos: [2, 5], parent: 'x_semi', name: 'Fiebre dorada', max: 3, cost: [600, 2.5], req: [['x_semi', 1]], desc: 'Tocar 8 notas extra seguidas activa la fiebre: todos los pulsos valen el doble por unos segundos.', fx: lv => lv ? `x2 durante ${3 + 2 * lv} s` : 'Sin fiebre' },
-    { id: 'c_root', br: 'c', pos: [2, 1], root: true, name: 'Contador de combo', max: 1, cost: [80, 1], req: [['core', 1]], desc: 'El combo empieza a multiplicar tus pulsos. Llegar a 10 de combo te da el Rango I (x1,5).', fx: lv => lv ? 'Rango I: 10 de combo → x1,5' : 'El combo no multiplica' },
-    { id: 'c_rank', br: 'c', pos: [1, 2], name: 'Rangos', max: 5, cost: [120, 2.1], req: [['c_root', 1]], desc: 'Desbloquea rangos de combo más altos. Cada rango sube el multiplicador.', fx: lv => { const r = RANKS[lv]; return `Hasta Rango ${ROMAN[lv]}: ${r[0]} → x${dec(r[1])}`; } },
-    { id: 'c_fc',   br: 'c', pos: [3, 2], name: 'Bonus Full Combo', max: 5, cost: [100, 1.9], req: [['c_root', 1]], desc: 'Premio por terminar una canción sin fallar ninguna flecha obligatoria. Las notas extra no cuentan.', fx: lv => lv ? `+${25 * lv}% de pulsos` : 'Sin bonus' },
-    { id: 'c_shield', br: 'c', pos: [1, 3], name: 'Escudo', max: 3, cost: [200, 2.4], req: [['c_rank', 1]], desc: 'Algunos fallos por canción no cortan el combo.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por canción` : 'Sin escudo' },
-    { id: 'c_perf', br: 'c', pos: [3, 3], name: 'Golpe perfecto', max: 3, cost: [150, 2], req: [['c_fc', 1]], desc: 'Los PERFECTO dan más pulsos.', fx: lv => `+${20 * lv}% por PERFECTO` },
-    { id: 'c_mem',  br: 'c', pos: [1, 4], name: 'Memoria', max: 2, cost: [300, 2.5], req: [['c_shield', 1]], desc: 'Cuando se corta el combo, conservás una parte.', fx: lv => lv ? `Conservás ${25 * lv}%` : 'Vuelve a cero' },
-    { id: 'c_asc',  br: 'c', pos: [2, 5], parent: 'c_mem', name: 'Ascenso', max: 2, cost: [500, 2.8], req: [['c_mem', 1], ['c_rank', 3]], desc: 'Los rangos piden menos combo para alcanzarse.', fx: lv => `${20 * lv}% menos combo por rango` },
-    { id: 'l_root', br: 'l', pos: [2, 1], root: true, name: 'Pulsaciones largas', max: 1, cost: [120, 1], req: [['core', 1]], desc: 'Aparecen flechas largas: tocá la cabeza y mantené apretado. Cada tick sostenido suma pulsos. Si soltás antes de tiempo, se corta el combo. En Difícil aparecen largas dobles.', fx: lv => lv ? 'Flechas largas activas' : 'Sin flechas largas' },
-    { id: 'l_tick', br: 'l', pos: [1, 2], name: 'Vibrato', max: 5, cost: [80, 1.8], req: [['l_root', 1]], desc: 'Cada tick sostenido vale más.', fx: lv => `${30 + 15 * lv}% de una flecha por tick` },
-    { id: 'l_freq', br: 'l', pos: [3, 2], name: 'Sostenido', max: 3, cost: [110, 2], req: [['l_root', 1]], desc: 'Aparecen más flechas largas.', fx: lv => `${100 + 35 * lv}% de flechas largas` },
-    { id: 'l_grip', br: 'l', pos: [1, 3], name: 'Agarre', max: 3, cost: [160, 2.2], req: [['l_tick', 1]], desc: 'Podés soltar un instante y volver a apretar sin perder la flecha larga.', fx: lv => lv ? `Margen de ${dec(0.1 * lv)} s` : 'Sin margen' },
-    { id: 'l_len',  br: 'l', pos: [3, 3], name: 'Notas eternas', max: 2, cost: [220, 2.4], req: [['l_freq', 1]], desc: 'Las flechas largas duran más tiempos y dan más ticks.', fx: lv => `Duran ${2 + lv} tiempos` },
-    { id: 'l_end',  br: 'l', pos: [1, 4], name: 'Remate', max: 3, cost: [200, 2.2], req: [['l_grip', 1]], desc: 'Completar una flecha larga da un bonus de pulsos.', fx: lv => lv ? `+${2 * lv} flechas de valor` : 'Sin bonus' },
-    { id: 'l_cross', br: 'l', pos: [3, 4], parent: 'l_len', name: 'Combo sostenido', max: 1, cost: [450, 1], req: [['l_len', 1], ['c_root', 1]], desc: 'Cada tick sostenido suma +1 al combo. Necesita el Contador de combo de la rama Combo.', fx: lv => lv ? 'Los ticks suman combo' : 'Los ticks no suman combo' },
-  ];
-  const N = Object.fromEntries(NODES.map(n => [n.id, n]));
-  const BR_NAME = { core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas' };
+  const pct = n => `${Math.round(n * 100)}%`;
+  const TREES = {
+    pulso: {
+      title: 'Mejoras de Vía Pulso', wallet: 'pts',
+      branches: [
+        { id: 'x', name: 'Notas extra', tag: 'Notas doradas opcionales entre los tiempos. Si las tocás, suman.' },
+        { id: 'c', name: 'Combo', tag: 'Rangos de combo que multiplican, protección y bonus por Full Combo.' },
+        { id: 'l', name: 'Largas', tag: 'Flechas que hay que mantener apretadas. Cada tick sostenido suma.' },
+      ],
+      nodes: [
+        { id: 'core', br: 'core', name: 'Núcleo', max: 1, desc: 'El punto de partida. De acá salen las mejoras generales y las tres ramas.', fx: () => 'Activo' },
+        { id: 'base', br: 'core', parent: 'core', name: 'Pulso base', cost: [10, 1.5], desc: 'Cada flecha que acertás vale más pulsos.', fx: lv => `${1 + lv} pulsos por flecha` },
+        { id: 'win',  br: 'core', parent: 'core', name: 'Ventana', max: 5, cost: [40, 1.9], desc: 'Agranda el margen de timing de todos los juicios.', fx: lv => `+${10 * lv}% de margen` },
+        { id: 'life', br: 'core', parent: 'core', name: 'Aguante', max: 5, cap: () => genreWorldsOpen('pulso'), cost: [45, 1.9], desc: 'Los fallos vacían menos la barra de aguante. Se puede mejorar un nivel por cada planeta que tengas abierto en Vía Pulso.', fx: lv => `Un fallo resta ${100 - 12 * lv}% de lo normal` },
+        { id: 'x_root', br: 'x', pos: [2, 1], root: true, name: 'Contratiempos', max: 1, cost: [100, 1], req: [['core', 1]], desc: 'Aparecen notas extra doradas entre los tiempos. Son opcionales: si las dejás pasar no perdés combo ni aguante.', fx: lv => lv ? 'Notas extra activas' : 'Sin notas extra' },
+        { id: 'x_val',  br: 'x', pos: [1, 2], name: 'Brillo', max: 5, cost: [70, 1.8], req: [['x_root', 1]], desc: 'Las notas extra valen más pulsos.', fx: lv => `Valen ${50 + 25 * lv}% de una flecha` },
+        { id: 'x_dens', br: 'x', pos: [3, 2], name: 'Densidad', max: 4, cost: [90, 1.9], req: [['x_root', 1]], desc: 'Aparecen más notas extra en cada canción.', fx: lv => `${100 + 25 * lv}% de notas extra` },
+        { id: 'x_combo', br: 'x', pos: [1, 3], name: 'Encadenar', max: 1, cost: [250, 1], req: [['x_val', 1]], desc: 'Las notas extra que tocás suman al combo.', fx: lv => lv ? 'Suman combo' : 'No suman combo' },
+        { id: 'x_semi', br: 'x', pos: [3, 3], name: 'Semicorcheas', max: 1, cost: [300, 1], req: [['x_dens', 2]], desc: 'Aparecen notas extra más rápidas, en semicorcheas. En Difícil y Doble forman escaleras doradas.', fx: lv => lv ? 'Activas' : 'Inactivas' },
+        { id: 'x_life', br: 'x', pos: [1, 4], name: 'Respiro', max: 3, cost: [120, 2], req: [['x_combo', 1]], desc: 'Cada nota extra que tocás recupera aguante.', fx: lv => lv ? `+${dec(1.5 * lv)} de aguante por nota` : 'Sin recuperación' },
+        { id: 'x_gold', br: 'x', pos: [2, 5], parent: 'x_semi', name: 'Fiebre dorada', max: 3, cost: [600, 2.5], req: [['x_semi', 1]], desc: 'Tocar 8 notas extra seguidas activa la fiebre: todos los pulsos valen el doble por unos segundos.', fx: lv => lv ? `x2 durante ${3 + 2 * lv} s` : 'Sin fiebre' },
+        { id: 'c_root', br: 'c', pos: [2, 1], root: true, name: 'Contador de combo', max: 1, cost: [80, 1], req: [['core', 1]], desc: 'El combo empieza a multiplicar tus pulsos. Llegar a 10 de combo te da el Rango I (x1,5).', fx: lv => lv ? 'Rango I: 10 de combo → x1,5' : 'El combo no multiplica' },
+        { id: 'c_rank', br: 'c', pos: [1, 2], name: 'Rangos', max: 5, cost: [120, 2.1], req: [['c_root', 1]], desc: 'Desbloquea rangos de combo más altos. Cada rango sube el multiplicador.', fx: lv => { const r = RANKS[lv]; return `Hasta Rango ${ROMAN[lv]}: ${r[0]} → x${dec(r[1])}`; } },
+        { id: 'c_fc',   br: 'c', pos: [3, 2], name: 'Bonus Full Combo', max: 5, cost: [100, 1.9], req: [['c_root', 1]], desc: 'Premio por terminar una canción sin fallar ninguna flecha obligatoria. Las notas extra no cuentan.', fx: lv => lv ? `+${25 * lv}% de pulsos` : 'Sin bonus' },
+        { id: 'c_shield', br: 'c', pos: [1, 3], name: 'Escudo', max: 3, cost: [200, 2.4], req: [['c_rank', 1]], desc: 'Algunos fallos por canción no cortan el combo.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por canción` : 'Sin escudo' },
+        { id: 'c_perf', br: 'c', pos: [3, 3], name: 'Golpe perfecto', max: 3, cost: [150, 2], req: [['c_fc', 1]], desc: 'Los PERFECTO dan más pulsos.', fx: lv => `+${20 * lv}% por PERFECTO` },
+        { id: 'c_mem',  br: 'c', pos: [1, 4], name: 'Memoria', max: 2, cost: [300, 2.5], req: [['c_shield', 1]], desc: 'Cuando se corta el combo, conservás una parte.', fx: lv => lv ? `Conservás ${25 * lv}%` : 'Vuelve a cero' },
+        { id: 'c_asc',  br: 'c', pos: [2, 5], parent: 'c_mem', name: 'Ascenso', max: 2, cost: [500, 2.8], req: [['c_mem', 1], ['c_rank', 3]], desc: 'Los rangos piden menos combo para alcanzarse.', fx: lv => `${20 * lv}% menos combo por rango` },
+        { id: 'l_root', br: 'l', pos: [2, 1], root: true, name: 'Pulsaciones largas', max: 1, cost: [120, 1], req: [['core', 1]], desc: 'Aparecen flechas largas: tocá la cabeza y mantené apretado. Cada tick sostenido suma pulsos. Si soltás antes de tiempo, se corta el combo. En Difícil aparecen largas dobles.', fx: lv => lv ? 'Flechas largas activas' : 'Sin flechas largas' },
+        { id: 'l_tick', br: 'l', pos: [1, 2], name: 'Vibrato', max: 5, cost: [80, 1.8], req: [['l_root', 1]], desc: 'Cada tick sostenido vale más.', fx: lv => `${30 + 15 * lv}% de una flecha por tick` },
+        { id: 'l_freq', br: 'l', pos: [3, 2], name: 'Sostenido', max: 3, cost: [110, 2], req: [['l_root', 1]], desc: 'Aparecen más flechas largas.', fx: lv => `${100 + 35 * lv}% de flechas largas` },
+        { id: 'l_grip', br: 'l', pos: [1, 3], name: 'Agarre', max: 3, cost: [160, 2.2], req: [['l_tick', 1]], desc: 'Podés soltar un instante y volver a apretar sin perder la flecha larga.', fx: lv => lv ? `Margen de ${dec(0.1 * lv)} s` : 'Sin margen' },
+        { id: 'l_len',  br: 'l', pos: [3, 3], name: 'Notas eternas', max: 2, cost: [220, 2.4], req: [['l_freq', 1]], desc: 'Las flechas largas duran más tiempos y dan más ticks.', fx: lv => `Duran ${2 + lv} tiempos` },
+        { id: 'l_end',  br: 'l', pos: [1, 4], name: 'Remate', max: 3, cost: [200, 2.2], req: [['l_grip', 1]], desc: 'Completar una flecha larga da un bonus de pulsos.', fx: lv => lv ? `+${2 * lv} flechas de valor` : 'Sin bonus' },
+        { id: 'l_cross', br: 'l', pos: [3, 4], parent: 'l_len', name: 'Combo sostenido', max: 1, cost: [450, 1], req: [['l_len', 1], ['c_root', 1]], desc: 'Cada tick sostenido suma +1 al combo. Necesita el Contador de combo de la rama Combo.', fx: lv => lv ? 'Los ticks suman combo' : 'Los ticks no suman combo' },
+      ],
+    },
+    ens: {
+      title: 'Mejoras de Ensamble', wallet: 'piezas',
+      branches: [
+        { id: 'ed', name: 'Diseño', tag: 'Ver más lejos: piezas siguientes, proyección y bodega.' },
+        { id: 'ec', name: 'Cadencia', tag: 'Moverse a tiempo multiplica lo que ganás por cada fila.' },
+      ],
+      nodes: [
+        { id: 'e_core', br: 'core', name: 'Grúa', max: 1, desc: 'La grúa principal del astillero. De acá salen todas las mejoras de Ensamble.', fx: () => 'Activa' },
+        { id: 'e_base', br: 'core', parent: 'e_core', name: 'Prensa', cost: [10, 1.5], desc: 'Cada fila completa y cada pieza encastrada valen más piezas.', fx: lv => `Base ${1 + lv} por fila` },
+        { id: 'e_win',  br: 'core', parent: 'e_core', name: 'Estabilizador', max: 5, cost: [40, 1.9], desc: 'Agranda el margen para que un movimiento cuente como a tiempo.', fx: lv => `+${10 * lv}% de margen` },
+        { id: 'e_life', br: 'core', parent: 'e_core', name: 'Casco', max: 5, cost: [45, 1.9], desc: 'Moverse fuera de tiempo daña menos la integridad del casco.', fx: lv => `Un error resta ${100 - 12 * lv}% de lo normal` },
+        { id: 'e_d_prev', br: 'ed', pos: [2, 1], root: true, name: 'Planos', max: 3, cost: [60, 2], req: [['e_core', 1]], desc: 'Ves más piezas siguientes en el panel lateral.', fx: lv => `Ves ${1 + lv} ${lv ? 'piezas' : 'pieza'}` },
+        { id: 'e_d_ghost', br: 'ed', pos: [1, 2], name: 'Proyección', max: 1, cost: [90, 1], req: [['e_d_prev', 1]], desc: 'Muestra el contorno de dónde va a caer la pieza.', fx: lv => lv ? 'Contorno visible' : 'Sin contorno' },
+        { id: 'e_d_hold', br: 'ed', pos: [3, 2], name: 'Bodega', max: 1, cost: [150, 1], req: [['e_d_prev', 1]], desc: 'Podés guardar una pieza para usarla después (tecla C). Una vez por pieza.', fx: lv => lv ? 'Bodega disponible' : 'Sin bodega' },
+        { id: 'e_c_root', br: 'ec', pos: [2, 1], root: true, name: 'Metrónomo', max: 1, cost: [80, 1], req: [['e_core', 1]], desc: 'Cada 8 movimientos seguidos a tiempo suben el multiplicador de ritmo en +0,25, hasta x1,5.', fx: lv => lv ? 'Ritmo hasta x1,5' : 'El ritmo no multiplica' },
+        { id: 'e_c_rank', br: 'ec', pos: [1, 2], name: 'Turnos dobles', max: 4, cost: [140, 2.1], req: [['e_c_root', 1]], desc: 'Sube el tope del multiplicador de ritmo.', fx: lv => `Ritmo hasta x${dec(1.5 + 0.5 * lv)}` },
+        { id: 'e_c_tetra', br: 'ec', pos: [3, 2], name: 'Ensamble perfecto', max: 3, cost: [120, 2], req: [['e_c_root', 1]], desc: 'Completar 4 filas de una vez da un bonus extra.', fx: lv => lv ? `+${50 * lv}% en 4 filas` : 'Sin bonus' },
+        { id: 'e_c_soft', br: 'ec', pos: [2, 3], name: 'Amortiguador', max: 3, cost: [200, 2.3], req: [['e_c_rank', 1]], desc: 'Algunos movimientos fuera de tiempo por canción no cortan la racha de ritmo.', fx: lv => lv ? `${2 * lv} errores perdonados` : 'Sin perdón' },
+      ],
+    },
+    sen: {
+      title: 'Mejoras de Señal', wallet: 'datos',
+      branches: [
+        { id: 'sm', name: 'Memoria', tag: 'Ayudas para recordar el patrón y premios por decodificarlo entero.' },
+        { id: 'st', name: 'Transmisión', tag: 'Más datos por señal y tolerancia a errores.' },
+      ],
+      nodes: [
+        { id: 's_core', br: 'core', name: 'Antena', max: 1, desc: 'La antena receptora. De acá salen todas las mejoras de Señal.', fx: () => 'Activa' },
+        { id: 's_base', br: 'core', parent: 's_core', name: 'Potencia', cost: [10, 1.5], desc: 'Cada nota que repetís bien vale más datos.', fx: lv => `${1 + lv} datos por nota` },
+        { id: 's_win',  br: 'core', parent: 's_core', name: 'Sintonía', max: 5, cost: [40, 1.9], desc: 'Agranda el margen de timing al repetir.', fx: lv => `+${10 * lv}% de margen` },
+        { id: 's_life', br: 'core', parent: 's_core', name: 'Redundancia', max: 5, cost: [45, 1.9], desc: 'Los fallos vacían menos la barra de señal.', fx: lv => `Un fallo resta ${100 - 12 * lv}% de lo normal` },
+        { id: 's_m_root', br: 'sm', pos: [2, 1], root: true, name: 'Eco visual', max: 1, cost: [60, 1], req: [['s_core', 1]], desc: 'La línea de tiempo muestra qué flecha va en cada punto del patrón, en cualquier dificultad.', fx: lv => lv ? 'Flechas visibles' : 'Solo tiempos (en Fácil)' },
+        { id: 's_m_dec', br: 'sm', pos: [1, 2], name: 'Decodificador', max: 5, cost: [70, 1.8], req: [['s_m_root', 1]], desc: 'Repetir un patrón entero da un bonus más grande.', fx: lv => `Bonus de ${100 + 40 * lv}% por patrón` },
+        { id: 's_m_streak', br: 'sm', pos: [3, 2], name: 'Racha de señal', max: 4, cost: [120, 2.1], req: [['s_m_root', 1]], desc: 'Cada patrón decodificado seguido suma +10% a todo lo que ganás, hasta un tope.', fx: lv => lv ? `Hasta +${50 * lv}%` : 'Sin racha' },
+        { id: 's_t_gain', br: 'st', pos: [2, 1], root: true, name: 'Amplificador de datos', max: 5, cost: [80, 1.8], req: [['s_core', 1]], desc: 'Todos los datos que ganás en una canción valen más.', fx: lv => `+${25 * lv}% de datos` },
+        { id: 's_t_fix', br: 'st', pos: [1, 2], name: 'Corrección de errores', max: 2, cost: [200, 2.5], req: [['s_t_gain', 1]], desc: 'Un patrón cuenta como decodificado aunque falles alguna nota.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por patrón` : 'Sin tolerancia' },
+        { id: 's_t_metro', br: 'st', pos: [3, 2], name: 'Metrónomo de respuesta', max: 1, cost: [90, 1], req: [['s_t_gain', 1]], desc: 'Durante la respuesta suena un clic en cada corchea para guiarte.', fx: lv => lv ? 'Clic activo' : 'Sin clic' },
+      ],
+    },
+    global: {
+      title: 'Árbol global', wallet: 'mo',
+      branches: [
+        { id: 'ga', name: 'Amplificadores', tag: 'Multiplicadores para la moneda de cada galaxia (en partidas y en ecos).' },
+        { id: 'ge', name: 'Ecos', tag: 'Tus mejores resultados se repiten solos. Hacelos rendir más y más seguido.' },
+      ],
+      nodes: [
+        { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con materia oscura.', fx: () => 'Activo' },
+        { id: 'g_res', br: 'core', parent: 'g_core', name: 'Resonancia', max: 10, cost: [3, 1.6], desc: 'Todas las monedas de todas las galaxias valen más.', fx: lv => `+${10 * lv}% en todo` },
+        { id: 'g_tune', br: 'core', parent: 'g_core', name: 'Afinación cósmica', max: 3, cost: [4, 2], desc: 'Agranda el margen de timing en todas las galaxias.', fx: lv => `+${5 * lv}% de margen` },
+        { id: 'g_dark', br: 'core', parent: 'g_core', name: 'Cosecha oscura', max: 4, cost: [5, 1.8], desc: 'Los hitos dan más materia oscura.', fx: lv => `+${25 * lv}% de materia oscura` },
+        { id: 'g_amp_pulso', br: 'ga', pos: [2, 1], root: true, name: 'Amplificador Pulso', max: 8, cost: [2, 1.5], req: [['g_core', 1]], desc: 'Más pulsos en Vía Pulso.', fx: lv => `+${25 * lv}% pulsos` },
+        { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.5], req: [['g_amp_pulso', 1]], desc: 'Más piezas en Ensamble.', fx: lv => `+${25 * lv}% piezas` },
+        { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.5], req: [['g_amp_pulso', 1]], desc: 'Más datos en Señal.', fx: lv => `+${25 * lv}% datos` },
+        { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3]], desc: 'Con las tres galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
+        { id: 'g_eco_eff', br: 'ge', pos: [2, 1], root: true, name: 'Ecos persistentes', max: 6, cost: [2, 1.6], req: [['g_core', 1]], desc: 'Cada eco rinde un porcentaje mayor de tu mejor resultado.', fx: lv => `Rinden ${10 + 5 * lv}%` },
+        { id: 'g_eco_speed', br: 'ge', pos: [1, 2], name: 'Bucle temporal', max: 4, cost: [4, 1.8], req: [['g_eco_eff', 1]], desc: 'Los ecos se repiten más seguido.', fx: lv => `${pct(1 / (1 + 0.25 * lv))} del tiempo` },
+        { id: 'g_eco_off', br: 'ge', pos: [3, 2], name: 'Memoria del vacío', max: 5, cost: [3, 1.6], req: [['g_eco_eff', 1]], desc: 'Los ecos siguen sonando más horas con el juego cerrado.', fx: lv => `Hasta ${2 + 2 * lv} h sin jugar` },
+        { id: 'g_eco_all', br: 'ge', pos: [2, 3], name: 'Eco total', max: 1, cost: [15, 1], req: [['g_eco_eff', 3]], desc: 'Cada canción repite el mejor resultado de cada dificultad, no solo el más alto.', fx: lv => lv ? 'Suma todas las dificultades' : 'Solo la mejor dificultad' },
+      ],
+    },
+  };
+  const ALL_NODES = [];
+  for (const [tid, t] of Object.entries(TREES)) for (const n of t.nodes) { n.tree = tid; if (n.br === 'core' && !n.parent) n.isCore = true; ALL_NODES.push(n); }
+  const N = Object.fromEntries(ALL_NODES.map(n => [n.id, n]));
+  const BR_NAME = { core: 'Núcleo', x: 'Notas extra', c: 'Combo', l: 'Largas', ed: 'Diseño', ec: 'Cadencia', sm: 'Memoria', st: 'Transmisión', ga: 'Amplificadores', ge: 'Ecos' };
+  const CORE_IDS = new Set(ALL_NODES.filter(n => n.isCore).map(n => n.id));
 
   // ---------- Estado ----------
   const KEY = 'comboPulso_v3';
-  const fresh = () => ({ pts: 0, total: 0, n: {}, rec: {}, sel: 0, diff: 1, keysL: 'wasd', keysR: 'arrows', off: {}, world: 0 });
+  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
   let S = fresh();
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) { S = { ...fresh(), ...JSON.parse(raw) }; S.n = S.n || {}; S.rec = S.rec || {}; }
-    else {
-      const old = JSON.parse(localStorage.getItem('comboPulso_v2') || 'null');
-      if (old) {
-        const lv = old.lv || {};
-        S.pts = old.pts || 0; S.total = old.total || 0; S.rec = old.rec || {}; S.sel = old.sel || 0;
-        for (const k of ['base', 'win', 'life', 'fans']) if (lv[k]) S.n[k] = lv[k];
-        for (let k = 0; k < (lv.mult || 0); k++) S.pts += 60 * 2.2 ** k;
-        for (let k = 0; k < (lv.fc || 0); k++) S.pts += 120 * 2 ** k;
-      }
+    if (raw) {
+      const d = JSON.parse(raw);
+      S = { ...fresh(), ...d, moInit: d.moInit || false };
+      S.n = S.n || {}; S.rec = S.rec || {}; S.off = S.off || {};
+      S.tot = { pulso: 0, ens: 0, sen: 0, ...(d.tot || {}) };
+      if (d.total && !d.tot) S.tot.pulso = d.total;
+      S.galOpen = { pulso: true, ...(d.galOpen || {}) };
+      if (!d.seen) S.seen = Date.now();
     }
   } catch (e) {}
   const hotData = window.claude?.hot?.data; if (hotData && hotData.S) S = { ...fresh(), ...hotData.S };
-  // récords viejos (por canción) pasan a la dificultad Normal
-  // récords de las canciones viejas (antes de los mundos) ya no aplican
   for (const k of Object.keys(S.rec)) if (/^\d+(-\d)?$/.test(k)) delete S.rec[k];
-  if (!SONGS[S.sel]) S.sel = 0;
-  if (S.world == null || !WORLDS[S.world]) S.world = SONGS[S.sel].wi;
-  // Escalada: cada dificultad se abre al superar la anterior en esa canción. Los planetas se abren al terminar el tutorial.
-  const recOf = (s, d) => S.rec[`${s.id}-${d}`];
-  const diffsOf = s => s.tut ? [0] : [0, 1, 2, 3];
-  const diffOpen = (s, d) => d === 0 || DIFFS.some((_, k) => k >= d - 1 && recOf(s, k)?.clear);
-  const tutDone = () => SONGS.some(s => s.tut && recOf(s, 0)?.clear);
-  // Un planeta se abre cuando un vecino abierto (según las rutas del mapa) tiene al menos 4 de 6 canciones superadas.
-  const NEED = 4;
-  const clearedIn = wi => WORLDS[wi].idx.filter(i => DIFFS.some((_, d) => recOf(SONGS[i], d)?.clear)).length;
-  const worldDone = wi => WORLDS[wi].tutorial ? tutDone() : clearedIn(wi) >= NEED;
-  function openWorlds() {
-    const by = Object.fromEntries(WORLDS.map((w, i) => [w.id, i])), open = new Set([by.base]);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const [a, b] of LINKS) for (const [x, y] of [[by[a], by[b]], [by[b], by[a]]])
-        if (open.has(x) && worldDone(x) && !open.has(y)) { open.add(y); changed = true; }
-    }
-    return open;
-  }
-  const worldOpen = wi => openWorlds().has(wi);
-  const genreWorldsOpen = () => [...openWorlds()].filter(wi => !WORLDS[wi].tutorial).length;
-  // Público ya no existe: se devuelven los pulsos invertidos
   if (S.n.fans) { for (let k = 0; k < S.n.fans; k++) S.pts += 50 * 1.7 ** k; delete S.n.fans; }
+  if (!SONGS[S.sel]) S.sel = 0;
+  if (!GX[S.galaxy] || !S.galOpen[S.galaxy]) S.galaxy = 'pulso';
+  if (S.world == null || !WORLDS[S.world] || WORLDS[S.world].gal !== S.galaxy) S.world = WORLDS.findIndex(w => w.gal === S.galaxy && w.tutorial);
   window.claude?.hot?.snapshot?.(() => ({ S }));
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+  const save = () => { S.seen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
-  const L = id => id === 'core' ? 1 : (S.n[id] || 0);
-  // Mejoras que agregan contenido al patrón: se pueden apagar para bajar la dificultad
+  const L = id => CORE_IDS.has(id) ? 1 : (S.n[id] || 0);
+  const wallet = gal => GX[gal].cur;
+  // Mejoras que agregan contenido al patrón de Vía Pulso: se pueden apagar para bajar la dificultad
   const TOGGLES = {
     x_root: { label: 'Notas extra', gold: true }, x_dens: { label: 'Densidad extra', parent: 'x_root', gold: true }, x_semi: { label: 'Semicorcheas', parent: 'x_root', gold: true },
     l_root: { label: 'Flechas largas' }, l_freq: { label: 'Más largas', parent: 'l_root' }, l_len: { label: 'Largas eternas', parent: 'l_root' },
   };
   const isOff = id => !!(S.off && (S.off[id] || (TOGGLES[id] && TOGGLES[id].parent && S.off[TOGGLES[id].parent])));
-  const E = id => isOff(id) ? 0 : L(id);   // nivel efectivo en las canciones
+  const E = id => isOff(id) ? 0 : L(id);
   const nodeCost = (n, lv) => Math.ceil(n.cost[0] * n.cost[1] ** lv);
   const reqMet = n => !n.req || n.req.every(([id, lv]) => L(id) >= lv);
   const maxed = n => n.max && L(n.id) >= n.max;
   const capped = n => !!n.cap && L(n.id) >= n.cap();
-  const canBuy = n => n.cost && reqMet(n) && !maxed(n) && !capped(n) && S.pts >= nodeCost(n, L(n.id));
+  const canBuy = n => n.cost && reqMet(n) && !maxed(n) && !capped(n) && S[TREES[n.tree].wallet] >= nodeCost(n, L(n.id));
 
-  const basePts = () => 1 + L('base');
-  const winScale = () => 1 + 0.1 * L('win');
-  function rankOf(c) {
-    if (!L('c_root')) return 0;
-    const avail = 1 + L('c_rank'), k = 1 - 0.2 * L('c_asc');
-    let r = 0;
-    for (let i = 0; i < avail; i++) if (c >= Math.ceil(RANKS[i][0] * k)) r = i + 1;
-    return r;
+  // Multiplicador global de cada galaxia (árbol global)
+  const galMult = gal => (1 + 0.1 * L('g_res')) * (1 + 0.25 * L('g_amp_' + gal)) * (L('g_sym') ? 1.5 : 1);
+  const tuneWin = () => 0.05 * L('g_tune');
+
+  // ---------- Progresión ----------
+  // Cada dificultad se abre al superar la anterior en esa canción. Cada planeta, cuando un vecino abierto tiene suficientes canciones superadas.
+  const recOf = (s, d) => S.rec[`${s.id}-${d}`];
+  const diffsOf = s => s.tut ? [0] : modeOf(s) === 'arrows' ? [0, 1, 2, 3] : [0, 1, 2];
+  const diffOpen = (s, d) => d === 0 || [0, 1, 2, 3].some(k => k >= d - 1 && recOf(s, k)?.clear);
+  const tutDone = gal => SONGS.some(s => s.gal === gal && s.tut && recOf(s, 0)?.clear);
+  const clearedIn = wi => WORLDS[wi].idx.filter(i => [0, 1, 2, 3].some(d => recOf(SONGS[i], d)?.clear)).length;
+  const worldDone = wi => WORLDS[wi].tutorial ? tutDone(WORLDS[wi].gal) : clearedIn(wi) >= GX[WORLDS[wi].gal].need;
+  const WI = Object.fromEntries(WORLDS.map((w, i) => [w.id, i]));
+  const LINKS = {
+    pulso: [['base', 'rock'], ['rock', 'pop'], ['rock', 'jazz'], ['pop', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']],
+    ens: [['ens_base', 'ens_a'], ['ens_a', 'ens_b'], ['ens_a', 'ens_c'], ['ens_b', 'ens_c']],
+    sen: [['sen_base', 'sen_a'], ['sen_a', 'sen_b'], ['sen_a', 'sen_c'], ['sen_b', 'sen_c']],
+  };
+  function openWorlds(gal) {
+    const open = new Set([WORLDS.findIndex(w => w.gal === gal && w.tutorial)]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const [a, b] of LINKS[gal]) for (const [x, y] of [[WI[a], WI[b]], [WI[b], WI[a]]])
+        if (open.has(x) && worldDone(x) && !open.has(y)) { open.add(y); changed = true; }
+    }
+    return open;
   }
-  const multFor = c => { const r = rankOf(c); return r ? RANKS[r - 1][1] : 1; };
-  const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
-  const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
-  const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO' };
-  const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
-  const gradeRank = g => 'EDCBAS'.indexOf(g);
+  const worldOpen = wi => S.galOpen[WORLDS[wi].gal] && openWorlds(WORLDS[wi].gal).has(wi);
+  const genreWorldsOpen = gal => [...openWorlds(gal)].filter(wi => !WORLDS[wi].tutorial).length;
 
+  // ---------- Materia oscura ----------
+  // Hitos: primera vez que superás una dificultad (+1, tutorial +2), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
+  const darkMult = () => 1 + 0.25 * L('g_dark');
+  function milestoneMO(s, before, after) {
+    let mo = 0;
+    if (after.clear && !before.clear) mo += s.tut ? 2 : 1;
+    if (after.grade === 'S' && before.grade !== 'S') mo += 1;
+    if (after.fc && !before.fc) mo += 1;
+    return mo;
+  }
+  if (!S.moInit) {   // partidas anteriores a v0.2: se reconocen los hitos ya logrados
+    let mo = 0;
+    for (const s of SONGS) for (const d of [0, 1, 2, 3]) { const r = recOf(s, d); if (r) mo += milestoneMO(s, {}, r); }
+    mo += 2 * genreWorldsOpen('pulso');
+    S.mo += mo; S.moInit = true;
+  }
+
+  // ---------- Ecos: repetición automática de tus mejores resultados ----------
+  const ecoEff = () => 0.10 + 0.05 * L('g_eco_eff');
+  const ecoInterval = s => songDur(s) * 6 / (1 + 0.25 * L('g_eco_speed'));
+  const ecoBest = s => {
+    const bs = [0, 1, 2, 3].map(d => recOf(s, d)?.best || 0);
+    return L('g_eco_all') ? bs.reduce((a, b) => a + b, 0) : Math.max(...bs);
+  };
+  const ecoPerCycle = s => ecoBest(s) * ecoEff() * galMult(s.gal);
+  const ecoRate = gal => SONGS.reduce((sum, s) => s.gal === gal ? sum + ecoPerCycle(s) / ecoInterval(s) : sum, 0);
+  const offlineCap = () => 3600 * (2 + 2 * L('g_eco_off'));
+  function creditEcos(dt) {
+    const got = {};
+    for (const g of GALAXIES) {
+      if (!S.galOpen[g.id]) continue;
+      const v = ecoRate(g.id) * dt;
+      if (v > 0) { S[g.cur] += v; S.tot[g.id] += v; got[g.id] = v; }
+    }
+    return got;
+  }
+  let offlineNote = '';
+  {
+    const away = Math.min(offlineCap(), Math.max(0, (Date.now() - (S.seen || Date.now())) / 1000));
+    if (away > 60) {
+      const got = creditEcos(away);
+      const parts = Object.entries(got).filter(([, v]) => v >= 1).map(([g, v]) => `${fmt(v)} ${GX[g].unit}`);
+      if (parts.length) offlineNote = `Mientras no estabas (${fmtTime(away)}), tus ecos generaron ${parts.join(', ')}.`;
+    }
+  }
   // ---------- Audio ----------
   let ac = null;
   const ensureAudio = () => {
@@ -776,11 +1046,65 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     stars = Math.round(stars * 10) / 10;
     return { ...acc, step, total, prog, end: LEAD + total * step, stars, boards: nb, mult: starMult(stars) };
   }
+
+  // ---------- Señal: llamada y respuesta ----------
+  // Cada ronda: la baliza toca un patrón (llamada) y en el mismo largo siguiente hay que repetirlo (respuesta).
+  const beacon = (at, lane) => { tone(at, 'sine', LANE_HZ[lane] * 0.5, 0.16, 0.26); tone(at, 'triangle', LANE_HZ[lane], 0.04, 0.14); };
+  const click = (at, strong) => tone(at, 'square', strong ? 1760 : 1320, strong ? 0.035 : 0.022, 0.03);
+  function buildSignal(si, di) {
+    const s = SONGS[si], step = 60 / s.bpm / 4, R = rng(3000 + si * 131 + di * 17);
+    const bars = s.tut ? 1 : di === 2 ? 2 : 1, len = bars * 16, cycle = len * 2;
+    const nR = Math.max(2, Math.floor((songMeasures(s) * 16 - 24) / cycle)), total = 16 + nR * cycle + 8;
+    const lvlAdj = Math.min(2, Math.floor((s.lvl - 1) / 2));
+    const notes = [], calls = [], rounds = [];
+    let last = -1, sumN = 0;
+    for (let r = 0; r < nR; r++) {
+      const start = 16 + r * cycle, resp = start + len, prog = nR > 1 ? r / (nR - 1) : 0;
+      const grid = s.tut || di === 0 ? 4 : di === 1 ? (prog < 0.3 ? 4 : 2) : (prog < 0.4 ? 2 : r % 2 ? 1 : 2);
+      const slots = len / grid;
+      let count = s.tut ? Math.min(1 + Math.floor(r / 2), 3)
+        : di === 0 ? 2 + Math.floor(prog * 2.5) + lvlAdj
+        : di === 1 ? 3 + Math.floor(prog * 3.5) + lvlAdj
+        : 5 + Math.floor(prog * 4.5) + lvlAdj;
+      count = Math.max(1, Math.min(count, slots - 1, di === 0 ? 4 : di === 1 ? 7 : 12));
+      const pick = new Set();
+      if (s.tut || R() < 0.7) pick.add(0);
+      while (pick.size < count) pick.add(Math.floor(R() * slots));
+      const offs = [...pick].sort((a, b) => a - b).map(k => k * grid);
+      const round = { start, resp, n: offs.length, left: offs.length, hits: 0, misses: 0, slots: [] };
+      offs.forEach((off, k) => {
+        let lane = s.tut ? (r + k) % 4 : Math.floor(R() * 4);
+        if (!s.tut && lane === last && R() < 0.5) lane = (lane + 1 + Math.floor(R() * 3)) % 4;
+        last = lane;
+        calls.push({ t: LEAD + (start + off) * step, i: start + off, lane });
+        notes.push({ t: LEAD + (resp + off) * step, i: resp + off, lane, kind: 'q', r });
+        round.slots.push({ off, lane });
+      });
+      sumN += offs.length;
+      rounds.push(round);
+    }
+    const dur = total * step;
+    let stars = 0.4 + 1.9 * notes.length / dur + (sumN / nR) * 0.12 + (bars === 2 ? 0.5 : 0);
+    stars = Math.round(stars * 10) / 10;
+    return { notes, calls, rounds, step, total, prog: WORLDS[s.wi].prog, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, bars, len };
+  }
+
+  // ---------- Ensamble: piezas que caen al compás ----------
+  function buildStack(si, di) {
+    const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16;
+    const rpb = s.tut ? 0.5 : di === 0 ? 1 : 2;          // filas que baja por tiempo
+    const garbage = !s.tut && di === 2;                   // chatarra que sube desde abajo cada 4 compases
+    let stars = 0.6 + (s.bpm / 60) * rpb * 1.1 + (garbage ? 1.2 : 0) + (s.lvl - 1) * 0.15;
+    stars = Math.round(stars * 10) / 10;
+    return { step, total, prog: WORLDS[s.wi].prog, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, rpb, garbage, seed: 7000 + si * 97 + di * 13 };
+  }
+
   const chartCache = new Map();
   const sig = () => ['x_root', 'x_dens', 'x_semi', 'l_root', 'l_freq', 'l_len'].map(id => E(id)).join('');
   function getChart(si, di) {
-    const k = `${si}-${di}-${sig()}`;
-    if (!chartCache.has(k)) chartCache.set(k, buildChart(si, di));
+    const m = modeOf(SONGS[si]);
+    const k = `${si}-${di}-${m === 'arrows' ? sig() : ''}`;
+    if (!chartCache.has(k)) chartCache.set(k, m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di) : buildStack(si, di));
     return chartCache.get(k);
   }
 
@@ -794,36 +1118,64 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  let view = 'menu', run = null, judge = null, judgeGold = false, judgeAt = 0, rankAt = 0, feverAt = 0;
+  let view = 'map', run = null, judge = null, judgeGold = false, judgeAt = 0, rankAt = 0, feverAt = 0;
   const press = Array(8).fill(0), flash = Array(8).fill(0), keyDown = Array(8).fill(false);
   const TRAVEL = 1.45;
   const gameT = () => clock() - run.t0;
-  const missDmg = () => (6 + run.stars * 0.6) * (1 - 0.12 * L('life'));
+  const modeWin = () => (run.mode === 'signal' ? 1 + 0.1 * L('s_win') : run.mode === 'stack' ? 1 + 0.1 * L('e_win') : 1 + 0.1 * L('win')) + tuneWin();
+  const lifeLv = () => run.mode === 'signal' ? L('s_life') : run.mode === 'stack' ? L('e_life') : L('life');
+  const missDmg = () => (6 + run.stars * 0.6) * (1 - 0.12 * lifeLv());
+  const basePts = () => run && run.mode === 'signal' ? 1 + L('s_base') : 1 + L('base');
+  function rankOf(c) {
+    if (!L('c_root')) return 0;
+    const avail = 1 + L('c_rank'), k = 1 - 0.2 * L('c_asc');
+    let r = 0;
+    for (let i = 0; i < avail; i++) if (c >= Math.ceil(RANKS[i][0] * k)) r = i + 1;
+    return r;
+  }
+  const multFor = c => { const r = rankOf(c); return r ? RANKS[r - 1][1] : 1; };
+  const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
+  const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
+  const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
+    dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO' };
+  const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
+  const gradeRank = g => 'EDCBAS'.indexOf(g);
 
   function startRun(si, di) {
-    if (!diffsOf(SONGS[si]).includes(di) || !diffOpen(SONGS[si], di) || !worldOpen(SONGS[si].wi)) return;
+    const s = SONGS[si];
+    if (!s || !diffsOf(s).includes(di) || !diffOpen(s, di) || !worldOpen(s.wi)) return;
     ensureAudio();
-    const ch = getChart(si, di);
-    run = {
-      si, di, song: SONGS[si], ch, boards: ch.boards, stars: ch.stars, mult: ch.mult,
-      notes: ch.notes.map(n => ({ ...n })), active: [], audioStep: 0,
-      t0: clock() + 0.1, combo: 0, maxCombo: 0, rank: 0, life: 100, earned: 0,
-      counts: { perfect: 0, great: 0, good: 0, miss: 0 }, xHit: 0, xStreak: 0, feverUntil: -1,
-      holdsDone: 0, drops: 0, ghost: 0, ghostTimes: [], shields: L('c_shield'), failed: false, over: false,
-    };
+    const ch = getChart(si, di), mode = modeOf(s);
+    run = { si, di, song: s, mode, ch, boards: ch.boards, stars: ch.stars, mult: ch.mult, audioStep: 0, t0: clock() + 0.1,
+      life: 100, earned: 0, combo: 0, maxCombo: 0, rank: 0, failed: false, over: false, callIdx: 0 };
+    if (mode === 'stack') initStack(run);
+    else {
+      Object.assign(run, { notes: ch.notes.map(n => ({ ...n })), active: [], counts: { perfect: 0, great: 0, good: 0, miss: 0 },
+        xHit: 0, xStreak: 0, feverUntil: -1, holdsDone: 0, drops: 0, ghost: 0, ghostTimes: [], shields: mode === 'arrows' ? L('c_shield') : 0 });
+      if (mode === 'signal') {
+        run.rounds = ch.rounds.map(r => ({ ...r })); run.streak = 0; run.decoded = 0;
+        run.roundNotes = run.rounds.map(() => []); for (const n of run.notes) run.roundNotes[n.r].push(n);
+      }
+    }
     keyDown.fill(false);
     judge = null;
     $('vPlay').classList.toggle('two', run.boards === 2);
-    renderPads(run.boards);
+    renderPads();
     setView('play'); fitPlay();
   }
+  // ¿El paso i (semicorchea) cae dentro de una respuesta de Señal?
+  const inResponse = i => { const ch = run.ch, cyc = ch.len * 2, k = i - 16; if (k < 0 || k >= run.rounds.length * cyc) return false; return k % cyc >= ch.len; };
   function scheduleAudio(t) {
     const { ch, song } = run, w = WORLDS[song.wi], st = ch.step;
     while (run.audioStep < ch.total && LEAD + run.audioStep * st < t + 0.2) {
       const i = run.audioStep, pos = i % 4, beat = Math.floor(i / 4) % 4, bar = Math.floor(i / 16);
       const [cr, cq] = w.prog[bar % 4];
       const at = run.t0 + LEAD + i * st + (w.swing && pos === 2 ? st * 0.667 : 0);
-      PLAY[w.id](at, { i, pos, beat, bar, root: song.root + cr, tones: QUAL[cq], st, w, song });
+      PLAY[w.style](at, { i, pos, beat, bar, root: song.root + cr, tones: QUAL[cq], st, w, song });
+      if (run.mode === 'signal') {
+        while (run.callIdx < ch.calls.length && ch.calls[run.callIdx].i === i) beacon(at, ch.calls[run.callIdx++].lane);
+        if (L('s_t_metro') && pos % 2 === 0 && inResponse(i)) click(at, pos === 0);
+      }
       run.audioStep++;
     }
   }
@@ -831,29 +1183,44 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
   function addCombo(k) {
     run.combo += k;
     if (run.combo > run.maxCombo) run.maxCombo = run.combo;
+    if (run.mode !== 'arrows') return;
     const r = rankOf(run.combo);
     if (r > run.rank) { run.rank = r; rankAt = performance.now(); }
   }
   function breakCombo() {
     if (run.combo === 0) return;
     if (run.shields > 0) { run.shields--; setJudge('shield'); return; }
-    run.combo = Math.floor(run.combo * 0.25 * L('c_mem'));
-    run.rank = rankOf(run.combo);
+    run.combo = run.mode === 'arrows' ? Math.floor(run.combo * 0.25 * L('c_mem')) : 0;
+    run.rank = run.mode === 'arrows' ? rankOf(run.combo) : 0;
   }
+  const sigStreakMult = () => 1 + Math.min(0.1 * run.streak, 0.5 * L('s_m_streak'));
   function award(v, j) {
+    if (run.mode === 'signal') { run.earned += v * sigStreakMult() * run.mult * (1 + 0.25 * L('s_t_gain')); return; }
     v *= multFor(run.combo) * run.mult;
     if (j === 'perfect' && L('c_perf')) v *= 1 + 0.2 * L('c_perf');
     if (gameT() < run.feverUntil) v *= 2;
     run.earned += v;
   }
-  function hurt(d) { if (run.song.tut) return; run.life -= d; if (run.life <= 0) { run.life = 0; run.failed = true; finish(); } }
+  function hurt(d) { if (run.song.tut) return; run.life -= d; if (run.life <= 0) { run.life = 0; run.failed = true; run.mode === 'stack' ? finishStack() : finish(); } }
+  // Señal: al juzgarse la última nota de una ronda, se decide si el patrón quedó decodificado
+  function roundNote(n, ok) {
+    if (run.mode !== 'signal') return;
+    const r = run.rounds[n.r]; if (!r) return;
+    r.left--; if (ok) r.hits++; else r.misses++;
+    if (r.left > 0) return;
+    if (r.misses <= L('s_t_fix')) {
+      run.decoded++;
+      award(r.n * basePts() * (1 + 0.4 * L('s_m_dec')), null);
+      run.streak++; setJudge('dec');
+    } else { run.streak = 0; setJudge('lost'); }
+  }
 
   function hit(lane) {
     press[lane] = performance.now();
-    if (view !== 'play' || !run || run.over || run.paused) return;
+    if (view !== 'play' || !run || run.over || run.paused || run.mode === 'stack') return;
     const t = gameT();
     for (const n of run.active) if (n.lane === lane && n.holding && n.relAt != null) { n.relAt = null; return; }
-    const sc = winScale();
+    const sc = modeWin();
     let best = null, bd = Infinity;
     for (const n of run.notes) {
       if (n.t - t > 0.5) break;
@@ -864,10 +1231,10 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     const good = WIN.good * sc, boo = good + 0.08;
     if (!best || bd > boo) { ghostTap(t); return; }
     if (bd > good) {
-      if (best.t < t) return; // tarde: el juez de fallos ya se encarga
+      if (best.t < t) return;
       best.judged = true; best.missed = true;
       if (best.kind === 'x') { run.xStreak = 0; setJudge('early', true); return; }
-      run.counts.miss++; setJudge('early'); breakCombo(); hurt(missDmg()); return;
+      run.counts.miss++; setJudge('early'); breakCombo(); roundNote(best, false); hurt(missDmg()); return;
     }
     const j = bd <= WIN.perfect * sc ? 'perfect' : bd <= WIN.great * sc ? 'great' : 'good';
     best.judged = true; flash[lane] = performance.now();
@@ -886,12 +1253,13 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     award(basePts() * JVAL[j], j);
     run.life = Math.min(100, run.life + (j === 'perfect' ? 1.2 : j === 'great' ? 0.6 : 0));
     setJudge(j); blip(lane, j);
+    roundNote(best, true);
     if (best.kind === 'h') { best.holding = true; best.relAt = null; best.nextTick = best.t + run.ch.step; run.active.push(best); }
   }
-  // Golpe sin flecha cerca: resta aguante y, si se repite mucho, corta el combo
   function ghostTap(t) {
     const first = run.notes.length ? run.notes[0].t : 0;
     if (t < first - 0.6 || t > run.ch.end) return;
+    if (run.mode === 'signal' && !inResponse((t - LEAD) / run.ch.step)) return;   // en la llamada se puede tocar libremente
     run.ghost++;
     run.ghostTimes = run.ghostTimes.filter(x => t - x < 1); run.ghostTimes.push(t);
     hurt(missDmg() * 0.3);
@@ -899,7 +1267,7 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     if (run.ghostTimes.length >= 3) { run.ghostTimes = []; setJudge('spam'); breakCombo(); }
   }
   function release(lane) {
-    if (view !== 'play' || !run || run.over || run.paused) return;
+    if (view !== 'play' || !run || run.over || run.paused || run.mode === 'stack') return;
     const t = gameT();
     for (const n of run.active) if (n.lane === lane && n.holding && n.relAt == null) n.relAt = t;
   }
@@ -915,13 +1283,13 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
 
   function update(t) {
     scheduleAudio(t);
-    const lim = WIN.good * winScale();
+    const lim = WIN.good * modeWin();
     for (const n of run.notes) {
       if (n.t > t) break;
       if (n.judged || t - n.t <= lim) continue;
       n.judged = true; n.missed = true;
       if (n.kind === 'x') { run.xStreak = 0; continue; }
-      run.counts.miss++; setJudge('miss'); breakCombo(); hurt(missDmg());
+      run.counts.miss++; setJudge('miss'); breakCombo(); roundNote(n, false); hurt(missDmg());
       if (run.over) return;
     }
     const grace = 0.1 * L('l_grip'), tickVal = basePts() * (0.3 + 0.15 * L('l_tick'));
@@ -944,52 +1312,177 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
 
   function finish() {
     if (run.over) return; run.over = true;
-    const c = run.counts, all = c.perfect + c.great + c.good + c.miss;
+    const c = run.counts, all = c.perfect + c.great + c.good + c.miss, hits = c.perfect + c.great + c.good;
     const den = all + run.ghost * 0.5;
     const acc = den ? (c.perfect + c.great * 0.7 + c.good * 0.4) / den * 100 : 0;
-    const tutFail = run.song.tut && (c.perfect + c.great + c.good) < all * 0.5;
-    if (tutFail) run.failed = true;   // el tutorial no se pierde por aguante, pero hay que acertar al menos la mitad
+    const tutFail = run.song.tut && hits < all * 0.5;
+    if (tutFail) run.failed = true;
     const fc = !run.failed && c.miss === 0 && run.drops === 0;
     const grade = run.failed ? 'E' : GRADES.find(([min]) => acc >= min)[1];
     let gain = run.earned; const notes = [];
-    if (tutFail) notes.push('Acertá al menos la mitad de las flechas para completar el tutorial');
-    else if (run.failed) { gain *= 0.5; notes.push('Aguante agotado: te quedás con el 50%'); }
-    if (fc) {
+    if (tutFail) notes.push(run.mode === 'signal' ? 'Repetí bien al menos la mitad de las notas para completar el tutorial' : 'Acertá al menos la mitad de las flechas para completar el tutorial');
+    else if (run.failed) { gain *= 0.5; notes.push(`${run.mode === 'signal' ? 'Señal perdida' : 'Aguante agotado'}: te quedás con el 50%`); }
+    if (fc && run.mode === 'arrows') {
       if (L('c_fc')) { const b = 0.25 * L('c_fc'); gain *= 1 + b; notes.push(`Bonus Full Combo: +${Math.round(b * 100)}%`); }
       else notes.push('Full Combo sin bonus: desbloquealo en la rama Combo');
     }
-    S.pts += gain; S.total += gain;
-    const key = `${run.song.id}-${run.di}`;
-    const nextWasOpen = diffOpen(run.song, run.di + 1), openBefore = openWorlds();
-    const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
-    const newBest = gain > rec.best;
-    rec.best = Math.max(rec.best, gain);
-    if (!rec.grade || gradeRank(grade) > gradeRank(rec.grade)) rec.grade = grade;
-    rec.clear = rec.clear || !run.failed; rec.fc = rec.fc || fc;
-    S.rec[key] = rec; save();
-    const newWorlds = [...openWorlds()].filter(wi => !openBefore.has(wi));
-    if (newWorlds.length) notes.push(`Se abrió la ruta a ${newWorlds.map(wi => WORLDS[wi].name).join(' y ')}. Aguante puede subir un nivel más`);
-    if (!run.failed && !run.song.tut && run.di < 3 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
-    showResult({ grade, gain, acc, fc, newBest, notes });
-  }
-
-  function showResult(r) {
-    const c = run.counts, s = run.song, ch = run.ch;
-    $('rSong').textContent = `${s.name} · ${DIFFS[run.di].name}`;
-    $('worldBtn').textContent = s.tut && tutDone() ? 'Ir al mapa' : `Volver a ${WORLDS[s.wi].name}`;
-    $('rStatus').textContent = run.failed ? 'No superada' : r.fc ? 'Superada · Full Combo' : 'Superada';
-    $('rGrade').textContent = r.grade;
-    $('rGain').textContent = '+' + fmt(r.gain);
-    const lines = [`Dificultad ${dec1(run.stars)}★ → multiplicador x${dec(run.mult)}`, ...r.notes];
-    if (r.newBest) lines.push('Nuevo récord en esta dificultad');
-    $('rCalc').innerHTML = lines.map(l => `<div>${l}</div>`).join('');
-    const rows = [['Perfecto', c.perfect], ['Genial', c.great], ['Bien', c.good], ['Fallo', c.miss], ['Combo máx.', run.maxCombo], ['Precisión', Math.round(r.acc) + '%']];
+    const ch = run.ch;
+    const rows = [['Perfecto', c.perfect], ['Genial', c.great], ['Bien', c.good], ['Fallo', c.miss], ['Combo máx.', run.maxCombo], ['Precisión', Math.round(acc) + '%']];
+    if (run.mode === 'signal') rows.push(['Patrones', `${run.decoded}/${run.rounds.length}`]);
     if (ch.extras) rows.push(['Notas extra', `${run.xHit}/${ch.extras}`]);
     if (ch.holds) rows.push(['Largas', `${run.holdsDone}/${ch.holds}`]);
     rows.push(['Golpes al aire', run.ghost]);
+    settle({ gain, grade, fc, notes, rows });
+  }
+
+  // Cierre común a todas las galaxias: récord, moneda (con multiplicador global), materia oscura y desbloqueos
+  function settle({ gain, grade, fc, notes, rows }) {
+    const s = run.song, gal = s.gal, g = GX[gal], key = `${s.id}-${run.di}`;
+    const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
+    const before = { ...(S.rec[key] || {}) };
+    const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
+    const newBest = gain > rec.best && !run.failed;
+    rec.best = Math.max(rec.best, gain);
+    if (!rec.grade || gradeRank(grade) > gradeRank(rec.grade)) rec.grade = grade;
+    rec.clear = rec.clear || !run.failed; rec.fc = rec.fc || fc;
+    S.rec[key] = rec;
+    const mult = galMult(gal), paid = gain * mult;
+    S[g.cur] += paid; S.tot[gal] += paid;
+    const newWorlds = [...openWorlds(gal)].filter(wi => !openBefore.has(wi));
+    const mo = (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult();
+    S.mo += mo;
+    save();
+    if (mult > 1.001) notes.push(`Multiplicador global x${dec(mult)}`);
+    if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
+    if (newWorlds.length) notes.push(`Se abrió la ruta a ${newWorlds.map(wi => WORLDS[wi].name).join(' y ')}${gal === 'pulso' ? '. Aguante puede subir un nivel más' : ''}`);
+    if (!run.failed && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
+    if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmt(ecoPerCycle(s))} ${g.unit} cada ${fmtTime(ecoInterval(s))}`);
+    showResult({ grade, paid, notes, rows, fc });
+  }
+  function showResult({ grade, paid, notes, rows, fc }) {
+    const s = run.song, g = GX[s.gal];
+    $('rSong').textContent = `${s.name} · ${DIFFS[run.di].name}`;
+    $('worldBtn').textContent = s.tut && tutDone(s.gal) ? 'Ir al mapa' : `Volver a ${WORLDS[s.wi].name}`;
+    $('rStatus').textContent = run.failed ? 'No superada' : fc ? `Superada · ${run.mode === 'stack' ? 'Sin errores de ritmo' : 'Full Combo'}` : 'Superada';
+    $('rGrade').textContent = grade;
+    $('rGainLbl').textContent = `${g.curName} ${s.gal === 'ens' ? 'ganadas' : 'ganados'}`;
+    $('rGain').textContent = '+' + fmt(paid);
+    const lines = [`Dificultad ${dec1(run.stars)}★ → multiplicador x${dec(run.mult)}`, ...notes];
+    $('rCalc').innerHTML = lines.map(l => `<div>${l}</div>`).join('');
     $('rRows').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     setView('result');
   }
+
+  // ---------- Ensamble ----------
+  const COLS = 10, ROWS = 18;
+  const SHAPES = { I: [[0, 1], [1, 1], [2, 1], [3, 1]], O: [[0, 0], [1, 0], [0, 1], [1, 1]], T: [[1, 0], [0, 1], [1, 1], [2, 1]], S: [[1, 0], [2, 0], [0, 1], [1, 1]], Z: [[0, 0], [1, 0], [1, 1], [2, 1]], J: [[0, 0], [0, 1], [1, 1], [2, 1]], L: [[2, 0], [0, 1], [1, 1], [2, 1]] };
+  const SHADE = { I: '#f0f0f2', O: '#c4c4c8', T: '#9c9ca2', S: '#7c7c82', Z: '#68686e', J: '#b0b0b5', L: '#8c8c92', G: '#3a3a40' };
+  const BOXN = { I: 4, O: 2 };
+  function cellsOf(type, rot) {
+    let c = SHAPES[type].map(p => [...p]); const n = BOXN[type] || 3;
+    if (type !== 'O') for (let k = 0; k < rot % 4; k++) c = c.map(([x, y]) => [n - 1 - y, x]);
+    return c;
+  }
+  const LINE_PTS = [0, 2, 5, 9, 16];
+  function initStack(r) {
+    const ch = r.ch;
+    Object.assign(r, { board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)), bag: [], rs: rng(ch.seed), piece: null, queue: [], hold: null, holdUsed: false,
+      gStep: 60 / r.song.bpm / ch.rpb, nextGrav: 0, rcombo: 0, rmax: 0, on: 0, off: 0, lines: 0, tetras: 0, soft: 2 * L('e_c_soft'),
+      nextGarbage: LEAD + 128 * ch.step, fx: [], beatFlash: 0 });
+    for (let k = 0; k < 4; k++) r.queue.push(nextType(r));
+  }
+  function nextType(r) {
+    if (!r.bag.length) { r.bag = Object.keys(SHAPES); for (let i = r.bag.length - 1; i > 0; i--) { const j = Math.floor(r.rs() * (i + 1)); [r.bag[i], r.bag[j]] = [r.bag[j], r.bag[i]]; } }
+    return r.bag.pop();
+  }
+  const fits = (p, dx = 0, dy = 0, rot = p.rot) => cellsOf(p.type, rot).every(([cx, cy]) => {
+    const x = p.x + cx + dx, y = p.y + cy + dy;
+    return x >= 0 && x < COLS && y < ROWS && (y < 0 || !run.board[y][x]);
+  });
+  function spawn(type) {
+    type = type || run.queue.shift(); if (run.queue.length < 4) run.queue.push(nextType(run));
+    run.piece = { type, rot: 0, x: type === 'O' ? 4 : 3, y: type === 'I' ? -1 : 0 };
+    if (!fits(run.piece)) { run.failed = true; setJudge('off'); finishStack(); }
+  }
+  const rhythmMult = () => L('e_c_root') ? Math.min(1 + Math.floor(run.rcombo / 8) * 0.25, 1.5 + 0.5 * L('e_c_rank')) : 1;
+  const stackBase = () => 1 + L('e_base');
+  function lockPiece() {
+    const p = run.piece;
+    for (const [cx, cy] of cellsOf(p.type, p.rot)) {
+      const x = p.x + cx, y = p.y + cy;
+      if (y < 0) { run.failed = true; finishStack(); return; }
+      run.board[y][x] = p.type;
+    }
+    run.earned += stackBase() * 0.2 * rhythmMult() * run.mult;
+    const full = []; for (let y = 0; y < ROWS; y++) if (run.board[y].every(Boolean)) full.push(y);
+    if (full.length) {
+      for (const y of full) { run.board.splice(y, 1); run.board.unshift(Array(COLS).fill(null)); }
+      const n = full.length;
+      let v = stackBase() * LINE_PTS[n] * rhythmMult() * run.mult;
+      if (n === 4) { v *= 1 + 0.5 * L('e_c_tetra'); run.tetras++; setJudge('tetra'); } else setJudge('line');
+      run.earned += v; run.lines += n; run.life = Math.min(100, run.life + 4 * n);
+      run.fx.push({ rows: full, at: performance.now() });
+      if (ac) for (let k = 0; k < n; k++) pluck(ac.currentTime + k * 0.05, run.song.root + 36 + [0, 4, 7, 12][k], 0.06, 0.3);
+    }
+    run.holdUsed = false; run.piece = null;
+    spawn();
+  }
+  function gravityStep() {
+    if (!run.piece) return;
+    if (fits(run.piece, 0, 1)) run.piece.y++; else lockPiece();
+  }
+  function addGarbage() {
+    if (run.board[0].some(Boolean)) { run.failed = true; finishStack(); return; }
+    const gap = Math.floor(run.rs() * COLS);
+    run.board.shift(); run.board.push(Array.from({ length: COLS }, (_, x) => x === gap ? null : 'G'));
+    if (run.piece && !fits(run.piece)) run.piece.y--;
+  }
+  // Cada movimiento se juzga contra la grilla de corcheas: a tiempo suma racha, fuera de tiempo daña el casco
+  function stackInput(act) {
+    if (view !== 'play' || !run || run.over || run.paused || run.mode !== 'stack') return;
+    const t = gameT(); if (!run.piece || t < LEAD - 0.15) return;
+    if (act === 'C' && (!L('e_d_hold') || run.holdUsed)) return;
+    const g8 = run.ch.step * 2, ph = (t - LEAD) / g8, d = Math.abs(ph - Math.round(ph)) * g8;
+    const win = 0.075 * modeWin() * (run.di === 0 || run.song.tut ? 1.3 : 1);
+    if (d <= win) {
+      run.on++; run.rcombo++; run.rmax = Math.max(run.rmax, run.rcombo); setJudge('on');
+      if (ac) pluck(ac.currentTime, run.song.root + 24 + [0, 7, 12, 4][run.rcombo % 4], 0.03, 0.08);
+    } else if (run.soft > 0) {
+      run.soft--; run.off++; setJudge('soft');
+    } else {
+      run.off++; run.rcombo = 0; setJudge('off');
+      if (ac) tone(ac.currentTime, 'square', 110, 0.04, 0.08);
+      hurt(4 * (1 - 0.12 * L('e_life'))); if (run.over) return;
+    }
+    const p = run.piece;
+    if (act === 'L' && fits(p, -1, 0)) p.x--;
+    else if (act === 'R' && fits(p, 1, 0)) p.x++;
+    else if (act === 'U') { const nr = (p.rot + 1) % 4; for (const [kx, ky] of [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1]]) if (fits(p, kx, ky, nr)) { p.x += kx; p.y += ky; p.rot = nr; break; } }
+    else if (act === 'D') gravityStep();
+    else if (act === 'H') { while (fits(p, 0, 1)) p.y++; lockPiece(); }
+    else if (act === 'C') { const cur = p.type; run.piece = null; if (run.hold) spawn(run.hold); else spawn(); run.hold = cur; run.holdUsed = true; }
+  }
+  function updateStack(t) {
+    scheduleAudio(t);
+    if (!run.piece && t >= LEAD) { spawn(); run.nextGrav = LEAD + run.gStep; if (run.over) return; }
+    while (run.piece && t >= run.nextGrav && run.nextGrav) { run.nextGrav += run.gStep; gravityStep(); if (run.over) return; }
+    if (run.ch.garbage && t >= run.nextGarbage) { run.nextGarbage += 64 * run.ch.step; addGarbage(); if (run.over) return; }
+    if (t >= run.ch.end + 0.3) finishStack();
+  }
+  function finishStack() {
+    if (run.over) return; run.over = true;
+    const tot = run.on + run.off, acc = tot ? run.on / tot * 100 : 0;
+    const tutFail = run.song.tut && run.lines < 2;
+    if (tutFail) run.failed = true;
+    const fc = !run.failed && run.off === 0 && tot > 0;
+    const grade = run.failed ? 'E' : GRADES.find(([m]) => acc >= m)[1];
+    let gain = run.earned; const notes = [];
+    if (tutFail) notes.push('Completá al menos 2 filas para terminar el tutorial');
+    else if (run.failed) { gain *= 0.5; notes.push('El casco no aguantó: te quedás con el 50%'); }
+    const rows = [['A tiempo', run.on], ['Fuera de tiempo', run.off], ['Filas', run.lines], ['Cuádruples', run.tetras], ['Racha máx.', run.rmax], ['Precisión', Math.round(acc) + '%']];
+    settle({ gain, grade, fc, notes, rows });
+  }
+
   function quit() { hidePause(); if (run && !run.over) run.over = true; run = null; setView('menu'); }
   // Pausa: congela el tiempo de la canción (y el audio). Al continuar hay una cuenta de 3 antes de retomar.
   let countTimer = null;
@@ -1012,14 +1505,12 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
       hidePause();
       if (ac) ac.resume();
       run.t0 += clock() - run.pausedAt; run.paused = false;
-      const t = gameT();
-      for (const h of run.active) if (h.holding && !keyDown[h.lane] && h.relAt == null) h.relAt = t;
+      if (run.mode !== 'stack') { const t = gameT(); for (const h of run.active) if (h.holding && !keyDown[h.lane] && h.relAt == null) h.relAt = t; }
     }, 450);
   }
   $('resumeBtn').addEventListener('click', resume);
   $('restartBtn').addEventListener('click', () => { const si = run.si, di = run.di; hidePause(); run.over = true; if (ac) ac.resume(); startRun(si, di); });
   $('endBtn').addEventListener('click', () => { if (ac) ac.resume(); quit(); });
-
   // ---------- Dibujo ----------
   const ANG = [-Math.PI / 2, Math.PI, 0, Math.PI / 2];
   const STARS = (() => { const r = rng(4242); return Array.from({ length: 90 }, () => ({ x: r(), y: r(), z: 0.3 + r() * 0.9, r: r() < 0.85 ? 1 : 2, a: 0.15 + r() * 0.45 })); })();
@@ -1163,40 +1654,371 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     }
   }
 
+
+  // Fondo común: estrellas que suben despacio
+  function drawSky(t) {
+    ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
+    for (const st of STARS) {
+      const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
+      ctx.fillStyle = `rgba(255,255,255,${st.a})`; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
+    }
+  }
+  function drawHud(U, label) {
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
+    ctx.fillStyle = run.life > 25 ? '#ececee' : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
+    ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
+    ctx.fillText(fmt(run.earned), 10, 22);
+    ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
+    ctx.fillText(label, W - 10, 24);
+  }
+  function wrapText(msg, x, y, maxW, lh) {
+    const lines = [''];
+    for (const w of msg.split(' ')) { const tst = (lines[lines.length - 1] + ' ' + w).trim(); if (ctx.measureText(tst).width > maxW) lines.push(w); else lines[lines.length - 1] = tst; }
+    lines.forEach((ln, k) => ctx.fillText(ln, x, y + k * lh));
+  }
+  function drawJudge(U, y) {
+    const now = performance.now(), age = (now - judgeAt) / 600;
+    if (!judge || age >= 1) return;
+    const al = 1 - age, sc = 1 + 0.15 * Math.max(0, 1 - age * 4);
+    ctx.save(); ctx.translate(W / 2, y); ctx.scale(sc, sc);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = F(900, U * (['dec', 'lost', 'tetra', 'off'].includes(judge) ? 0.065 : 0.08));
+    const col = judgeGold ? GOLD : { miss: '95,95,100', drop: '95,95,100', early: '120,120,126', spam: '120,120,126', lost: '110,110,116', off: '120,120,126', soft: '170,170,176', great: '210,210,214', good: '150,150,156' }[judge] || '255,255,255';
+    ctx.fillStyle = `rgba(${col},${al})`; ctx.fillText(JTXT[judge], 0, 0);
+    ctx.restore();
+  }
+  function drawCountdown(t, U, y, sub) {
+    if (t >= LEAD) return;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = F(900, U * 0.2); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillText(Math.max(1, Math.ceil(LEAD - t)), W / 2, y);
+    ctx.font = F(600, U * 0.035); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText(sub, W / 2, y + U * 0.13);
+  }
+  function tutMsg(t, U, y, MSG) {
+    const tp = Math.max(0, t / run.ch.end), msg = (MSG.filter(m => tp >= m[0]).pop() || MSG[0])[1];
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = F(700, U * 0.04); ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    wrapText(msg, W / 2, y, W * 0.86, U * 0.055);
+  }
+
+  // ---------- Dibujo: Señal ----------
+  function drawSignal() {
+    if (!run || !W) return;
+    const now = performance.now(), t = gameT(), ch = run.ch, st = ch.step, U = Math.min(W, H * 0.68);
+    drawSky(t);
+    drawHud(U, `${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`);
+    const i = (t - LEAD) / st, cyc = ch.len * 2;
+    let phase = 'intro', rIdx = -1, local = 0;
+    if (i >= 16) {
+      const k = Math.floor((i - 16) / cyc);
+      if (k < run.rounds.length) { rIdx = k; local = (i - 16) - k * cyc; phase = local < ch.len ? 'call' : 'resp'; } else phase = 'end';
+    }
+    // Antena: un plato con ondas que se encienden en la llamada
+    const ax = W / 2, ay = H * 0.2;
+    const lastCall = ch.calls.filter(c => c.t <= t).pop(), callAge = lastCall ? t - lastCall.t : 9;
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(ax, ay + U * 0.05, U * 0.07, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ax, ay + U * 0.05); ctx.lineTo(ax, ay + U * 0.11); ctx.stroke();
+    for (let k = 1; k <= 3; k++) {
+      const a = Math.max(0, 0.6 - callAge * 2 - k * 0.12);
+      if (a <= 0) continue;
+      ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(ax, ay - U * 0.01, U * (0.04 + k * 0.035 + callAge * 0.08), Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = F(900, U * 0.075);
+    ctx.fillStyle = phase === 'resp' ? '#ffffff' : 'rgba(255,255,255,0.55)';
+    ctx.fillText(phase === 'call' ? 'ESCUCHÁ' : phase === 'resp' ? 'REPETÍ' : phase === 'end' ? 'FIN DE LA TRANSMISIÓN' : 'PREPARATE', W / 2, H * 0.33);
+
+    // Cuatro luces: se encienden con la llamada y con tus toques
+    const ly = H * 0.48, gap = W / 4.6, size = Math.min(gap * 0.75, 80);
+    for (let l = 0; l < 4; l++) {
+      const x = W / 2 + (l - 1.5) * gap;
+      const callLit = ch.calls.some(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24);
+      const f = Math.max(0, 1 - (now - flash[l]) / 220), p = Math.max(0, 1 - (now - press[l]) / 180);
+      arrow(x, ly, size * (1 + 0.1 * Math.max(f, callLit ? 1 : 0)), ANG[l]);
+      if (callLit) { ctx.fillStyle = '#ffffff'; ctx.fill(); }
+      else if (f > 0) { ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.5 * f})`; ctx.fill(); }
+      else if (p > 0) { ctx.fillStyle = `rgba(255,255,255,${0.18 * p})`; ctx.fill(); }
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.stroke();
+      if (run.song.tut) { ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillText(`${'ASWD'[l]} · ${'JKIL'[l]}`, x, ly + size * 0.8); }
+    }
+
+    // Línea de tiempo del compás actual (llamada o respuesta)
+    const tx0 = W * 0.08, tx1 = W * 0.92, ty = H * 0.68, tw = tx1 - tx0;
+    ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(tx0, ty - 1, tw, 2);
+    for (let k = 0; k <= ch.len; k += 2) {
+      const x = tx0 + tw * k / ch.len, big = k % 4 === 0;
+      ctx.fillStyle = `rgba(255,255,255,${big ? 0.4 : 0.15})`; ctx.fillRect(x - 1, ty - (big ? 8 : 4), 2, big ? 16 : 8);
+    }
+    if (rIdx >= 0) {
+      const R = run.rounds[rIdx], px = tx0 + tw * (phase === 'call' ? local : local - ch.len) / ch.len;
+      const showDots = phase === 'call' || run.di === 0 || run.song.tut || L('s_m_root');
+      const showLanes = phase === 'call' || run.song.tut || L('s_m_root');
+      if (showDots) R.slots.forEach((sl, k) => {
+        if (phase === 'call' && sl.off > local) return;   // en la llamada aparecen a medida que suenan
+        const x = tx0 + tw * sl.off / ch.len, n = run.roundNotes[rIdx][k];
+        const hitOk = phase === 'resp' && n.judged && !n.missed, missed = phase === 'resp' && n.missed;
+        if (showLanes) {
+          arrow(x, ty - U * 0.06, U * 0.05, ANG[sl.lane]);
+          ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : phase === 'call' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(x, ty, U * 0.012, 0, Math.PI * 2);
+        ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.9)' : 'rgba(255,255,255,0.5)'; ctx.fill();
+      });
+      ctx.fillStyle = phase === 'resp' ? '#ffffff' : 'rgba(255,255,255,0.5)'; ctx.fillRect(px - 1, ty - 14, 2, 28);
+      ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.textAlign = 'left';
+      ctx.fillText(`Patrón ${rIdx + 1}/${run.rounds.length} · ${R.n} ${R.n > 1 ? 'notas' : 'nota'}`, tx0, ty + U * 0.06);
+      ctx.textAlign = 'right';
+      ctx.fillText(`Decodificados ${run.decoded}${run.streak > 1 ? ` · racha ${run.streak}` : ''}`, tx1, ty + U * 0.06);
+    }
+    drawJudge(U, H * 0.8);
+    if (run.streak > 1 && L('s_m_streak')) { ctx.textAlign = 'center'; ctx.font = F(700, U * 0.032); ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillText(`Racha x${dec(sigStreakMult())}`, W / 2, H * 0.87); }
+    if (run.song.tut) tutMsg(t, U, H * 0.92, [[0, 'La antena toca un patrón: mirá qué luces se prenden y escuchá el ritmo'], [0.2, 'Cuando dice REPETÍ, tocá las mismas flechas con el mismo ritmo'], [0.55, 'Los puntos de la línea muestran cuándo tocar'], [0.85, 'Terminá la transmisión para abrir el mapa']]);
+    drawCountdown(t, U, H * 0.58, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
+    const prog = Math.max(0, Math.min(1, t / ch.end));
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = '#8a8a90'; ctx.fillRect(0, H - 3, W * prog, 3);
+  }
+
+  // ---------- Dibujo: Ensamble ----------
+  function drawCell(x, y, cs, color, alpha = 1) {
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color; ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(x + 1, y + 1, cs - 2, 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x + 1, y + cs - 3, cs - 2, 2);
+    ctx.globalAlpha = 1;
+  }
+  function drawMini(type, x, y, cs) {
+    const c = cellsOf(type, 0), w = (BOXN[type] || 3) * cs;
+    for (const [cx, cy] of c) drawCell(x + cx * cs + (3 * cs - w) / 2, y + cy * cs, cs, SHADE[type]);
+  }
+  function drawStack() {
+    if (!run || !W) return;
+    const now = performance.now(), t = gameT(), ch = run.ch, U = Math.min(W, H * 0.68);
+    drawSky(t);
+    drawHud(U, `${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`);
+    const cs = Math.floor(Math.min((W * 0.64) / COLS, (H * 0.74) / ROWS)), bx = Math.round(W * 0.05), by = Math.round(H * 0.1);
+    const bw = cs * COLS, bh = cs * ROWS;
+    // pulso del tiempo en el borde del tablero
+    const beat = 60 / run.song.bpm, bp = t > LEAD ? Math.max(0, 1 - (((t - LEAD) % beat) / beat) * 3) : 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.035)'; ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    for (let x = 1; x < COLS; x++) { ctx.beginPath(); ctx.moveTo(bx + x * cs + 0.5, by); ctx.lineTo(bx + x * cs + 0.5, by + bh); ctx.stroke(); }
+    ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.5 * bp})`; ctx.lineWidth = 2; ctx.strokeRect(bx - 1, by - 1, bw + 2, bh + 2);
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const c = run.board[y][x]; if (c) drawCell(bx + x * cs, by + y * cs, cs, SHADE[c]); }
+    for (const f of run.fx) {
+      const a = 1 - (now - f.at) / 350; if (a <= 0) continue;
+      ctx.fillStyle = `rgba(255,255,255,${0.7 * a})`;
+      f.rows.forEach(y => ctx.fillRect(bx, by + y * cs, bw, cs));
+    }
+    run.fx = run.fx.filter(f => now - f.at < 350);
+    const p = run.piece;
+    if (p) {
+      if (L('e_d_ghost')) {
+        let gy = 0; while (fits(p, 0, gy + 1)) gy++;
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
+        for (const [cx, cy] of cellsOf(p.type, p.rot)) { const y = p.y + cy + gy; if (y >= 0) ctx.strokeRect(bx + (p.x + cx) * cs + 2.5, by + y * cs + 2.5, cs - 5, cs - 5); }
+      }
+      for (const [cx, cy] of cellsOf(p.type, p.rot)) { const y = p.y + cy; if (y >= 0) drawCell(bx + (p.x + cx) * cs, by + y * cs, cs, SHADE[p.type]); }
+    }
+    // Panel lateral
+    const px = bx + bw + Math.max(10, W * 0.03), pw = W - px - 10, mcs = Math.max(6, Math.floor(Math.min(cs * 0.6, pw / 4)));
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = F(700, U * 0.028); ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    let yy = by;
+    ctx.fillText('SIGUIENTE', px, yy); yy += U * 0.045;
+    run.queue.slice(0, 1 + L('e_d_prev')).forEach(tp => { drawMini(tp, px, yy, mcs); yy += mcs * 2.8; });
+    if (L('e_d_hold')) {
+      ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText('BODEGA (C)', px, yy); yy += U * 0.045;
+      if (run.hold) drawMini(run.hold, px, yy, mcs); yy += mcs * 2.8;
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText('FILAS', px, yy); yy += U * 0.035;
+    ctx.font = F(900, U * 0.06); ctx.fillStyle = '#ffffff'; ctx.fillText(run.lines, px, yy); yy += U * 0.08;
+    ctx.font = F(700, U * 0.028); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText('RACHA', px, yy); yy += U * 0.035;
+    ctx.font = F(900, U * 0.06); ctx.fillStyle = '#ffffff'; ctx.fillText(run.rcombo, px, yy); yy += U * 0.075;
+    if (L('e_c_root')) { ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText(`Ritmo x${dec(rhythmMult())}`, px, yy); }
+
+    // Tira de ritmo: las marcas de corchea se acercan a la línea central
+    const sy = by + bh + Math.max(18, H * 0.05), cx0 = W / 2, pps = W * 0.32, g8 = ch.step * 2;
+    ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(10, sy - 1, W - 20, 2);
+    const n0 = Math.floor((t - LEAD) / g8);
+    for (let k = -3; k <= 10; k++) {
+      const n = n0 + k, tk = LEAD + n * g8, x = cx0 + (tk - t) * pps;
+      if (x < 10 || x > W - 10 || n < 0) continue;
+      const big = n % 2 === 0;
+      ctx.fillStyle = `rgba(255,255,255,${big ? 0.6 : 0.3})`; ctx.fillRect(x - 1.5, sy - (big ? 10 : 6), 3, big ? 20 : 12);
+    }
+    const jf = Math.max(0, 1 - (now - judgeAt) / 250), good = judge === 'on';
+    ctx.fillStyle = jf > 0 ? (good ? `rgba(255,255,255,${0.5 + 0.5 * jf})` : `rgba(120,120,126,${0.5 + 0.5 * jf})`) : 'rgba(255,255,255,0.5)';
+    ctx.fillRect(cx0 - 2, sy - 16, 4, 32);
+    drawJudge(U, by + bh * 0.42);
+    if (run.song.tut) tutMsg(t, U, sy + U * 0.07, [[0, 'Movés con ← →, girás con ↑ y soltás con Espacio'], [0.15, 'Cada movimiento tiene que caer sobre una marca de la tira de abajo'], [0.45, 'Completá filas enteras para ganar piezas'], [0.8, 'Hacé 2 filas para abrir el mapa']]);
+    drawCountdown(t, U, by + bh * 0.4, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
+    const prog = Math.max(0, Math.min(1, t / ch.end));
+    ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = '#8a8a90'; ctx.fillRect(0, H - 3, W * prog, 3);
+  }
+
   // ---------- Pads táctiles ----------
+  // Vertical: botones debajo de la pista. Horizontal (celular acostado): un grupo a cada lado, para jugar con los pulgares.
   const ARROWS = ['←', '↓', '↑', '→'], ARIA = ['Izquierda', 'Abajo', 'Arriba', 'Derecha'];
-  function renderPads(nb) {
-    const pads = $('pads');
-    pads.className = 'pads' + (nb === 2 ? ' two' : '');
-    pads.innerHTML = Array.from({ length: nb }, (_, b) => `<div class="pg">
-        ${nb === 2 ? `<div class="pg-label">${GNAME[b ? S.keysR : S.keysL]}</div>` : ''}
-        <div class="pg-pads">${ARROWS.map((a, k) => `<button class="pad" id="pad${b * 4 + k}" data-l="${b * 4 + k}" aria-label="${ARIA[k]}">${a}</button>`).join('')}</div>
-      </div>`).join('');
-    pads.querySelectorAll('.pad').forEach(p => {
+  const isLand = () => document.body.classList.contains('land');
+  const arrowPad = l => `<button class="pad" id="pad${l}" data-l="${l}" aria-label="${ARIA[l % 4]}">${ARROWS[l % 4]}</button>`;
+  const actPad = ([a, s, l]) => `<button class="pad" data-act="${a}" aria-label="${l}">${s}<small>${l}</small></button>`;
+  const PAUSE_PAD = '<button class="pad pause-pad" data-act="P" aria-label="Pausa">PAUSA</button>', PAUSE_GAP = '<span class="pad pause-pad gap" aria-hidden="true">PAUSA</span>';
+  function renderPads() {
+    const pads = $('pads'), land = isLand();
+    if (run.mode === 'stack') {
+      const acts = [['L', '←', 'Mover'], ['U', '↻', 'Girar'], ['R', '→', 'Mover'], ['D', '↓', 'Bajar'], ['H', '⤓', 'Soltar']];
+      if (L('e_d_hold')) acts.push(['C', '⇄', 'Bodega']);
+      if (land) {
+        const left = [acts[0], acts[2], acts[1]], right = acts.slice(3);
+        pads.className = 'pads land-pads';
+        pads.innerHTML = `<div class="pg side left">${PAUSE_GAP}<div class="pg-pads" style="--c:2">${left.map(actPad).join('')}</div></div>
+          <div class="pg side right">${PAUSE_PAD}<div class="pg-pads" style="--c:2">${right.map(actPad).join('')}</div></div>`;
+      } else {
+        pads.className = 'pads';
+        pads.innerHTML = `<div class="pg"><div class="pg-pads acts" style="--n:${acts.length}">${acts.map(actPad).join('')}</div></div>`;
+      }
+    } else {
+      const nb = run.boards;
+      if (land) {
+        const groups = nb === 2 ? [[0, 1, 2, 3], [4, 5, 6, 7]] : [[0, 1], [2, 3]];
+        pads.className = 'pads land-pads';
+        pads.innerHTML = groups.map((g, gi) => `<div class="pg side ${gi ? 'right' : 'left'}">
+            ${gi ? PAUSE_PAD : PAUSE_GAP}
+            ${nb === 2 ? `<div class="pg-label">${GNAME[gi ? S.keysR : S.keysL]}</div>` : ''}
+            <div class="pg-pads" style="--c:${nb === 2 ? 2 : 1}">${g.map(arrowPad).join('')}</div>
+          </div>`).join('');
+      } else {
+        pads.className = 'pads' + (nb === 2 ? ' two' : '');
+        pads.innerHTML = Array.from({ length: nb }, (_, b) => `<div class="pg">
+            ${nb === 2 ? `<div class="pg-label">${GNAME[b ? S.keysR : S.keysL]}</div>` : ''}
+            <div class="pg-pads">${[0, 1, 2, 3].map(k => arrowPad(b * 4 + k)).join('')}</div>
+          </div>`).join('');
+      }
+    }
+    pads.querySelectorAll('.pad[data-l]').forEach(p => {
       const l = +p.dataset.l;
       p.addEventListener('pointerdown', e => { e.preventDefault(); try { p.setPointerCapture(e.pointerId); } catch (err) {} keyDown[l] = true; p.classList.add('on'); hit(l); });
       const up = () => { if (!keyDown[l]) return; keyDown[l] = false; p.classList.remove('on'); release(l); };
       p.addEventListener('pointerup', up); p.addEventListener('pointercancel', up); p.addEventListener('lostpointercapture', up);
     });
+    pads.querySelectorAll('.pad[data-act]').forEach(p => p.addEventListener('pointerdown', e => {
+      e.preventDefault(); p.classList.add('on'); setTimeout(() => p.classList.remove('on'), 120);
+      if (p.dataset.act === 'P') pause(); else stackInput(p.dataset.act);
+    }));
   }
 
   // ---------- Vistas ----------
+  let treeId = S.galaxy;
   function setView(v) {
-    view = v;
-    $('vMap').hidden = v !== 'map'; $('vMenu').hidden = v !== 'menu'; $('vPlay').hidden = v !== 'play'; $('vResult').hidden = v !== 'result'; $('vTree').hidden = v !== 'tree';
+    view = v; document.body.dataset.view = v;
+    for (const [id, name] of [['vGal', 'gal'], ['vMap', 'map'], ['vMenu', 'menu'], ['vPlay', 'play'], ['vResult', 'result'], ['vTree', 'tree']]) $(id).hidden = v !== name;
     $('tabs').hidden = v === 'play';
     document.body.classList.toggle('playing', v === 'play');
+    $('tabGal').setAttribute('aria-pressed', String(v === 'gal'));
     $('tabMap').setAttribute('aria-pressed', String(v === 'map' || v === 'menu' || v === 'result'));
-    $('tabTree').setAttribute('aria-pressed', String(v === 'tree'));
+    $('tabTree').setAttribute('aria-pressed', String(v === 'tree' && treeId !== 'global'));
+    $('tabGlobal').setAttribute('aria-pressed', String(v === 'tree' && treeId === 'global'));
+    if (v === 'gal') renderGal();
     if (v === 'menu') renderSongs();
     if (v === 'map') renderMap();
     if (v !== 'tree') closeTip();
-    if (v === 'tree') { updateTree(); renderRespec(false); requestAnimationFrame(drawLines); }
+    if (v === 'tree') { buildTree(); updateTree(); renderRespec(false); requestAnimationFrame(drawLines); }
     if (v !== 'play') hidePause();
+    const g = GX[S.galaxy];
+    $('keysHint').innerHTML = g.mode === 'stack'
+      ? '<kbd>←</kbd><kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> bajar · <kbd>Espacio</kbd> soltar · <kbd>Esc</kbd> pausa'
+      : 'Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa';
     renderUI(true);
   }
+  function travel(gal) {
+    S.galaxy = gal; S.world = WORLDS.findIndex(w => w.gal === gal && w.tutorial); S.sel = WORLDS[S.world].idx[0]; S.diff = 0;
+    treeId = gal; save(); setView('map');
+  }
 
-  function diffInfo(di) {
+  // ---------- Mapa de galaxias ----------
+  const GLAYOUT = { wide: { pulso: [22, 60], ens: [55, 30], sen: [80, 70] }, tall: { pulso: [50, 16], ens: [30, 46], sen: [68, 76] }, short: { pulso: [18, 34], ens: [50, 28], sen: [82, 40] } };
+  const MAP_STARS = (() => { const r = rng(777); return Array.from({ length: 110 }, () => [r() * 100, r() * 100, r() < 0.88 ? 0.7 : 1.4, 0.2 + r() * 0.6]); })();
+  const starsSvg = () => MAP_STARS.map(([x, y, r, a]) => `<circle cx="${x.toFixed(1)}%" cy="${y.toFixed(1)}%" r="${r}" fill="#ffffff" fill-opacity="${a.toFixed(2)}"/>`).join('');
+  const narrow = () => window.matchMedia('(max-width: 600px)').matches;
+  // En pantallas bajas (celular acostado) se comprime la altura del mapa para que entren las etiquetas
+  const layoutKey = () => window.innerHeight < 500 && !narrow() ? 'short' : narrow() ? 'tall' : 'wide';
+  let galSel = S.galaxy;
+  function renderGal() {
+    const pos = GLAYOUT[layoutKey()];
+    $('galSvg').innerHTML = starsSvg() + GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
+    $('galaxies').innerHTML = GALAXIES.map(g => {
+      const open = !!S.galOpen[g.id], here = S.galaxy === g.id;
+      const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : `${g.cost} de materia oscura`;
+      return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%" aria-label="${g.name}, ${status}">
+        <span class="gxw"><span class="gx" data-g="${g.id}"></span></span>
+        <span class="pgn">${g.modeName}</span><span class="pn">${g.name}</span><span class="pp">${status}</span>
+      </button>`;
+    }).join('');
+    renderGalInfo();
+  }
+  function renderGalInfo() {
+    const g = GX[galSel], open = !!S.galOpen[g.id], here = S.galaxy === g.id;
+    const nW = WORLDS.filter(w => w.gal === g.id && !w.tutorial).length, wOpen = open ? genreWorldsOpen(g.id) : 0;
+    const btn = here ? '<button class="play-btn" id="galGo">Ir al mapa</button>'
+      : open ? '<button class="play-btn" id="galGo">Viajar</button>'
+      : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de materia oscura</button>`
+      : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
+    $('galInfo').innerHTML = `<div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3></div>${btn}<p>${g.desc}</p>
+      <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id))}/s</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
+  }
+  $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
+  $('galInfo').addEventListener('click', e => {
+    if (e.target.id !== 'galGo') return;
+    const g = GX[galSel];
+    if (!S.galOpen[g.id]) { if (S.mo < g.cost) return; S.mo -= g.cost; S.galOpen[g.id] = true; }
+    travel(g.id);
+  });
+
+  // ---------- Mapa de planetas ----------
+  const LAYOUT = {
+    pulso: { wide: { base: [9, 26], rock: [22, 66], pop: [40, 24], jazz: [45, 77], disco: [66, 40], edm: [87, 66] },
+             tall: { base: [50, 8], rock: [25, 24], pop: [74, 37], jazz: [28, 52], disco: [72, 66], edm: [40, 82] },
+             short: { base: [7, 24], rock: [22, 60], pop: [38, 20], jazz: [54, 60], disco: [70, 20], edm: [88, 58] } },
+    ens: { wide: { ens_base: [12, 30], ens_a: [36, 66], ens_b: [64, 30], ens_c: [85, 68] },
+           tall: { ens_base: [50, 8], ens_a: [28, 34], ens_b: [72, 54], ens_c: [36, 80] },
+           short: { ens_base: [10, 24], ens_a: [36, 60], ens_b: [62, 20], ens_c: [86, 58] } },
+    sen: { wide: { sen_base: [12, 66], sen_a: [36, 30], sen_b: [62, 68], sen_c: [86, 32] },
+           tall: { sen_base: [50, 8], sen_a: [72, 32], sen_b: [28, 56], sen_c: [66, 80] },
+           short: { sen_base: [10, 58], sen_a: [36, 20], sen_b: [62, 58], sen_c: [86, 20] } },
+  };
+  function renderMap() {
+    const gal = S.galaxy, g = GX[gal], pos = LAYOUT[gal][layoutKey()];
+    $('mapSvg').innerHTML = starsSvg() + LINKS[gal].map(([a, b]) => `<line class="${worldOpen(WI[a]) && worldOpen(WI[b]) ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
+    $('planets').innerHTML = WORLDS.map((w, wi) => {
+      if (w.gal !== gal) return '';
+      const cleared = clearedIn(wi), n = w.idx.length, open = worldOpen(wi);
+      const via = LINKS[gal].flatMap(([a, b]) => a === w.id ? [b] : b === w.id ? [a] : []).map(id => WI[id]).filter(x => worldOpen(x));
+      const status = open ? (w.tutorial ? (cleared ? 'Completado' : 'Empezá acá') : `${cleared}/${n}${cleared < g.need ? ` · ${g.need} abren rutas` : ''}`)
+        : via.length ? (WORLDS[via[0]].tutorial ? 'Completá el tutorial' : `Superá ${g.need} en ${WORLDS[via[0]].name}`) : 'Fuera de alcance';
+      return `<button class="pl${open ? '' : ' locked'}${w.tutorial ? ' tutw' : ''}${w.tutorial && !cleared ? ' start' : ''}" data-wi="${wi}" style="left:${pos[w.id][0]}%;top:${pos[w.id][1]}%" ${open ? '' : 'disabled'} aria-label="${w.name}, ${w.genre}, ${status}">
+        <span class="orb" data-w="${w.id}"></span>
+        <span class="pgn">${w.genre}</span><span class="pn">${w.name}</span><span class="pp">${status}</span>
+      </button>`;
+    }).join('');
+    const tw = WORLDS.find(w => w.gal === gal && w.tutorial), first = WORLDS[WI[LINKS[gal][0][1]]];
+    const songsPer = WORLDS.find(w => w.gal === gal && !w.tutorial).idx.length;
+    $('mapHint').textContent = tutDone(gal)
+      ? `${g.name}: superá ${g.need} de las ${songsPer} canciones de un planeta (en cualquier dificultad) para abrir las rutas a sus vecinos.`
+      : `Empezá en ${tw.name}: completá el tutorial para abrir la ruta a ${first.name}.`;
+  }
+  $('planets').addEventListener('click', e => {
+    const b = e.target.closest('.pl'); if (!b || b.disabled) return;
+    S.world = +b.dataset.wi; save(); setView('menu');
+  });
+
+  // ---------- Canciones de un planeta ----------
+  function diffInfo(s, di) {
+    const m = modeOf(s);
+    if (m === 'stack') return ['<b>Fácil:</b> la pieza baja una fila por tiempo y el margen para moverse a tiempo es más amplio.',
+      '<b>Normal:</b> la pieza baja dos filas por tiempo.',
+      '<b>Difícil:</b> dos filas por tiempo y cada 4 compases sube una fila de chatarra desde abajo.'][di];
+    if (m === 'signal') return ['<b>Fácil:</b> patrones en negras de un compás. La línea de tiempo marca cuándo tocar.',
+      '<b>Normal:</b> patrones de un compás que pasan a corcheas. Sin marcas en la respuesta (salvo con Eco visual).',
+      '<b>Difícil:</b> llamadas de dos compases con corcheas y semicorcheas.'][di];
     const off = (name, req, id) => `<span>${name} (${L(id) ? 'apagada' : 'se activa con ' + req})</span>`;
     if (di === 0) return '<b>Fácil:</b> sin saltos, con menos notas extra y menos largas.';
     if (di === 1) return '<b>Normal:</b> la canción tal como es, con todas tus mecánicas.';
@@ -1205,30 +2027,36 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     return `<b>Doble:</b> dos tableros a la vez, ${GNAME[S.keysL]} a la izquierda y ${GNAME[S.keysR]} a la derecha. Secciones de un lado, alternadas y simultáneas. ` +
       (E('l_root') ? 'Largas de un lado mientras tocás del otro. ' : '') + (E('x_semi') ? 'Escaleras doradas.' : '');
   }
+  const MENU_HINT = {
+    arrows: 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras incluidas: más estrellas, más multiplicador. Tocar donde no hay flecha resta aguante. Si se vacía, te quedás con la mitad de lo ganado.',
+    stack: 'Cada movimiento se juzga contra las corcheas de la canción: a tiempo suma racha, fuera de tiempo daña el casco. Si el casco se rompe o las piezas llegan arriba, te quedás con la mitad.',
+    signal: 'Durante la llamada podés tocar libremente para practicar. En la respuesta, cada nota se juzga como en Vía Pulso. Repetir un patrón entero da un bonus.',
+  };
   function renderSongs() {
-    if (S.diff == null) S.diff = 0;
-    const W0 = WORLDS[S.world];
+    const W0 = WORLDS[S.world], mode = GX[W0.gal].mode, unit = GX[W0.gal].unit;
     if (SONGS[S.sel].wi !== S.world) S.sel = W0.idx[0];
     { const cur = SONGS[S.sel], ok = diffsOf(cur).filter(d => diffOpen(cur, d));
       if (!ok.includes(S.diff)) S.diff = ok[ok.length - 1]; }
     $('whOrb').dataset.w = W0.id; $('whGenre').textContent = W0.genre; $('whName').textContent = W0.name; $('whDesc').textContent = W0.desc;
     $('songs').innerHTML = W0.idx.map(i => {
-      const s = SONGS[i];
-      const charts = DIFFS.map((_, d) => getChart(i, d));
-      const st = charts.map(c => c.stars), lo = Math.min(...st), hi = Math.max(...st);
-      const grades = DIFFS.map((_, d) => S.rec[`${s.id}-${d}`]).filter(r => r && r.grade).map(r => r.grade);
+      const s = SONGS[i], ds = diffsOf(s);
+      const charts = Object.fromEntries(ds.map(d => [d, getChart(i, d)]));
+      const st = ds.map(d => charts[d].stars), lo = Math.min(...st), hi = Math.max(...st);
+      const grades = ds.map(d => recOf(s, d)).filter(r => r && r.grade).map(r => r.grade);
       const best = grades.sort((a, b) => gradeRank(b) - gradeRank(a))[0] || '';
-      const sel = i === S.sel;
+      const sel = i === S.sel, eb = ecoBest(s), iv = ecoInterval(s);
+      const eco = eb > 0 ? `<span class="eco"><i style="--dur:${iv.toFixed(1)}s;--delay:-${((Date.now() / 1000) % iv).toFixed(1)}s"></i>Eco: +${fmt(ecoPerCycle(s))} ${unit} cada ${fmtTime(iv)}</span>` : '';
       let h = `<div class="songwrap${sel ? ' sel' : ''}">
         <button class="song" data-i="${i}" aria-expanded="${sel}">
           <span class="num">${String(s.k + 1).padStart(2, '0')}</span>
           <span class="title">${s.name}</span>
           <span class="grade">${best}</span>
-          <span class="meta">${s.bpm} BPM · ${s.tut ? 'Tutorial · ' + dec1(lo) + '★' : dec1(lo) + '–' + dec1(hi) + '★'} · ${diffsOf(s).filter(d => diffOpen(s, d)).length}/${diffsOf(s).length} abiertas</span>
+          <span class="meta">${s.bpm} BPM · ${s.tut ? 'Tutorial · ' + dec1(lo) + '★' : dec1(lo) + '–' + dec1(hi) + '★'} · ${ds.filter(d => diffOpen(s, d)).length}/${ds.length} abiertas</span>
+          ${eco}
         </button>`;
       if (sel) {
-        h += `<div class="diffs${s.tut ? ' one' : ''}">${diffsOf(s).map(k => {
-          const d = DIFFS[k], c = charts[k], r = S.rec[`${s.id}-${k}`], open = diffOpen(s, k);
+        h += `<div class="diffs${s.tut ? ' one' : ''}"${!s.tut && ds.length === 3 ? ' style="grid-template-columns:repeat(3,minmax(0,1fr))"' : ''}>${ds.map(k => {
+          const d = DIFFS[k], c = charts[k], r = recOf(s, k), open = diffOpen(s, k);
           if (!open) return `<button class="diff locked" disabled>
             <span class="dn">${d.name}${d.boards === 2 ? ' · 2 tableros' : ''}</span>
             <span class="ds">${dec1(c.stars)}★</span>
@@ -1241,13 +2069,15 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
             <span class="dbar"><i style="width:${Math.min(100, c.stars / 14 * 100)}%"></i></span>
             <span class="dm">x${dec(c.mult)}${r && r.grade ? ' · ' + r.grade : ''}${r && r.fc ? ' · FC' : ''}</span>
           </button>`;
-        }).join('')}</div><p class="dinfo">${diffInfo(S.diff)}</p>`;
+        }).join('')}</div><p class="dinfo">${diffInfo(s, S.diff)}</p>`;
       }
       return h + '</div>';
     }).join('');
     const c = getChart(S.sel, S.diff);
     $('playBtn').textContent = `Jugar “${SONGS[S.sel].name}” · ${DIFFS[S.diff].name} ${dec1(c.stars)}★`;
-    $('keycfg').hidden = S.diff !== 3;
+    $('keycfg').hidden = !(mode === 'arrows' && S.diff === 3);
+    $('mechBox').hidden = mode !== 'arrows';
+    $('menuHint').textContent = MENU_HINT[mode];
     for (const side of ['L', 'R']) {
       const cur = side === 'L' ? S.keysL : S.keysR;
       document.querySelector(`.seg[data-side="${side}"]`).innerHTML = Object.keys(GROUPS)
@@ -1282,54 +2112,33 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
   $('playBtn').addEventListener('click', () => startRun(S.sel, S.diff));
   $('quitBtn').addEventListener('click', pause);
   $('retryBtn').addEventListener('click', () => run ? startRun(run.si, run.di) : startRun(S.sel, S.diff));
-  $('worldBtn').addEventListener('click', () => { const toMap = run && run.song.tut && tutDone(); run = null; setView(toMap ? 'map' : 'menu'); });
+  $('worldBtn').addEventListener('click', () => { const toMap = run && run.song.tut && tutDone(run.song.gal); run = null; setView(toMap ? 'map' : 'menu'); });
+  $('tabGal').addEventListener('click', () => { run = null; galSel = S.galaxy; setView('gal'); });
   $('tabMap').addEventListener('click', () => { run = null; setView('map'); });
+  $('tabTree').addEventListener('click', () => { run = null; treeId = S.galaxy; setView('tree'); });
+  $('tabGlobal').addEventListener('click', () => { run = null; treeId = 'global'; setView('tree'); });
   $('backMap').addEventListener('click', () => setView('map'));
+  $('noticeClose').addEventListener('click', () => { $('notice').hidden = true; });
 
-  // ---------- Mapa ----------
-  const LAYOUT = {
-    wide: { base: [9, 26], rock: [22, 66], pop: [40, 24], jazz: [45, 77], disco: [66, 40], edm: [87, 66] },
-    tall: { base: [50, 9], rock: [24, 27], pop: [75, 38], jazz: [27, 56], disco: [73, 72], edm: [38, 90] },
-  };
-  const LINKS = [['base', 'rock'], ['rock', 'pop'], ['rock', 'jazz'], ['pop', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']];
-  const MAP_STARS = (() => { const r = rng(777); return Array.from({ length: 110 }, () => [r() * 100, r() * 100, r() < 0.88 ? 0.7 : 1.4, 0.2 + r() * 0.6]); })();
-  function renderMap() {
-    const pos = LAYOUT[window.matchMedia('(max-width: 600px)').matches ? 'tall' : 'wide'];
-    $('mapSvg').innerHTML = MAP_STARS.map(([x, y, r, a]) => `<circle cx="${x.toFixed(1)}%" cy="${y.toFixed(1)}%" r="${r}" fill="#ffffff" fill-opacity="${a.toFixed(2)}"/>`).join('') +
-      LINKS.map(([a, b]) => `<line class="${worldOpen(WORLDS.findIndex(w => w.id === a)) && worldOpen(WORLDS.findIndex(w => w.id === b)) ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
-    $('planets').innerHTML = WORLDS.map((w, wi) => {
-      const cleared = w.idx.filter(i => DIFFS.some((_, d) => S.rec[`${SONGS[i].id}-${d}`]?.clear)).length, n = w.idx.length, open = worldOpen(wi);
-      const via = LINKS.flatMap(([a, b]) => a === w.id ? [b] : b === w.id ? [a] : []).map(id => WORLDS.findIndex(x => x.id === id)).filter(x => worldOpen(x));
-      const status = open ? (w.tutorial ? (cleared ? 'Completado' : 'Empezá acá') : `${cleared}/${n}${cleared < NEED ? ` · ${NEED} abren rutas` : ''}`)
-        : via.length ? (WORLDS[via[0]].tutorial ? 'Completá el tutorial' : `Superá ${NEED} en ${WORLDS[via[0]].name}`) : 'Fuera de alcance';
-      return `<button class="pl${open ? '' : ' locked'}${w.tutorial && !cleared ? ' start' : ''}" data-wi="${wi}" style="left:${pos[w.id][0]}%;top:${pos[w.id][1]}%" ${open ? '' : 'disabled'} aria-label="${w.name}, ${w.genre}, ${status}">
-        <span class="orb" data-w="${w.id}"></span>
-        <span class="pgn">${w.genre}</span><span class="pn">${w.name}</span><span class="pp">${status}</span>
-      </button>`;
-    }).join('');
-    $('mapHint').textContent = tutDone()
-      ? `Cada planeta es un género musical. Superá ${NEED} de sus 6 canciones (en cualquier dificultad) para abrir las rutas a los planetas vecinos.`
-      : 'Empezá en la Estación: completá el tutorial para abrir la ruta a Magma.';
+  // ---------- Árboles ----------
+  let selNode = null;
+  const nodeBtn = n => `<button class="node${n.root ? ' root' : ''}${n.isCore ? ' is-core' : ''}" id="n-${n.id}" data-id="${n.id}" ${n.pos ? `style="grid-column:${n.pos[0]};grid-row:${n.pos[1]}"` : ''}><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="14"/></svg><span class="nn">${n.name}</span><span class="nl"></span></button>`;
+  let builtTree = null;
+  function buildTree() {
+    if (builtTree === treeId) return;
+    builtTree = treeId;
+    const T = TREES[treeId];
+    $('coreGrid').innerHTML = T.nodes.filter(n => n.br === 'core').map(nodeBtn).join('');
+    $('branches').className = 'branches' + (T.branches.length === 2 ? ' two' : '');
+    $('branches').innerHTML = T.branches.map(b => `<div class="branch" data-br="${b.id}">
+        <div><h3>${b.name}</h3><p>${b.tag}</p></div>
+        <div class="bgrid">${T.nodes.filter(n => n.br === b.id).map(nodeBtn).join('')}</div>
+      </div>`).join('');
   }
-  $('planets').addEventListener('click', e => {
-    const b = e.target.closest('.pl'); if (!b || b.disabled) return;
-    S.world = +b.dataset.wi; save(); setView('menu');
-  });
-  $('tabTree').addEventListener('click', () => { run = null; setView('tree'); });
-
-  // ---------- Árbol ----------
-  let selNode = 'c_root';
-  const nodeBtn = n => `<button class="node${n.root ? ' root' : ''}" id="n-${n.id}" data-id="${n.id}" ${n.pos ? `style="grid-column:${n.pos[0]};grid-row:${n.pos[1]}"` : ''}><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="14"/></svg><span class="nn">${n.name}</span><span class="nl"></span></button>`;
-  $('coreGrid').innerHTML = NODES.filter(n => n.br === 'core').map(nodeBtn).join('');
-  $('branches').innerHTML = BRANCHES.map(b => `<div class="branch" data-br="${b.id}">
-      <div><h3>${b.name}</h3><p>${b.tag}</p></div>
-      <div class="bgrid">${NODES.filter(n => n.br === b.id).map(nodeBtn).join('')}</div>
-    </div>`).join('');
-  // Cartel flotante: con mouse aparece tras 1 s de hover (anillo de carga); con toque o clic, al instante.
   let tipOpen = false, chargeT = null, hideT = null, chargingEl = null;
   const tip = $('detail');
   function positionTip() {
-    const b = $('n-' + selNode); if (!b || !tipOpen) return;
+    const b = selNode && $('n-' + selNode); if (!b || !tipOpen) return;
     const r = b.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight, m = 10;
     const below = r.bottom + th + m + 8 < window.innerHeight || r.top - th - m < 0;
     let x = r.left + r.width / 2 - tw / 2; x = Math.max(8, Math.min(window.innerWidth - tw - 8, x));
@@ -1373,8 +2182,10 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
   $('vTree').addEventListener('scroll', () => { if (tipOpen) positionTip(); }, { passive: true });
   window.addEventListener('resize', () => { if (tipOpen) positionTip(); });
   function updateTree() {
-    for (const n of NODES) {
+    if (builtTree !== treeId) return;
+    for (const n of TREES[treeId].nodes) {
       const b = $('n-' + n.id), lv = L(n.id);
+      if (!b) continue;
       b.classList.toggle('locked', !reqMet(n));
       b.classList.toggle('owned', lv > 0);
       b.classList.toggle('maxed', !!maxed(n));
@@ -1382,14 +2193,14 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
       b.classList.toggle('sel', tipOpen && n.id === selNode);
       const off = !!(TOGGLES[n.id] && lv > 0 && isOff(n.id));
       b.classList.toggle('off', off);
-      b.querySelector('.nl').textContent = n.id === 'core' ? 'activo' : (n.max ? `${lv}/${n.max}` : `nv ${lv}`) + (off ? ' · apagada' : '');
+      b.querySelector('.nl').textContent = n.isCore ? 'activo' : (n.max ? `${lv}/${n.max}` : `nv ${lv}`) + (off ? ' · apagada' : '');
     }
   }
   function drawLines() {
-    const tree = $('tree'), box = tree.getBoundingClientRect();
-    if (!box.width) return;
+    const box = tree.getBoundingClientRect();
+    if (!box.width || builtTree !== treeId) return;
     let out = '';
-    for (const n of NODES) {
+    for (const n of TREES[treeId].nodes) {
       const p = n.parent || (n.req && n.req[0][0]);
       if (!p || N[p].br !== n.br) continue;
       const a = $('n-' + p).getBoundingClientRect(), b = $('n-' + n.id).getBoundingClientRect();
@@ -1400,24 +2211,26 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     }
     $('treeSvg').innerHTML = out;
   }
-  if (window.ResizeObserver) new ResizeObserver(() => { if (view === 'tree') drawLines(); }).observe($('tree'));
+  if (window.ResizeObserver) new ResizeObserver(() => { if (view === 'tree') drawLines(); }).observe(tree);
+  const walletUnit = tid => tid === 'global' ? 'de materia oscura' : GX[tid].unit;
   function renderDetail() {
-    const n = N[selNode], lv = L(n.id), isMax = maxed(n);
-    $('dBr').textContent = `${BR_NAME[n.br]}${n.id === 'core' ? '' : ' · ' + (n.max ? `nivel ${lv}/${n.max}` : `nivel ${lv}`)}`;
+    const n = N[selNode]; if (!n) return;
+    const lv = L(n.id), isMax = maxed(n), T = TREES[n.tree];
+    $('dBr').textContent = `${BR_NAME[n.br]}${n.isCore ? '' : ' · ' + (n.max ? `nivel ${lv}/${n.max}` : `nivel ${lv}`)}`;
     $('dName').textContent = n.name;
     $('dDesc').textContent = n.desc;
-    $('dFx').innerHTML = n.id === 'core' ? '' : `<div><span>Ahora</span>${TOGGLES[n.id] && lv && isOff(n.id) ? 'Apagada en canciones' : n.fx(lv)}</div>` + (isMax ? '' : `<div><span>Siguiente</span>${n.fx(lv + 1)}</div>`);
-    const reqs = (n.req || []).filter(([id]) => id !== 'core');
+    $('dFx').innerHTML = n.isCore ? '' : `<div><span>Ahora</span>${TOGGLES[n.id] && lv && isOff(n.id) ? 'Apagada en canciones' : n.fx(lv)}</div>` + (isMax ? '' : `<div><span>Siguiente</span>${n.fx(lv + 1)}</div>`);
+    const reqs = (n.req || []).filter(([id]) => !CORE_IDS.has(id));
     $('dReq').innerHTML = reqs.length ? 'Requiere: ' + reqs.map(([id, r]) => {
       const ok = L(id) >= r;
       return `<b class="${ok ? '' : 'no'}">${ok ? '✓' : '✗'} ${N[id].name}${N[id].max > 1 ? ' nv ' + r : ''}</b>`;
     }).join(' · ') : '';
-    const tog = $('togBtn'), T = TOGGLES[n.id];
-    tog.hidden = !(T && L(n.id));
+    const tog = $('togBtn'), TG = TOGGLES[n.id];
+    tog.hidden = !(TG && L(n.id));
     if (!tog.hidden) {
-      const parentOff = T.parent && S.off[T.parent];
+      const parentOff = TG.parent && S.off[TG.parent];
       tog.disabled = !!parentOff;
-      tog.textContent = parentOff ? `Apagada con ${N[T.parent].name}` : S.off[n.id] ? 'Encender en canciones' : 'Apagar en canciones';
+      tog.textContent = parentOff ? `Apagada con ${N[TG.parent].name}` : S.off[n.id] ? 'Encender en canciones' : 'Apagar en canciones';
     }
     const btn = $('buyBtn');
     if (!n.cost) { btn.hidden = true; return; }
@@ -1425,7 +2238,7 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     if (isMax) { btn.disabled = true; btn.textContent = 'Al máximo'; }
     else if (!reqMet(n)) { btn.disabled = true; btn.textContent = 'Bloqueado'; }
     else if (capped(n)) { btn.disabled = true; btn.textContent = 'Abrí otro planeta'; }
-    else { const c = nodeCost(n, lv); btn.disabled = S.pts < c; btn.textContent = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)}`; }
+    else { const c = nodeCost(n, lv); btn.disabled = S[T.wallet] < c; btn.textContent = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)}${n.tree === 'global' ? ' MO' : ''}`; }
   }
   function toggleMech(id) {
     S.off = S.off || {};
@@ -1438,45 +2251,52 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     toggleMech(b.dataset.t); renderSongs();
   });
   const REFUND = 0.4;
-  const spentOnTree = () => NODES.reduce((sum, n) => { if (!n.cost) return sum; for (let k = 0; k < L(n.id); k++) sum += nodeCost(n, k); return sum; }, 0);
+  const spentOnTree = tid => TREES[tid].nodes.reduce((sum, n) => { if (!n.cost) return sum; for (let k = 0; k < L(n.id); k++) sum += nodeCost(n, k); return sum; }, 0);
   function renderRespec(confirming) {
-    const spent = spentOnTree(), back = Math.floor(spent * REFUND);
-    $('spentInfo').textContent = `Invertido en mejoras: ${fmt(spent)} pulsos`;
+    const spent = spentOnTree(treeId), back = Math.floor(spent * REFUND), u = walletUnit(treeId);
+    $('spentInfo').textContent = `${TREES[treeId].title} · invertido: ${fmt(spent)} ${u}`;
     $('respecBox').innerHTML = !spent ? ''
       : confirming
         ? `<span>Recuperás ${fmt(back)} de ${fmt(spent)} (40%). ¿Seguro?</span><button class="play-btn" id="respecYes">Sí, reiniciar</button><button class="ghost-btn" id="respecNo">Cancelar</button>`
-        : `<button class="ghost-btn" id="respecBtn">Reiniciar mejoras · recuperás el 40%</button>`;
+        : `<button class="ghost-btn" id="respecBtn">Reiniciar estas mejoras · recuperás el 40%</button>`;
   }
   $('respecBox').addEventListener('click', e => {
     const id = e.target.id;
     if (id === 'respecBtn') renderRespec(true);
     else if (id === 'respecNo') renderRespec(false);
     else if (id === 'respecYes') {
-      S.pts += Math.floor(spentOnTree() * REFUND); S.n = {}; S.off = {}; save();
-      closeTip(); updateTree(); drawLines(); renderRespec(false); renderUI(true);
+      S[TREES[treeId].wallet] += Math.floor(spentOnTree(treeId) * REFUND);
+      for (const n of TREES[treeId].nodes) delete S.n[n.id];
+      if (treeId === 'pulso') S.off = {};
+      save(); closeTip(); updateTree(); drawLines(); renderRespec(false); renderUI(true);
     }
   });
   $('buyBtn').addEventListener('click', () => {
-    const n = N[selNode]; if (!canBuy(n)) return;
-    S.pts -= nodeCost(n, L(n.id)); S.n[n.id] = L(n.id) + 1; save(); renderRespec(false); requestAnimationFrame(positionTip);
+    const n = N[selNode]; if (!n || !canBuy(n)) return;
+    S[TREES[n.tree].wallet] -= nodeCost(n, L(n.id)); S.n[n.id] = L(n.id) + 1; save(); renderRespec(false); requestAnimationFrame(positionTip);
     updateTree(); renderDetail(); drawLines(); renderUI(true);
   });
 
   let lastUI = 0;
   function renderUI(force) {
     const now = performance.now(); if (!force && now - lastUI < 250) return; lastUI = now;
-    $('pts').textContent = fmt(S.pts);
-    $('rate').textContent = view === 'play' ? 'El árbol se habilita al terminar la canción'
-      : 'Jugá canciones para juntar pulsos';
-    $('tot').textContent = `Total histórico: ${fmt(S.total)} pulsos`;
-    const n = NODES.filter(canBuy).length, badge = $('badge');
-    badge.hidden = !n; badge.textContent = n;
+    const g = GX[S.galaxy], rate = ecoRate(g.id);
+    $('curName').textContent = g.curName;
+    $('pts').textContent = fmt(S[g.cur]);
+    $('rate').textContent = view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate)} ${g.unit}/s` : 'Superá canciones para activar sus ecos';
+    $('moLine').innerHTML = `Materia oscura: <b>${Math.floor(S.mo)}</b>`;
+    $('tot').textContent = `Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`;
+    const nb = TREES[S.galaxy].nodes.filter(canBuy).length, ng = TREES.global.nodes.filter(canBuy).length;
+    $('badge').hidden = !nb; $('badge').textContent = nb;
+    $('badgeG').hidden = !ng; $('badgeG').textContent = ng;
     if (view === 'tree' && !force) { updateTree(); if (tipOpen) renderDetail(); }
+    if (view === 'gal' && !force && now % 1000 < 260) renderGalInfo();
   }
 
   // ---------- Teclado ----------
+  const STACK_KEYS = { ArrowLeft: 'L', KeyA: 'L', KeyJ: 'L', ArrowRight: 'R', KeyD: 'R', KeyL: 'R', ArrowUp: 'U', KeyW: 'U', KeyI: 'U', KeyX: 'U', ArrowDown: 'D', KeyS: 'D', KeyK: 'D', Space: 'H', KeyC: 'C', ShiftLeft: 'C', ShiftRight: 'C' };
   function mapKey(code) {
-    if (!run) return undefined;
+    if (!run || run.mode === 'stack') return undefined;
     if (run.boards === 1) { for (const g of Object.values(GROUPS)) if (code in g) return g[code]; return undefined; }
     if (code in GROUPS[S.keysL]) return GROUPS[S.keysL][code];
     if (code in GROUPS[S.keysR]) return 4 + GROUPS[S.keysR][code];
@@ -1485,7 +2305,11 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
   window.addEventListener('keydown', e => {
     if (view === 'play') {
       if (e.code === 'Escape' || e.code === 'KeyP') { e.preventDefault(); if (run && run.paused) resume(); else pause(); return; }
-      if (run && run.paused) return;
+      if (!run || run.paused) return;
+      if (run.mode === 'stack') {
+        const act = STACK_KEYS[e.code]; if (!act) return;
+        e.preventDefault(); if (!e.repeat) stackInput(act); return;
+      }
       const l = mapKey(e.code); if (l === undefined) return;
       e.preventDefault(); if (e.repeat) return;
       keyDown[l] = true; hit(l); $('pad' + l)?.classList.add('on');
@@ -1505,17 +2329,30 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
     const l = mapKey(e.code); if (l === undefined) return;
     keyDown[l] = false; $('pad' + l)?.classList.remove('on'); release(l);
   });
-  document.addEventListener('visibilitychange', () => { if (document.hidden && view === 'play') pause(); });
-  window.addEventListener('resize', () => { if (view === 'play') fitPlay(); else resize(); if (view === 'tree') drawLines(); if (view === 'map') renderMap(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { save(); if (view === 'play') pause(); } });
+  // Celular acostado: la pista va al centro y los botones a los costados
+  function applyLand() {
+    const land = window.innerWidth > window.innerHeight && window.innerHeight < 560;
+    if (land === document.body.classList.contains('land')) return false;
+    document.body.classList.toggle('land', land); return true;
+  }
+  window.addEventListener('resize', () => { if (applyLand() && view === 'play' && run) renderPads(); if (view === 'play') fitPlay(); else resize(); if (view === 'tree') drawLines(); if (view === 'map') renderMap(); if (view === 'gal') renderGal(); });
   function scrollSel() { document.querySelector('.songwrap.sel')?.scrollIntoView({ block: 'nearest' }); }
-  // Ajusta la pista al espacio disponible (marco de itch.io, pantalla completa o celular), centrada
   function fitPlay() {
     if (view !== 'play' || !run) return;
-    const vp = $('vPlay'), a = run.boards === 2 ? 6.4 / 4.4 : 3 / 4.4;
-    const extra = $('pads').offsetHeight + $('quitBtn').offsetHeight + 20;
-    let w = Math.min(vp.clientWidth, (vp.clientHeight - extra) * a, run.boards === 2 ? 960 : 480);
+    const vp = $('vPlay'), a = run.boards === 2 ? 6.4 / 4.4 : 3 / 4.4, stage = $('stage');
+    let w;
+    if (isLand()) {
+      stage.classList.add('land-stage'); stage.style.width = '';
+      const sides = [...document.querySelectorAll('.pg.side')].reduce((sum, el) => sum + el.offsetWidth, 0) + 32;
+      w = Math.min(vp.clientWidth - sides, (vp.clientHeight - 4) * a, run.boards === 2 ? 960 : 480);
+    } else {
+      stage.classList.remove('land-stage');
+      const extra = $('pads').offsetHeight + $('quitBtn').offsetHeight + 20;
+      w = Math.min(vp.clientWidth, (vp.clientHeight - extra) * a, run.boards === 2 ? 960 : 480);
+    }
     w = Math.max(160, Math.floor(w));
-    $('stage').style.width = w + 'px';
+    if (!isLand()) stage.style.width = w + 'px';
     cv.style.width = w + 'px'; cv.style.height = Math.floor(w / a) + 'px';
     resize();
   }
@@ -1523,9 +2360,9 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
   const resetBox = $('resetBox');
   resetBox.addEventListener('click', e => {
     if (e.target.id === 'reset') {
-      resetBox.innerHTML = '<span class="confirm">¿Borrar pulsos, árbol y récords? <button class="link" id="yes">Sí, borrar</button><button class="link" id="no">Cancelar</button></span>';
+      resetBox.innerHTML = '<span class="confirm">¿Borrar todo (monedas, árboles, galaxias y récords)? <button class="link" id="yes">Sí, borrar</button><button class="link" id="no">Cancelar</button></span>';
     } else if (e.target.id === 'yes' || e.target.id === 'no') {
-      if (e.target.id === 'yes') { run = null; S = fresh(); chartCache.clear(); save(); setView(view === 'tree' ? 'tree' : 'map'); }
+      if (e.target.id === 'yes') { run = null; S = fresh(); chartCache.clear(); treeId = 'pulso'; builtTree = null; save(); setView('map'); }
       resetBox.innerHTML = '<button class="link" id="reset">Reiniciar progreso</button>';
     }
   });
@@ -1533,14 +2370,19 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
   // ---------- Loop ----------
   let lastFrame = performance.now(), lastSave = 0;
   function frame(now) {
-    lastFrame = now;
-    if (view === 'play' && run && !run.over && !run.paused) update(gameT());
-    if (view === 'play' && !(run && run.paused)) draw();
+    const dt = Math.min(1, (now - lastFrame) / 1000); lastFrame = now;
+    creditEcos(dt);
+    if (view === 'play' && run && !run.over && !run.paused) (run.mode === 'stack' ? updateStack : update)(gameT());
+    if (view === 'play' && run && !run.paused) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : draw)();
     renderUI(false);
     if (now - lastSave > 3000) { save(); lastSave = now; }
     requestAnimationFrame(frame);
   }
-  function boot() { setView('map'); requestAnimationFrame(frame); }
+  function boot() {
+    applyLand();
+    if (offlineNote) { $('noticeText').textContent = offlineNote; $('notice').hidden = false; }
+    setView('map'); requestAnimationFrame(frame);
+  }
   document.fonts?.ready?.then(() => { resize(); if (view === 'tree') drawLines(); });
   window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot();
 })();
