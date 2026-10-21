@@ -97,6 +97,10 @@ Cada galaxia nueva sigue el mismo molde que las actuales:
 2. **Órbita:** dibujo y colisión simples, y es muy distinta a todo lo anterior.
 3. **Salto:** la más costosa de animar y de equilibrar, porque hay que sincronizar los obstáculos con un movimiento que se ve continuo.
 
+## Señal: mejoras para mensajes de varias notas por tiempo
+- **Multiplexado** (rama Transmisión): las notas de acordes y ráfagas valen más (+50% por nivel, 3 niveles). Hace rendir los modificadores Acordes y Ráfagas.
+- **Eco de acorde** (rama Memoria): en la respuesta, las dos flechas de un acorde se marcan juntas en la línea de tiempo aunque no tengas Eco visual.
+
 ## Modificadores propuestos y todavía no elegidos
 - **Vía Pulso:**
   - Sigilo (flechas invisibles, +1,5★ como referencia).

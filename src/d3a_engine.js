@@ -60,7 +60,7 @@
     setView('play'); fitPlay();
   }
   // ¿El paso i (semicorchea) cae dentro de una respuesta de Señal?
-  const inResponse = i => { const ch = run.ch, cyc = ch.len * 2, k = i - 16; if (k < 0 || k >= run.rounds.length * cyc) return false; return k % cyc >= ch.len; };
+  const inResponse = i => { const ch = run.ch, cyc = ch.cycle, k = i - 16; if (k < 0 || k >= run.rounds.length * cyc) return false; return k % cyc >= ch.len + ch.gap; };
   function scheduleAudio(t) {
     const { ch, song } = run, w = WORLDS[song.wi], st = ch.step;
     while (run.audioStep < ch.total && LEAD + run.audioStep * st < t + 0.2) {
@@ -69,6 +69,7 @@
       playMusic(run.music, at, i, st, ch.total, run.mode === 'signal');
       if (run.mode === 'signal') {
         while (run.callIdx < ch.calls.length && ch.calls[run.callIdx].i === i) beacon(at, ch.calls[run.callIdx++].lane);
+        if (ch.gap && ch.gapAt.has(i)) walkie(at, ch.gap * st);
         if (L('s_t_metro') && pos % 2 === 0 && inResponse(i)) click(at, pos === 0);
       }
       run.audioStep++;

@@ -898,6 +898,9 @@ button.chip.mod:hover { border-color: var(--fg); }
     reverse: { gal: 'sen', label: 'Al revés', pct: 0.25, desc: 'Repetís la llamada en orden inverso.' },
     blind:   { gal: 'com', label: 'Ciego', pct: 0.2, desc: 'Solo ves las próximas 3 baldosas del camino.' },
     still:   { gal: 'com', label: 'Sin órbita', pct: 0.15, desc: 'Los planetas no se ven: solo el camino y el pulso de la baldosa en la que estás.' },
+    nogap:   { gal: 'sen', label: 'Sin cambio', pct: 0.15, desc: 'La respuesta empieza apenas termina la llamada, sin la pausa de radio.' },
+    chords:  { gal: 'sen', label: 'Acordes', pct: 0.2, desc: 'Algunas notas de la llamada son dos flechas a la vez.' },
+    burst:   { gal: 'sen', label: 'Ráfagas', pct: 0.2, desc: 'Un tiempo de cada patrón trae dos o tres notas seguidas en semicorcheas.' },
     delay:   { gal: 'sen', label: 'Memoria diferida', pct: 0.4, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
   };
   const galHardClear = gal => SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
@@ -1497,17 +1500,31 @@ button.chip.mod:hover { border-color: var(--fg); }
   // ---------- Señal: llamada y respuesta ----------
   // Cada ronda: la baliza toca un patrón (llamada) y en el mismo largo siguiente hay que repetirlo (respuesta).
   const beacon = (at, lane) => { tone(at, 'sine', LANE_NOW[lane] * 0.5, 0.16, 0.26); tone(at, 'triangle', LANE_NOW[lane], 0.04, 0.14); };
+  // Pausa de radio entre la llamada y la respuesta: clic de "cambio", ruido blanco filtrado y otro clic al soltar
+  function walkie(at, dur) {
+    if (!ac) return;
+    if (!noiseBuf) nz(at, { vol: 0.0001 });
+    tone(at, 'square', 1400, 0.03, 0.03);
+    const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(), end = at + dur;
+    src.buffer = noiseBuf; src.loop = true; f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 0.8;
+    g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.05, at + 0.03);
+    g.gain.setValueAtTime(0.05, Math.max(at + 0.04, end - 0.07)); g.gain.linearRampToValueAtTime(0.0001, end - 0.02);
+    src.connect(f).connect(g).connect(ac.destination); src.start(at); src.stop(end);
+    tone(end - 0.04, 'square', 1100, 0.025, 0.03);
+  }
+  // Largo de la pausa en semicorcheas: un tiempo en canciones lentas, dos en las rápidas (así dura parecido en segundos)
+  const radioGap = bpm => 4 * Math.max(1, Math.min(2, Math.round(bpm / 75)));
   const click = (at, strong) => tone(at, 'square', strong ? 1760 : 1320, strong ? 0.035 : 0.022, 0.03);
   function buildSignal(si, di, mods = []) {
     const s = SONGS[si], step = 60 / s.bpm / 4, R = rng(3000 + si * 131 + di * 17);
-    const bars = s.tut ? 1 : di === 2 ? 2 : 1, len = bars * 16, cycle = len * 2;
+    const bars = s.tut ? 1 : di === 2 ? 2 : 1, len = bars * 16, gap = mods.includes('nogap') ? 0 : radioGap(s.bpm), cycle = len * 2 + gap;
     const nR = Math.max(2, Math.floor((songMeasures(s) * 16 - 24) / cycle)), total = 16 + nR * cycle + 8;
     const lvlAdj = Math.min(2, Math.floor((s.lvl - 1) / 2));
     const notes = [], calls = [], rounds = [];
     let last = -1, sumN = 0;
     const pats = [];   // patrón de cada llamada: para Memoria diferida, la respuesta usa el de la ronda anterior
     for (let r = 0; r < nR; r++) {
-      const start = 16 + r * cycle, resp = start + len, prog = nR > 1 ? r / (nR - 1) : 0;
+      const start = 16 + r * cycle, resp = start + len + gap, prog = nR > 1 ? r / (nR - 1) : 0;
       const grid = s.tut || di === 0 ? 4 : di === 1 ? (prog < 0.3 ? 4 : 2) : (prog < 0.4 ? 2 : r % 2 ? 1 : 2);
       const slots = len / grid;
       let count = s.tut ? Math.min(1 + Math.floor(r / 2), 3)
@@ -1518,14 +1535,23 @@ button.chip.mod:hover { border-color: var(--fg); }
       const pick = new Set();
       if (s.tut || R() < 0.7) pick.add(0);
       while (pick.size < count) pick.add(Math.floor(R() * slots));
-      const offs = [...pick].sort((a, b) => a - b).map(k => k * grid);
-      const pat = offs.map((off, k) => {
+      let offs = [...pick].sort((a, b) => a - b).map(k => k * grid);
+      // Ráfagas: un tiempo del patrón trae dos o tres notas seguidas en semicorcheas
+      if (mods.includes('burst') && grid > 1 && offs.length > 1) {
+        const b = Math.floor(R() * (offs.length - 1)), o = offs[b], next = offs[b + 1], add = [o + 1];
+        if (R() < 0.4) add.push(o + 2);
+        offs = [...new Set([...offs, ...add.filter(x => x < next && x < len)])].sort((a, b) => a - b);
+      }
+      const pat = [];
+      offs.forEach((off, k) => {
         let lane = s.tut ? (r + k) % 4 : Math.floor(R() * 4);
         if (!s.tut && lane === last && R() < 0.5) lane = (lane + 1 + Math.floor(R() * 3)) % 4;
         last = lane;
-        calls.push({ t: LEAD + (start + off) * step, i: start + off, lane });
-        return { off, lane };
+        pat.push({ off, lane });
+        // Acordes: algunas notas son dos flechas a la vez
+        if (mods.includes('chords') && R() < (di === 2 ? 0.35 : 0.25)) pat.push({ off, lane: (lane + 1 + Math.floor(R() * 3)) % 4 });
       });
+      for (const p of pat) calls.push({ t: LEAD + (start + p.off) * step, i: start + p.off, lane: p.lane });
       pats.push(pat);
       // Respuesta: la llamada tal cual, la anterior (diferida) y/o con las flechas en orden inverso (mismo ritmo)
       const src = mods.includes('delay') && r > 0 ? pats[r - 1] : pat;
@@ -1540,7 +1566,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     const dur = total * step;
     let stars = 0.4 + 1.9 * notes.length / dur + (sumN / nR) * 0.12 + (bars === 2 ? 0.5 : 0);
     stars = Math.round(stars * 10) / 10;
-    return { notes, calls, rounds, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, bars, len };
+    return { notes, calls, rounds, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, bars, len, gap, cycle, gapAt: new Set(rounds.map(r => r.start + len)) };
   }
 
   // ---------- Ensamble: piezas que caen al compás ----------
@@ -1710,7 +1736,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     setView('play'); fitPlay();
   }
   // ¿El paso i (semicorchea) cae dentro de una respuesta de Señal?
-  const inResponse = i => { const ch = run.ch, cyc = ch.len * 2, k = i - 16; if (k < 0 || k >= run.rounds.length * cyc) return false; return k % cyc >= ch.len; };
+  const inResponse = i => { const ch = run.ch, cyc = ch.cycle, k = i - 16; if (k < 0 || k >= run.rounds.length * cyc) return false; return k % cyc >= ch.len + ch.gap; };
   function scheduleAudio(t) {
     const { ch, song } = run, w = WORLDS[song.wi], st = ch.step;
     while (run.audioStep < ch.total && LEAD + run.audioStep * st < t + 0.2) {
@@ -1719,6 +1745,7 @@ button.chip.mod:hover { border-color: var(--fg); }
       playMusic(run.music, at, i, st, ch.total, run.mode === 'signal');
       if (run.mode === 'signal') {
         while (run.callIdx < ch.calls.length && ch.calls[run.callIdx].i === i) beacon(at, ch.calls[run.callIdx++].lane);
+        if (ch.gap && ch.gapAt.has(i)) walkie(at, ch.gap * st);
         if (L('s_t_metro') && pos % 2 === 0 && inResponse(i)) click(at, pos === 0);
       }
       run.audioStep++;
@@ -2290,12 +2317,13 @@ button.chip.mod:hover { border-color: var(--fg); }
     const now = performance.now(), t = gameT(), ch = run.ch, st = ch.step, U = Math.min(W, H * 0.68);
     drawSky(t);
     drawHud(U);
-    const i = (t - LEAD) / st, cyc = ch.len * 2;
+    const i = (t - LEAD) / st, cyc = ch.cycle;
     let phase = 'intro', rIdx = -1, local = 0;
     if (i >= 16) {
       const k = Math.floor((i - 16) / cyc);
-      if (k < run.rounds.length) { rIdx = k; local = (i - 16) - k * cyc; phase = local < ch.len ? 'call' : 'resp'; } else phase = 'end';
+      if (k < run.rounds.length) { rIdx = k; local = (i - 16) - k * cyc; phase = local < ch.len ? 'call' : local < ch.len + ch.gap ? 'gap' : 'resp'; } else phase = 'end';
     }
+    const rl = local - ch.len - ch.gap;   // posición dentro de la respuesta
     // Antena: un plato con ondas que se encienden en la llamada
     const ax = W / 2, ay = H * 0.2;
     const lastCall = ch.calls.filter(c => c.t <= t).pop(), callAge = lastCall ? t - lastCall.t : 9;
@@ -2311,7 +2339,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = F(900, U * 0.075);
     ctx.fillStyle = phase === 'resp' ? '#ffffff' : 'rgba(255,255,255,0.55)';
-    ctx.fillText(phase === 'call' ? 'ESCUCHÁ' : phase === 'resp' ? 'REPETÍ' : phase === 'end' ? 'FIN DE LA TRANSMISIÓN' : 'PREPARATE', W / 2, H * 0.33);
+    ctx.fillText(phase === 'call' ? 'ESCUCHÁ' : phase === 'gap' ? 'CAMBIO…' : phase === 'resp' ? 'REPETÍ' : phase === 'end' ? 'FIN DE LA TRANSMISIÓN' : 'PREPARATE', W / 2, H * 0.33);
 
     // Cuatro luces: se encienden con la llamada y con tus toques
     const ly = H * 0.48, gap = W / 4.6, size = Math.min(gap * 0.75, 80);
@@ -2335,25 +2363,32 @@ button.chip.mod:hover { border-color: var(--fg); }
       ctx.fillStyle = `rgba(255,255,255,${big ? 0.4 : 0.15})`; ctx.fillRect(x - 1, ty - (big ? 8 : 4), 2, big ? 16 : 8);
     }
     if (rIdx >= 0) {
-      const R = run.rounds[rIdx], px = tx0 + tw * (phase === 'call' ? local : local - ch.len) / ch.len;
+      const callish = phase !== 'resp';
+      if (phase === 'gap') {   // estática de radio alrededor de la antena
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        for (let s = 0; s < 40; s++) { const a = Math.random() * Math.PI * 2, d = U * (0.06 + Math.random() * 0.14); ctx.fillRect(ax + Math.cos(a) * d, ay + Math.sin(a) * d * 0.6, 1 + Math.random() * 6, 1.5); }
+      }
+      const R = run.rounds[rIdx], px = tx0 + tw * (phase === 'call' ? local : phase === 'gap' ? ch.len : rl) / ch.len;
       // Solo audio oculta los puntos; Al revés y Memoria diferida no muestran qué flecha va en la respuesta
       const MD = run.mods, twist = MD.reverse || MD.delay;
-      const showDots = !MD.audio && (phase === 'call' || run.di === 0 || run.song.tut || L('s_m_root'));
-      const showLanes = phase === 'call' || (!twist && (run.song.tut || L('s_m_root')));
-      if (showDots) (phase === 'call' ? R.callSlots : R.slots).forEach((sl, k) => {
+      const showDots = !MD.audio && (callish || run.di === 0 || run.song.tut || L('s_m_root'));
+      const showLanes = callish || (!twist && (run.song.tut || L('s_m_root')));
+      const stackAt = {};   // acordes: la segunda flecha va encima de la primera
+      if (showDots) (callish ? R.callSlots : R.slots).forEach((sl, k) => {
         if (phase === 'call' && sl.off > local) return;   // en la llamada aparecen a medida que suenan
+        const lift = (stackAt[sl.off] = (stackAt[sl.off] || 0) + 1) - 1;
         const x = tx0 + tw * sl.off / ch.len, n = phase === 'resp' ? run.roundNotes[rIdx][k] : null;
         const hitOk = n && n.judged && !n.missed, missed = n && n.missed;
         if (showLanes) {
-          arrow(x, ty - U * 0.06, U * 0.05, ANG[sl.lane]);
-          ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : phase === 'call' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
+          arrow(x, ty - U * 0.06 - lift * U * 0.06, U * 0.05, ANG[sl.lane]);
+          ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : callish ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
         }
         ctx.beginPath(); ctx.arc(x, ty, U * 0.012, 0, Math.PI * 2);
         ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.9)' : 'rgba(255,255,255,0.5)'; ctx.fill();
       });
       ctx.fillStyle = phase === 'resp' ? '#ffffff' : 'rgba(255,255,255,0.5)'; ctx.fillRect(px - 1, ty - 14, 2, 28);
       ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.textAlign = 'left';
-      const nn = phase === 'call' ? R.callSlots.length : R.n;
+      const nn = callish ? R.callSlots.length : R.n;
       ctx.fillText(`Patrón ${rIdx + 1}/${run.rounds.length} · ${nn} ${nn > 1 ? 'notas' : 'nota'}${phase === 'resp' && MD.delay && rIdx > 0 ? ' · repetí el anterior' : ''}`, tx0, ty + U * 0.06);
       ctx.textAlign = 'right';
       ctx.fillText(`Decodificados ${run.decoded}${run.streak > 1 ? ` · racha ${run.streak}` : ''}`, tx1, ty + U * 0.06);

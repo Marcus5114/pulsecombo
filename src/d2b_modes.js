@@ -2,17 +2,31 @@
   // ---------- Señal: llamada y respuesta ----------
   // Cada ronda: la baliza toca un patrón (llamada) y en el mismo largo siguiente hay que repetirlo (respuesta).
   const beacon = (at, lane) => { tone(at, 'sine', LANE_NOW[lane] * 0.5, 0.16, 0.26); tone(at, 'triangle', LANE_NOW[lane], 0.04, 0.14); };
+  // Pausa de radio entre la llamada y la respuesta: clic de "cambio", ruido blanco filtrado y otro clic al soltar
+  function walkie(at, dur) {
+    if (!ac) return;
+    if (!noiseBuf) nz(at, { vol: 0.0001 });
+    tone(at, 'square', 1400, 0.03, 0.03);
+    const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(), end = at + dur;
+    src.buffer = noiseBuf; src.loop = true; f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 0.8;
+    g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.05, at + 0.03);
+    g.gain.setValueAtTime(0.05, Math.max(at + 0.04, end - 0.07)); g.gain.linearRampToValueAtTime(0.0001, end - 0.02);
+    src.connect(f).connect(g).connect(ac.destination); src.start(at); src.stop(end);
+    tone(end - 0.04, 'square', 1100, 0.025, 0.03);
+  }
+  // Largo de la pausa en semicorcheas: un tiempo en canciones lentas, dos en las rápidas (así dura parecido en segundos)
+  const radioGap = bpm => 4 * Math.max(1, Math.min(2, Math.round(bpm / 75)));
   const click = (at, strong) => tone(at, 'square', strong ? 1760 : 1320, strong ? 0.035 : 0.022, 0.03);
   function buildSignal(si, di, mods = []) {
     const s = SONGS[si], step = 60 / s.bpm / 4, R = rng(3000 + si * 131 + di * 17);
-    const bars = s.tut ? 1 : di === 2 ? 2 : 1, len = bars * 16, cycle = len * 2;
+    const bars = s.tut ? 1 : di === 2 ? 2 : 1, len = bars * 16, gap = mods.includes('nogap') ? 0 : radioGap(s.bpm), cycle = len * 2 + gap;
     const nR = Math.max(2, Math.floor((songMeasures(s) * 16 - 24) / cycle)), total = 16 + nR * cycle + 8;
     const lvlAdj = Math.min(2, Math.floor((s.lvl - 1) / 2));
     const notes = [], calls = [], rounds = [];
     let last = -1, sumN = 0;
     const pats = [];   // patrón de cada llamada: para Memoria diferida, la respuesta usa el de la ronda anterior
     for (let r = 0; r < nR; r++) {
-      const start = 16 + r * cycle, resp = start + len, prog = nR > 1 ? r / (nR - 1) : 0;
+      const start = 16 + r * cycle, resp = start + len + gap, prog = nR > 1 ? r / (nR - 1) : 0;
       const grid = s.tut || di === 0 ? 4 : di === 1 ? (prog < 0.3 ? 4 : 2) : (prog < 0.4 ? 2 : r % 2 ? 1 : 2);
       const slots = len / grid;
       let count = s.tut ? Math.min(1 + Math.floor(r / 2), 3)
@@ -23,14 +37,23 @@
       const pick = new Set();
       if (s.tut || R() < 0.7) pick.add(0);
       while (pick.size < count) pick.add(Math.floor(R() * slots));
-      const offs = [...pick].sort((a, b) => a - b).map(k => k * grid);
-      const pat = offs.map((off, k) => {
+      let offs = [...pick].sort((a, b) => a - b).map(k => k * grid);
+      // Ráfagas: un tiempo del patrón trae dos o tres notas seguidas en semicorcheas
+      if (mods.includes('burst') && grid > 1 && offs.length > 1) {
+        const b = Math.floor(R() * (offs.length - 1)), o = offs[b], next = offs[b + 1], add = [o + 1];
+        if (R() < 0.4) add.push(o + 2);
+        offs = [...new Set([...offs, ...add.filter(x => x < next && x < len)])].sort((a, b) => a - b);
+      }
+      const pat = [];
+      offs.forEach((off, k) => {
         let lane = s.tut ? (r + k) % 4 : Math.floor(R() * 4);
         if (!s.tut && lane === last && R() < 0.5) lane = (lane + 1 + Math.floor(R() * 3)) % 4;
         last = lane;
-        calls.push({ t: LEAD + (start + off) * step, i: start + off, lane });
-        return { off, lane };
+        pat.push({ off, lane });
+        // Acordes: algunas notas son dos flechas a la vez
+        if (mods.includes('chords') && R() < (di === 2 ? 0.35 : 0.25)) pat.push({ off, lane: (lane + 1 + Math.floor(R() * 3)) % 4 });
       });
+      for (const p of pat) calls.push({ t: LEAD + (start + p.off) * step, i: start + p.off, lane: p.lane });
       pats.push(pat);
       // Respuesta: la llamada tal cual, la anterior (diferida) y/o con las flechas en orden inverso (mismo ritmo)
       const src = mods.includes('delay') && r > 0 ? pats[r - 1] : pat;
@@ -45,7 +68,7 @@
     const dur = total * step;
     let stars = 0.4 + 1.9 * notes.length / dur + (sumN / nR) * 0.12 + (bars === 2 ? 0.5 : 0);
     stars = Math.round(stars * 10) / 10;
-    return { notes, calls, rounds, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, bars, len };
+    return { notes, calls, rounds, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, bars, len, gap, cycle, gapAt: new Set(rounds.map(r => r.start + len)) };
   }
 
   // ---------- Ensamble: piezas que caen al compás ----------

@@ -319,6 +319,9 @@
     reverse: { gal: 'sen', label: 'Al revés', pct: 0.25, desc: 'Repetís la llamada en orden inverso.' },
     blind:   { gal: 'com', label: 'Ciego', pct: 0.2, desc: 'Solo ves las próximas 3 baldosas del camino.' },
     still:   { gal: 'com', label: 'Sin órbita', pct: 0.15, desc: 'Los planetas no se ven: solo el camino y el pulso de la baldosa en la que estás.' },
+    nogap:   { gal: 'sen', label: 'Sin cambio', pct: 0.15, desc: 'La respuesta empieza apenas termina la llamada, sin la pausa de radio.' },
+    chords:  { gal: 'sen', label: 'Acordes', pct: 0.2, desc: 'Algunas notas de la llamada son dos flechas a la vez.' },
+    burst:   { gal: 'sen', label: 'Ráfagas', pct: 0.2, desc: 'Un tiempo de cada patrón trae dos o tres notas seguidas en semicorcheas.' },
     delay:   { gal: 'sen', label: 'Memoria diferida', pct: 0.4, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
   };
   const galHardClear = gal => SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);

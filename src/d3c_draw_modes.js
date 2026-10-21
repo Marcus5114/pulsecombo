@@ -48,12 +48,13 @@
     const now = performance.now(), t = gameT(), ch = run.ch, st = ch.step, U = Math.min(W, H * 0.68);
     drawSky(t);
     drawHud(U);
-    const i = (t - LEAD) / st, cyc = ch.len * 2;
+    const i = (t - LEAD) / st, cyc = ch.cycle;
     let phase = 'intro', rIdx = -1, local = 0;
     if (i >= 16) {
       const k = Math.floor((i - 16) / cyc);
-      if (k < run.rounds.length) { rIdx = k; local = (i - 16) - k * cyc; phase = local < ch.len ? 'call' : 'resp'; } else phase = 'end';
+      if (k < run.rounds.length) { rIdx = k; local = (i - 16) - k * cyc; phase = local < ch.len ? 'call' : local < ch.len + ch.gap ? 'gap' : 'resp'; } else phase = 'end';
     }
+    const rl = local - ch.len - ch.gap;   // posición dentro de la respuesta
     // Antena: un plato con ondas que se encienden en la llamada
     const ax = W / 2, ay = H * 0.2;
     const lastCall = ch.calls.filter(c => c.t <= t).pop(), callAge = lastCall ? t - lastCall.t : 9;
@@ -69,7 +70,7 @@
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = F(900, U * 0.075);
     ctx.fillStyle = phase === 'resp' ? '#ffffff' : 'rgba(255,255,255,0.55)';
-    ctx.fillText(phase === 'call' ? 'ESCUCHÁ' : phase === 'resp' ? 'REPETÍ' : phase === 'end' ? 'FIN DE LA TRANSMISIÓN' : 'PREPARATE', W / 2, H * 0.33);
+    ctx.fillText(phase === 'call' ? 'ESCUCHÁ' : phase === 'gap' ? 'CAMBIO…' : phase === 'resp' ? 'REPETÍ' : phase === 'end' ? 'FIN DE LA TRANSMISIÓN' : 'PREPARATE', W / 2, H * 0.33);
 
     // Cuatro luces: se encienden con la llamada y con tus toques
     const ly = H * 0.48, gap = W / 4.6, size = Math.min(gap * 0.75, 80);
@@ -93,25 +94,32 @@
       ctx.fillStyle = `rgba(255,255,255,${big ? 0.4 : 0.15})`; ctx.fillRect(x - 1, ty - (big ? 8 : 4), 2, big ? 16 : 8);
     }
     if (rIdx >= 0) {
-      const R = run.rounds[rIdx], px = tx0 + tw * (phase === 'call' ? local : local - ch.len) / ch.len;
+      const callish = phase !== 'resp';
+      if (phase === 'gap') {   // estática de radio alrededor de la antena
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        for (let s = 0; s < 40; s++) { const a = Math.random() * Math.PI * 2, d = U * (0.06 + Math.random() * 0.14); ctx.fillRect(ax + Math.cos(a) * d, ay + Math.sin(a) * d * 0.6, 1 + Math.random() * 6, 1.5); }
+      }
+      const R = run.rounds[rIdx], px = tx0 + tw * (phase === 'call' ? local : phase === 'gap' ? ch.len : rl) / ch.len;
       // Solo audio oculta los puntos; Al revés y Memoria diferida no muestran qué flecha va en la respuesta
       const MD = run.mods, twist = MD.reverse || MD.delay;
-      const showDots = !MD.audio && (phase === 'call' || run.di === 0 || run.song.tut || L('s_m_root'));
-      const showLanes = phase === 'call' || (!twist && (run.song.tut || L('s_m_root')));
-      if (showDots) (phase === 'call' ? R.callSlots : R.slots).forEach((sl, k) => {
+      const showDots = !MD.audio && (callish || run.di === 0 || run.song.tut || L('s_m_root'));
+      const showLanes = callish || (!twist && (run.song.tut || L('s_m_root')));
+      const stackAt = {};   // acordes: la segunda flecha va encima de la primera
+      if (showDots) (callish ? R.callSlots : R.slots).forEach((sl, k) => {
         if (phase === 'call' && sl.off > local) return;   // en la llamada aparecen a medida que suenan
+        const lift = (stackAt[sl.off] = (stackAt[sl.off] || 0) + 1) - 1;
         const x = tx0 + tw * sl.off / ch.len, n = phase === 'resp' ? run.roundNotes[rIdx][k] : null;
         const hitOk = n && n.judged && !n.missed, missed = n && n.missed;
         if (showLanes) {
-          arrow(x, ty - U * 0.06, U * 0.05, ANG[sl.lane]);
-          ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : phase === 'call' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
+          arrow(x, ty - U * 0.06 - lift * U * 0.06, U * 0.05, ANG[sl.lane]);
+          ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : callish ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
         }
         ctx.beginPath(); ctx.arc(x, ty, U * 0.012, 0, Math.PI * 2);
         ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.9)' : 'rgba(255,255,255,0.5)'; ctx.fill();
       });
       ctx.fillStyle = phase === 'resp' ? '#ffffff' : 'rgba(255,255,255,0.5)'; ctx.fillRect(px - 1, ty - 14, 2, 28);
       ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.textAlign = 'left';
-      const nn = phase === 'call' ? R.callSlots.length : R.n;
+      const nn = callish ? R.callSlots.length : R.n;
       ctx.fillText(`Patrón ${rIdx + 1}/${run.rounds.length} · ${nn} ${nn > 1 ? 'notas' : 'nota'}${phase === 'resp' && MD.delay && rIdx > 0 ? ' · repetí el anterior' : ''}`, tx0, ty + U * 0.06);
       ctx.textAlign = 'right';
       ctx.fillText(`Decodificados ${run.decoded}${run.streak > 1 ? ` · racha ${run.streak}` : ''}`, tx1, ty + U * 0.06);
