@@ -16,6 +16,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 - Color propio para cada galaxia: Vía Pulso en cian, Ensamble en naranja y Señal en violeta. Tiñe pestañas, botones, dificultades, árboles y las barras de la partida. El árbol global queda neutro.
 
 ### Corregido
+- El contador de mejoras del árbol global se ve siempre blanco; antes tomaba el color de la galaxia.
 - Árboles de mejoras: los nombres de las mejoras ya no se cortan a mitad de palabra. Ocupan una o dos líneas y las mejoras principales de cada rama usan todo el ancho de su fila.
 
 ### Cambiado

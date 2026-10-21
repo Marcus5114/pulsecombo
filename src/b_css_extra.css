@@ -154,3 +154,5 @@ body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }
   to { transform: rotate(360deg) translateX(calc(var(--sz) * 0.55)) rotate(90deg) scaleY(1); }
 }
 @media (prefers-reduced-motion: reduce) { .here-mark i, .here-mark .ship { animation: none; } .here-mark .ship { transform: translateX(calc(var(--sz) * 0.55)) rotate(90deg); } }
+/* El contador del árbol global es siempre neutro (blanco), en cualquier galaxia */
+#badgeG { background: var(--fg); color: var(--bg); }
