@@ -108,6 +108,7 @@ body.land.playing #quitBtn { display: none; }
 
 /* ---------- Color por galaxia: cada galaxia tiñe sus menús; el árbol global queda neutro ---------- */
 :root { --acc: var(--fg); --acc-ink: var(--bg); }
+body { --gold: var(--acc); }   /* las notas extra usan el color de la galaxia */
 body[data-acc="pulso"] { --acc: #5cd0e6; --acc-ink: #06181c; }
 body[data-acc="ens"] { --acc: #ff8c5a; --acc-ink: #1f0d05; }
 body[data-acc="sen"] { --acc: #b892ff; --acc-ink: #140a26; }

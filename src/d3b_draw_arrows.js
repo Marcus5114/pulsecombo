@@ -1,7 +1,9 @@
   // ---------- Dibujo ----------
   const ANG = [-Math.PI / 2, Math.PI, 0, Math.PI / 2];
   const STARS = (() => { const r = rng(4242); return Array.from({ length: 90 }, () => ({ x: r(), y: r(), z: 0.3 + r() * 0.9, r: r() < 0.85 ? 1 : 2, a: 0.15 + r() * 0.45 })); })();
-  const GOLD = '242,179,61';
+  // Las notas extra, la fiebre y sus juicios usan el color de la galaxia
+  const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
+  const XC = () => hexRgb(run ? GX[run.song.gal].color : '#ffffff');
   function arrow(x, y, s, a) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.scale(s, s);
     ctx.beginPath();
@@ -36,7 +38,7 @@
         ctx.fillStyle = g; ctx.fillRect(x0, rY, lw, H - rY);
       }
     }
-    if (fever) { ctx.fillStyle = `rgba(${GOLD},${0.06 + 0.03 * Math.sin(now / 90)})`; ctx.fillRect(0, 0, W, H); }
+    if (fever) { ctx.fillStyle = `rgba(${XC()},${0.06 + 0.03 * Math.sin(now / 90)})`; ctx.fillRect(0, 0, W, H); }
 
     // HUD
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
@@ -46,7 +48,7 @@
     ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = F(600, U * 0.032);
     ctx.fillText(`${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`, W - 10, 24);
     if (fever) {
-      ctx.textAlign = 'center'; ctx.fillStyle = `rgb(${GOLD})`; ctx.font = F(800, U * 0.034);
+      ctx.textAlign = 'center'; ctx.fillStyle = `rgb(${XC()})`; ctx.font = F(800, U * 0.034);
       ctx.fillText(`FIEBRE x2 · ${dec1(Math.max(0, run.feverUntil - t))} s`, W / 2, 44);
     }
     if (run.shields && L('c_shield')) {
@@ -102,7 +104,7 @@
       if (y < -size || (n.judged && !n.missed)) continue;
       if (n.kind === 'x') {
         arrow(x, y, size * (n.semi ? 0.78 : 0.92), a);
-        ctx.fillStyle = n.missed ? `rgba(${GOLD},0.2)` : `rgb(${GOLD})`; ctx.fill();
+        ctx.fillStyle = n.missed ? `rgba(${XC()},0.2)` : `rgb(${XC()})`; ctx.fill();
         ctx.lineWidth = 2; ctx.strokeStyle = '#0d0d0e'; ctx.stroke();
         continue;
       }
@@ -118,7 +120,7 @@
       const al = 1 - age, sc = 1 + 0.15 * Math.max(0, 1 - age * 4);
       ctx.save(); ctx.translate(W / 2, H * 0.48); ctx.scale(sc, sc);
       ctx.font = F(900, U * 0.085);
-      const col = judgeGold ? GOLD : { perfect: '255,255,255', great: '210,210,214', good: '150,150,156', miss: '95,95,100', drop: '95,95,100', ok: '255,255,255', shield: '210,210,214', early: '120,120,126', spam: '120,120,126' }[judge];
+      const col = judgeGold ? XC() : { perfect: '255,255,255', great: '210,210,214', good: '150,150,156', miss: '95,95,100', drop: '95,95,100', ok: '255,255,255', shield: '210,210,214', early: '120,120,126', spam: '120,120,126' }[judge];
       ctx.fillStyle = `rgba(${col},${al})`; ctx.fillText(JTXT[judge], 0, 0);
       ctx.restore();
     }
@@ -128,7 +130,7 @@
       ctx.fillText(`RANGO ${ROMAN[run.rank - 1]}`, W / 2, H * 0.38 - rAge * 12);
     }
     const fAge = (now - feverAt) / 1000;
-    if (fAge < 1) { ctx.font = F(900, U * 0.07); ctx.fillStyle = `rgba(${GOLD},${1 - fAge})`; ctx.fillText('FIEBRE DORADA', W / 2, H * 0.33); }
+    if (fAge < 1) { ctx.font = F(900, U * 0.07); ctx.fillStyle = `rgba(${XC()},${1 - fAge})`; ctx.fillText('FIEBRE', W / 2, H * 0.33); }
     if (run.combo >= 4) {
       ctx.font = F(900, U * 0.16); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillText(run.combo, W / 2, H * 0.62);
       ctx.font = F(600, U * 0.035); ctx.fillStyle = 'rgba(255,255,255,0.5)';

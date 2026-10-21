@@ -122,9 +122,9 @@
     if (di === 0) return '<b>Fácil:</b> sin saltos, con menos notas extra y menos largas.';
     if (di === 1) return '<b>Normal:</b> la canción tal como es, con todas tus mecánicas.';
     if (di === 2) return '<b>Difícil:</b> corcheas obligatorias y más saltos. ' +
-      [E('l_root') ? 'Largas dobles.' : off('Largas dobles', 'Pulsaciones largas', 'l_root'), E('x_semi') ? 'Escaleras doradas de semicorcheas.' : off('Escaleras doradas', 'Semicorcheas', 'x_semi')].join(' ');
+      [E('l_root') ? 'Largas dobles.' : off('Largas dobles', 'Pulsaciones largas', 'l_root'), E('x_semi') ? 'Escaleras de notas extra en semicorcheas.' : off('Escaleras de notas extra', 'Semicorcheas', 'x_semi')].join(' ');
     return `<b>Doble:</b> dos tableros a la vez, ${GNAME[S.keysL]} a la izquierda y ${GNAME[S.keysR]} a la derecha. Secciones de un lado, alternadas y simultáneas. ` +
-      (E('l_root') ? 'Largas de un lado mientras tocás del otro. ' : '') + (E('x_semi') ? 'Escaleras doradas.' : '');
+      (E('l_root') ? 'Largas de un lado mientras tocás del otro. ' : '') + (E('x_semi') ? 'Escaleras de notas extra.' : '');
   }
   const MENU_HINT = {
     arrows: 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras incluidas: más estrellas, más multiplicador. Tocar donde no hay flecha resta aguante. Si se vacía, te quedás con la mitad de lo ganado.',

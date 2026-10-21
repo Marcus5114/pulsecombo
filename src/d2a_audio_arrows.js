@@ -156,7 +156,7 @@
     }
     const kept = main.filter(n => !n.removed);
 
-    // 3. Notas extra doradas, con escaleras de semicorcheas en dificultades altas
+    // 3. Notas extra (opcionales), con escaleras de semicorcheas en dificultades altas
     const occ = new Map();
     const mark = (i, l) => { if (!occ.has(i)) occ.set(i, new Set()); occ.get(i).add(l); };
     for (const n of kept) mark(n.i, n.lane);
