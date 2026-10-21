@@ -58,56 +58,84 @@
     return { step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, rpb, garbage, seed: 7000 + si * 97 + di * 13 };
   }
 
-  // ---------- Compás: camino de baldosas ----------
-  // Las baldosas siguen la melodía de la canción. Entre dos toques, el planeta que gira recorre 180° por tiempo,
-  // así que el ángulo entre baldosas dice cuánto falta para el próximo toque: recto = un tiempo, giro de 90° = una corchea.
+  // ---------- Compás: camino de baldosas sobre una grilla hexagonal ----------
+  // Alrededor del planeta fijo, la órbita es un hexágono: sus 6 vértices son las 6 baldosas vecinas.
+  // El planeta que gira avanza un lado por unidad de tiempo, y la forma de la baldosa en la que estás dice cuánto vale cada lado:
+  // hexágono = corchea, triángulo = semicorchea, círculo = negra. Seguir derecho son 3 lados; cada lado más o menos cambia 60° la dirección.
+  // Como un péndulo, el sentido de giro se alterna en cada baldosa (así un ritmo parejo avanza en zigzag). Las baldosas de giro lo repiten.
+  const HEX = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];   // vecinos en coordenadas axiales, a 0°, 60°, 120°… (pantalla)
+  const hexXY = (q, r) => [q + r / 2, r * Math.sqrt(3) / 2];
+  // Hueco en semicorcheas → unidad por lado (1, 2 o 4) y cantidad de lados (1 a 5).
+  // Siempre que se pueda, corchea por lado; si no, se repite la unidad anterior para no cambiar de velocidad de más.
+  function hexSplit(gap, prevU, units) {
+    const opts = units.filter(u => gap % u === 0 && gap / u >= 1 && gap / u <= 5).map(u => [u, gap / u]);
+    if (!opts.length) return null;
+    return opts.find(([u]) => u === 2) || opts.find(([u]) => u === prevU) || opts[0];
+  }
+  // Tutorial: frases de dos compases con curvas (negras), medias notas, rectas (negra con puntillo) y corcheas
+  const TUT_PHRASES = [[4, 4, 4, 4, 4, 4, 4, 4], [8, 8, 8, 8], [6, 2, 4, 4, 6, 2, 4, 4], [4, 4, 8, 4, 4, 8], [2, 2, 4, 8, 2, 2, 4, 8], [8, 4, 4, 6, 6, 4]];
   function buildPath(si, di) {
     const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16, M = getMusic(si), R = rng(11000 + si * 53 + di * 7);
-    // Fácil: corcheas con separación de un tiempo · Normal: corcheas · Difícil: semicorcheas (en canciones rápidas, solo de a pares)
-    const grid = s.tut ? 4 : di === 2 ? 1 : 2, minGap = s.tut || di === 0 ? 4 : di === 1 ? 2 : 1, maxGap = 6, end = total - 8, fast = s.bpm > 140;
+    // Fácil: negras y más largas · Normal: corcheas · Difícil: semicorcheas (en canciones rápidas, solo de a pares) y baldosas triángulo
+    const grid = di === 2 ? 1 : 2, minGap = di === 0 ? 4 : di === 1 ? 2 : 1, maxGap = di === 0 ? 16 : 12, end = total - 8, fast = s.bpm > 140;
+    const units = di === 2 ? [2, 1, 4] : [2, 4];
     const DRUMS = di === 1 ? 'kK' : di === 2 ? 'kKsc' : '';
-    // 1. Candidatos: la melodía (desde el compás 2) y, en Normal y Difícil, golpes de la batería; el compás 1 marca los tiempos
-    const cand = [];
-    for (let i = 16; i < end; i++) {
-      const bar = i >> 4, p = i & 15;
-      let on;
-      if (s.tut) on = p % 4 === 0 || (bar >= 8 && bar % 2 === 1 && p === 6);
-      else if (bar < 2) on = p % 4 === 0;
-      else { const S = M.sec[secAt(M, bar)]; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || S.dr[p].some(([d]) => DRUMS.includes(d))); }
-      if (on) cand.push(i);
+    let taps = [];
+    if (s.tut) {
+      let i = 16, ph = 0;
+      while (i < end) { for (const g of TUT_PHRASES[ph % TUT_PHRASES.length]) { if (i >= end) break; taps.push(i); i += g; } ph++; }
+    } else {
+      // 1. Candidatos: la melodía (desde el compás 2) y, en Normal y Difícil, golpes de la batería; el compás 1 marca los tiempos
+      const cand = [];
+      for (let i = 16; i < end; i++) {
+        const bar = i >> 4, p = i & 15;
+        let on;
+        if (bar < 2) on = p % 4 === 0;
+        else { const S = M.sec[secAt(M, bar)]; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || S.dr[p].some(([d]) => DRUMS.includes(d))); }
+        if (on) cand.push(i);
+      }
+      // 2. Separación mínima, sin rachas de semicorcheas, y huecos largos rellenados con negras
+      let last = cand[0] - 4;
+      for (const c of cand) {
+        if (c - last < minGap) continue;
+        if (c - last === 1 && taps.length > 1 && last - taps[taps.length - 2] < (fast ? 4 : 2)) continue;
+        while (c - last > maxGap) { last += 4; taps.push(last); }
+        if (c - last < minGap) continue;
+        taps.push(c); last = c;
+      }
     }
-    // 2. Separación mínima y relleno de huecos largos con tiempos (un giro de más de 270° no se puede leer)
-    const taps = []; let last = cand[0] - 4;
-    for (const c of cand) {
-      if (c - last < minGap) continue;
-      if (c - last === 1 && taps.length > 1 && last - taps[taps.length - 2] < (fast ? 4 : 2)) continue;   // sin rachas de semicorcheas
-      let ok = true;
-      while (c - last > maxGap) { const n = last + 4; if (c - n < minGap) { ok = false; break; } taps.push(n); last = n; }
-      if (!ok) continue;
-      taps.push(c); last = c;
-    }
-    // 3. Baldosas: posición, dirección y sentido de giro (los giros invierten el sentido)
+    // 3. Baldosas en la grilla hexagonal. Si una cae sobre otra reciente, el giro cambia de sentido.
     const golds = L('p_c_gold') && !s.tut;
-    const tiles = [{ x: 0, y: 0, dir: 0, s: 1, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, gap: 4 }];
-    let sign = 1, twirls = 0, irr = 0, nGold = 0;
-    const notes = taps.map((i, k) => {
-      const prev = tiles[k], gap = i - prev.i, bar = i >> 4;
-      const secStart = k > 0 && (i >> 7) !== (prev.i >> 7);
-      let twirl = false;
-      if (!s.tut && secStart && (di === 2 ? R() < 0.7 : di === 1 ? secAt(M, bar) === 'B' && R() < 0.5 : false)) { sign = -sign; twirl = true; }
-      // Si la baldosa cae encima de una anterior, se invierte el sentido de giro para que el camino se lea
-      const at = sg => prev.dir + Math.PI + sg * gap * Math.PI / 4;
-      const clear = sg => { const a2 = at(sg), x = prev.x + Math.cos(a2), y = prev.y + Math.sin(a2); let m = 9; for (let q = Math.max(0, tiles.length - 40); q < tiles.length - 2; q++) m = Math.min(m, Math.hypot(tiles[q].x - x, tiles[q].y - y)); return m; };
-      if (!s.tut && clear(sign) < 0.8 && clear(-sign) > clear(sign)) { sign = -sign; twirl = !twirl; }
+    const first = { q: 0, r: 0, D: 0, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, u: 2, m: 2, s: 1 };
+    [first.x, first.y] = hexXY(0, 0);
+    const tiles = [first], notes = [];
+    let twirls = 0, uchg = 0, quick = 0, prevU = 2;
+    const busy = (q, r) => tiles.slice(-8).some(T => T.q === q && T.r === r);   // solo las recientes: las viejas ya se apagaron
+    for (let k = 0; k < taps.length; k++) {
+      const prev = tiles[tiles.length - 1], i = taps[k];
+      let gap = i - prev.i, sp = hexSplit(gap, prevU, units);
+      if (!sp) { sp = hexSplit(gap, prevU, [1, 2, 4]); }
+      if (!sp) continue;   // no se puede expresar (no debería pasar)
+      const [u, m] = sp;
+      const secStart = (i >> 7) !== (prev.i >> 7);
+      let twirl = !!(s.tut ? k > 0 && k % 7 === 0 : secStart && (di === 2 ? R() < 0.6 : di === 1 ? R() < 0.35 : false));
+      let sign = twirl ? prev.s : -prev.s;
+      const go = sg => { const D = (((prev.D + 3 + sg * m) % 6) + 6) % 6; return [D, prev.q + HEX[D][0], prev.r + HEX[D][1]]; };
+      let [D, q, r] = go(sign);
+      if (busy(q, r)) { const [D2, q2, r2] = go(-sign); if (!busy(q2, r2)) { sign = -sign; twirl = !twirl; [D, q, r] = [D2, q2, r2]; } }
       if (twirl) twirls++;
-      const a = at(sign);
-      const gold = golds && k > 4 && R() < 0.12; if (gold) nGold++;
-      if (gap !== 4) irr++;
-      tiles.push({ x: prev.x + Math.cos(a), y: prev.y + Math.sin(a), dir: a, s: sign, i, t: LEAD + i * step, gap, twirl, gold });
-      return { t: LEAD + i * step, i, lane: 0, kind: 'q', k: k + 1, gold, pl: k % 4 };
-    });
-    const dur = total * step, secs = new Set(taps.map(i => i >> 7)).size;
-    let stars = 0.3 + 1.35 * notes.length / dur + 1.5 * irr / dur + 0.012 * twirls;
+      if (u !== prevU) uchg++;
+      if (gap <= 2) quick++;
+      prev.u = u;   // la forma de la baldosa en la que estás dice cuánto vale cada lado de la órbita
+      prevU = u;
+      const gold = golds && k > 4 && R() < 0.12;
+      const [x, y] = hexXY(q, r);
+      tiles.push({ q, r, x, y, D, i, t: LEAD + i * step, u: 2, m, s: sign, gap, twirl, gold });
+      notes.push({ t: LEAD + i * step, i, lane: 0, kind: 'q', k: tiles.length - 1, gold, pl: k % 4 });
+    }
+    // la baldosa de llegada (de la nota k) guarda cuántos lados y en qué sentido se recorrieron hasta ella
+    const dur = total * step, secs = new Set(notes.map(n => n.i >> 7)).size, nGold = notes.filter(n => n.gold).length;
+    let stars = 0.3 + 1.3 * notes.length / dur + 1.4 * quick / dur + 1.5 * uchg / dur + 0.012 * twirls;
     stars = Math.round(stars * 10) / 10;
     return { notes, tiles, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, golds: nGold, secs };
   }

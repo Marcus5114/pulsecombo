@@ -119,9 +119,9 @@
     if (m === 'stack') return ['<b>Fácil:</b> la pieza baja una fila por tiempo y el margen para moverse a tiempo es más amplio.',
       '<b>Normal:</b> la pieza baja dos filas por tiempo.',
       '<b>Difícil:</b> dos filas por tiempo y cada 4 compases sube una fila de chatarra desde abajo.'][di];
-    if (m === 'path') return ['<b>Fácil:</b> una baldosa por tiempo o cada pocos tiempos: el camino casi siempre va recto.',
-      '<b>Normal:</b> la melodía en corcheas, con giros de 90°. En los estribillos el sentido de giro puede invertirse.',
-      '<b>Difícil:</b> la melodía completa, con semicorcheas (en canciones lentas) y giros que se invierten en cada tramo.'][di];
+    if (m === 'path') return ['<b>Fácil:</b> negras, medias notas y algunas negras con puntillo. Baldosas hexágono (corchea por lado) y círculo (negra por lado).',
+      '<b>Normal:</b> la melodía y el bombo en corcheas. En algunos tramos el giro cambia de sentido.',
+      '<b>Difícil:</b> semicorcheas con baldosas triángulo, más cambios de sentido y de velocidad.'][di];
     if (m === 'signal') return ['<b>Fácil:</b> patrones en negras de un compás. La línea de tiempo marca cuándo tocar.',
       '<b>Normal:</b> patrones de un compás que pasan a corcheas. Sin marcas en la respuesta (salvo con Eco visual).',
       '<b>Difícil:</b> llamadas de dos compases con corcheas y semicorcheas.'][di];
@@ -136,7 +136,7 @@
   const MENU_HINT = {
     arrows: 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras incluidas: más estrellas, más multiplicador. Tocar donde no hay flecha resta aguante. Si se vacía, te quedás con la mitad de lo ganado.',
     stack: 'Cada movimiento se juzga contra las corcheas de la canción: a tiempo suma racha, fuera de tiempo daña el casco. Si el casco se rompe o las piezas llegan arriba, te quedás con la mitad.',
-    path: 'Tocá cualquier tecla cuando el planeta que gira llegue a la próxima baldosa. El ángulo del camino marca el ritmo: recto es un tiempo, más cerrado es más rápido. Si fallás, el equilibrio baja; si se vacía, te quedás con la mitad.',
+    path: 'Tocá cualquier tecla cuando el planeta que gira llegue a la baldosa marcada. La órbita es un hexágono y cada lado vale una corchea (semicorchea en baldosas con triángulo, negra con círculo): derecho son 3 lados, cada lado menos o más dobla 60°. Borde punteado: el próximo giro cambia de sentido. Si se vacía el equilibrio, te quedás con la mitad.',
     signal: 'Durante la llamada podés tocar libremente para practicar. En la respuesta, cada nota se juzga como en Vía Pulso. Repetir un patrón entero da un bonus.',
   };
   function renderSongs() {
@@ -267,17 +267,14 @@
   const tree = $('tree');
   tree.addEventListener('pointerover', e => {
     if (e.pointerType !== 'mouse') return;
-    const b = e.target.closest('.node'); if (!b || b === chargingEl) return;
+    const b = e.target.closest('.node'); if (!b) return;
     clearTimeout(hideT);
     if (tipOpen && b.dataset.id === selNode) return;
-    clearCharge();
-    chargingEl = b; b.classList.add('charging');
-    chargeT = setTimeout(() => openTip(b.dataset.id), 1000);
+    openTip(b.dataset.id);   // el detalle aparece apenas pasás el mouse
   });
   tree.addEventListener('pointerout', e => {
     if (e.pointerType !== 'mouse') return;
     const b = e.target.closest('.node'); if (!b || b.contains(e.relatedTarget)) return;
-    if (b === chargingEl) clearCharge();
     if (tipOpen) { clearTimeout(hideT); hideT = setTimeout(closeTip, 250); }
   });
   tip.addEventListener('pointerenter', () => clearTimeout(hideT));

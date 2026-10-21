@@ -602,7 +602,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
       desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
     { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
-      desc: 'Dos planetas unidos que giran uno alrededor del otro. En cada nota de la melodía tocás para fijar uno y soltar el otro: el ángulo de cada baldosa te dice cuándo.' },
+      desc: 'Dos planetas unidos sobre un panal de baldosas. El que gira recorre una órbita hexagonal, un lado por corchea: contá los lados hasta la próxima baldosa y tocá al llegar.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
   const GAL_LINKS = [['pulso', 'ens'], ['pulso', 'sen'], ['ens', 'sen'], ['ens', 'com'], ['sen', 'com']];
@@ -656,7 +656,7 @@ button.chip.mod:hover { border-color: var(--fg); }
       songs: [['Código Morse', 120], ['Transmisión Cruzada', 132], ['Mensaje Final', 144]] },
 
     { gal: 'com', id: 'com_base', style: 'base', name: 'Péndulo', genre: 'Tutorial', tutorial: true, root: 43,
-      desc: 'Un péndulo doble que marca el tiempo. Aprendé a tocar en cada baldosa para que los planetas sigan el camino.',
+      desc: 'Un péndulo doble que marca el tiempo. Aprendé a contar los lados de la órbita: curvas, rectas, medias notas y cambios de giro.',
       songs: [['Primer Giro', 88]] },
     { gal: 'com', id: 'com_a', style: 'bossa', name: 'Brisa', genre: 'Bossa nova', root: 45,
       desc: 'Un planeta de playas lentas y guitarras suaves. Caminos que se curvan con las síncopas.',
@@ -1553,56 +1553,84 @@ button.chip.mod:hover { border-color: var(--fg); }
     return { step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, rpb, garbage, seed: 7000 + si * 97 + di * 13 };
   }
 
-  // ---------- Compás: camino de baldosas ----------
-  // Las baldosas siguen la melodía de la canción. Entre dos toques, el planeta que gira recorre 180° por tiempo,
-  // así que el ángulo entre baldosas dice cuánto falta para el próximo toque: recto = un tiempo, giro de 90° = una corchea.
+  // ---------- Compás: camino de baldosas sobre una grilla hexagonal ----------
+  // Alrededor del planeta fijo, la órbita es un hexágono: sus 6 vértices son las 6 baldosas vecinas.
+  // El planeta que gira avanza un lado por unidad de tiempo, y la forma de la baldosa en la que estás dice cuánto vale cada lado:
+  // hexágono = corchea, triángulo = semicorchea, círculo = negra. Seguir derecho son 3 lados; cada lado más o menos cambia 60° la dirección.
+  // Como un péndulo, el sentido de giro se alterna en cada baldosa (así un ritmo parejo avanza en zigzag). Las baldosas de giro lo repiten.
+  const HEX = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];   // vecinos en coordenadas axiales, a 0°, 60°, 120°… (pantalla)
+  const hexXY = (q, r) => [q + r / 2, r * Math.sqrt(3) / 2];
+  // Hueco en semicorcheas → unidad por lado (1, 2 o 4) y cantidad de lados (1 a 5).
+  // Siempre que se pueda, corchea por lado; si no, se repite la unidad anterior para no cambiar de velocidad de más.
+  function hexSplit(gap, prevU, units) {
+    const opts = units.filter(u => gap % u === 0 && gap / u >= 1 && gap / u <= 5).map(u => [u, gap / u]);
+    if (!opts.length) return null;
+    return opts.find(([u]) => u === 2) || opts.find(([u]) => u === prevU) || opts[0];
+  }
+  // Tutorial: frases de dos compases con curvas (negras), medias notas, rectas (negra con puntillo) y corcheas
+  const TUT_PHRASES = [[4, 4, 4, 4, 4, 4, 4, 4], [8, 8, 8, 8], [6, 2, 4, 4, 6, 2, 4, 4], [4, 4, 8, 4, 4, 8], [2, 2, 4, 8, 2, 2, 4, 8], [8, 4, 4, 6, 6, 4]];
   function buildPath(si, di) {
     const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16, M = getMusic(si), R = rng(11000 + si * 53 + di * 7);
-    // Fácil: corcheas con separación de un tiempo · Normal: corcheas · Difícil: semicorcheas (en canciones rápidas, solo de a pares)
-    const grid = s.tut ? 4 : di === 2 ? 1 : 2, minGap = s.tut || di === 0 ? 4 : di === 1 ? 2 : 1, maxGap = 6, end = total - 8, fast = s.bpm > 140;
+    // Fácil: negras y más largas · Normal: corcheas · Difícil: semicorcheas (en canciones rápidas, solo de a pares) y baldosas triángulo
+    const grid = di === 2 ? 1 : 2, minGap = di === 0 ? 4 : di === 1 ? 2 : 1, maxGap = di === 0 ? 16 : 12, end = total - 8, fast = s.bpm > 140;
+    const units = di === 2 ? [2, 1, 4] : [2, 4];
     const DRUMS = di === 1 ? 'kK' : di === 2 ? 'kKsc' : '';
-    // 1. Candidatos: la melodía (desde el compás 2) y, en Normal y Difícil, golpes de la batería; el compás 1 marca los tiempos
-    const cand = [];
-    for (let i = 16; i < end; i++) {
-      const bar = i >> 4, p = i & 15;
-      let on;
-      if (s.tut) on = p % 4 === 0 || (bar >= 8 && bar % 2 === 1 && p === 6);
-      else if (bar < 2) on = p % 4 === 0;
-      else { const S = M.sec[secAt(M, bar)]; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || S.dr[p].some(([d]) => DRUMS.includes(d))); }
-      if (on) cand.push(i);
+    let taps = [];
+    if (s.tut) {
+      let i = 16, ph = 0;
+      while (i < end) { for (const g of TUT_PHRASES[ph % TUT_PHRASES.length]) { if (i >= end) break; taps.push(i); i += g; } ph++; }
+    } else {
+      // 1. Candidatos: la melodía (desde el compás 2) y, en Normal y Difícil, golpes de la batería; el compás 1 marca los tiempos
+      const cand = [];
+      for (let i = 16; i < end; i++) {
+        const bar = i >> 4, p = i & 15;
+        let on;
+        if (bar < 2) on = p % 4 === 0;
+        else { const S = M.sec[secAt(M, bar)]; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || S.dr[p].some(([d]) => DRUMS.includes(d))); }
+        if (on) cand.push(i);
+      }
+      // 2. Separación mínima, sin rachas de semicorcheas, y huecos largos rellenados con negras
+      let last = cand[0] - 4;
+      for (const c of cand) {
+        if (c - last < minGap) continue;
+        if (c - last === 1 && taps.length > 1 && last - taps[taps.length - 2] < (fast ? 4 : 2)) continue;
+        while (c - last > maxGap) { last += 4; taps.push(last); }
+        if (c - last < minGap) continue;
+        taps.push(c); last = c;
+      }
     }
-    // 2. Separación mínima y relleno de huecos largos con tiempos (un giro de más de 270° no se puede leer)
-    const taps = []; let last = cand[0] - 4;
-    for (const c of cand) {
-      if (c - last < minGap) continue;
-      if (c - last === 1 && taps.length > 1 && last - taps[taps.length - 2] < (fast ? 4 : 2)) continue;   // sin rachas de semicorcheas
-      let ok = true;
-      while (c - last > maxGap) { const n = last + 4; if (c - n < minGap) { ok = false; break; } taps.push(n); last = n; }
-      if (!ok) continue;
-      taps.push(c); last = c;
-    }
-    // 3. Baldosas: posición, dirección y sentido de giro (los giros invierten el sentido)
+    // 3. Baldosas en la grilla hexagonal. Si una cae sobre otra reciente, el giro cambia de sentido.
     const golds = L('p_c_gold') && !s.tut;
-    const tiles = [{ x: 0, y: 0, dir: 0, s: 1, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, gap: 4 }];
-    let sign = 1, twirls = 0, irr = 0, nGold = 0;
-    const notes = taps.map((i, k) => {
-      const prev = tiles[k], gap = i - prev.i, bar = i >> 4;
-      const secStart = k > 0 && (i >> 7) !== (prev.i >> 7);
-      let twirl = false;
-      if (!s.tut && secStart && (di === 2 ? R() < 0.7 : di === 1 ? secAt(M, bar) === 'B' && R() < 0.5 : false)) { sign = -sign; twirl = true; }
-      // Si la baldosa cae encima de una anterior, se invierte el sentido de giro para que el camino se lea
-      const at = sg => prev.dir + Math.PI + sg * gap * Math.PI / 4;
-      const clear = sg => { const a2 = at(sg), x = prev.x + Math.cos(a2), y = prev.y + Math.sin(a2); let m = 9; for (let q = Math.max(0, tiles.length - 40); q < tiles.length - 2; q++) m = Math.min(m, Math.hypot(tiles[q].x - x, tiles[q].y - y)); return m; };
-      if (!s.tut && clear(sign) < 0.8 && clear(-sign) > clear(sign)) { sign = -sign; twirl = !twirl; }
+    const first = { q: 0, r: 0, D: 0, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, u: 2, m: 2, s: 1 };
+    [first.x, first.y] = hexXY(0, 0);
+    const tiles = [first], notes = [];
+    let twirls = 0, uchg = 0, quick = 0, prevU = 2;
+    const busy = (q, r) => tiles.slice(-8).some(T => T.q === q && T.r === r);   // solo las recientes: las viejas ya se apagaron
+    for (let k = 0; k < taps.length; k++) {
+      const prev = tiles[tiles.length - 1], i = taps[k];
+      let gap = i - prev.i, sp = hexSplit(gap, prevU, units);
+      if (!sp) { sp = hexSplit(gap, prevU, [1, 2, 4]); }
+      if (!sp) continue;   // no se puede expresar (no debería pasar)
+      const [u, m] = sp;
+      const secStart = (i >> 7) !== (prev.i >> 7);
+      let twirl = !!(s.tut ? k > 0 && k % 7 === 0 : secStart && (di === 2 ? R() < 0.6 : di === 1 ? R() < 0.35 : false));
+      let sign = twirl ? prev.s : -prev.s;
+      const go = sg => { const D = (((prev.D + 3 + sg * m) % 6) + 6) % 6; return [D, prev.q + HEX[D][0], prev.r + HEX[D][1]]; };
+      let [D, q, r] = go(sign);
+      if (busy(q, r)) { const [D2, q2, r2] = go(-sign); if (!busy(q2, r2)) { sign = -sign; twirl = !twirl; [D, q, r] = [D2, q2, r2]; } }
       if (twirl) twirls++;
-      const a = at(sign);
-      const gold = golds && k > 4 && R() < 0.12; if (gold) nGold++;
-      if (gap !== 4) irr++;
-      tiles.push({ x: prev.x + Math.cos(a), y: prev.y + Math.sin(a), dir: a, s: sign, i, t: LEAD + i * step, gap, twirl, gold });
-      return { t: LEAD + i * step, i, lane: 0, kind: 'q', k: k + 1, gold, pl: k % 4 };
-    });
-    const dur = total * step, secs = new Set(taps.map(i => i >> 7)).size;
-    let stars = 0.3 + 1.35 * notes.length / dur + 1.5 * irr / dur + 0.012 * twirls;
+      if (u !== prevU) uchg++;
+      if (gap <= 2) quick++;
+      prev.u = u;   // la forma de la baldosa en la que estás dice cuánto vale cada lado de la órbita
+      prevU = u;
+      const gold = golds && k > 4 && R() < 0.12;
+      const [x, y] = hexXY(q, r);
+      tiles.push({ q, r, x, y, D, i, t: LEAD + i * step, u: 2, m, s: sign, gap, twirl, gold });
+      notes.push({ t: LEAD + i * step, i, lane: 0, kind: 'q', k: tiles.length - 1, gold, pl: k % 4 });
+    }
+    // la baldosa de llegada (de la nota k) guarda cuántos lados y en qué sentido se recorrieron hasta ella
+    const dur = total * step, secs = new Set(notes.map(n => n.i >> 7)).size, nGold = notes.filter(n => n.gold).length;
+    let stars = 0.3 + 1.3 * notes.length / dur + 1.4 * quick / dur + 1.5 * uchg / dur + 0.012 * twirls;
     stars = Math.round(stars * 10) / 10;
     return { notes, tiles, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, golds: nGold, secs };
   }
@@ -2418,57 +2446,66 @@ button.chip.mod:hover { border-color: var(--fg); }
   }
 
   // ---------- Dibujo: Compás ----------
-  // El planeta pivote está en la baldosa actual; el otro gira 180° por tiempo hasta la próxima.
+  // El planeta fijo está en la baldosa actual; el otro recorre la órbita hexagonal (las 6 baldosas vecinas) lado por lado.
   function drawPath() {
     if (!run || !W) return;
     const now = performance.now(), t = gameT(), ch = run.ch, st = ch.step, U = Math.min(W, H * 0.68), MD = run.mods;
-    const tiles = ch.tiles, n = tiles.length, acc = XC(), w = Math.PI / (4 * st);
+    const tiles = ch.tiles, n = tiles.length, acc = XC();
     drawSky(t);
     while (run.pk + 1 < n && tiles[run.pk + 1].t <= t) run.pk++;
-    const k = run.pk, P = tiles[k], N1 = tiles[k + 1];
-    const a = P.dir + Math.PI + (N1 ? N1.s : P.s) * w * (t - P.t);
+    const k = run.pk, P = tiles[k], N1 = tiles[k + 1], sg = N1 ? N1.s : P.s || 1;
+    // posición del planeta que gira: vértice inicial (de donde vino) + lados recorridos
+    const v = P.D + 3 + sg * (t - P.t) / (P.u * st), v0 = Math.floor(v), f = v - v0;
+    const vx = j => { const d = HEX[((j % 6) + 6) % 6]; return hexXY(d[0], d[1]); };
+    const [ax, ay] = vx(v0), [bx, by] = vx(v0 + 1);
     // cámara: sigue al pivote y se desliza hacia la próxima baldosa
     const fr = N1 ? Math.max(0, Math.min(1, (t - P.t) / (N1.t - P.t))) : 0, e = fr * fr * (3 - 2 * fr);
     const cx = P.x + (N1 ? (N1.x - P.x) * e : 0), cy = P.y + (N1 ? (N1.y - P.y) * e : 0);
-    const R = U * 0.17, ox = W / 2, oy = H * 0.56;
+    const R = U * 0.15, ox = W / 2, oy = H * 0.56;
     const SX = x => ox + (x - cx) * R, SY = y => oy + (y - cy) * R;
-    const from = Math.max(0, k - 3), to = Math.min(n - 1, MD.blind ? k + 3 : k + 40);
+    const from = Math.max(0, k - 3), to = Math.min(n - 1, MD.blind ? k + 3 : k + 16);
+    const hexPath = (x, y, rr) => { ctx.beginPath(); for (let j = 0; j < 6; j++) { const a = Math.PI / 6 + j * Math.PI / 3; j ? ctx.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)) : ctx.moveTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); } ctx.closePath(); };
     // camino
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = R * 0.34; ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = R * 0.3; ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.beginPath(); for (let q = from; q <= to; q++) { const T = tiles[q]; q === from ? ctx.moveTo(SX(T.x), SY(T.y)) : ctx.lineTo(SX(T.x), SY(T.y)); } ctx.stroke();
-    // baldosas: blancas si las tocaste, oscuras si fallaste; la próxima con borde de color
+    // baldosas hexagonales; adentro, la forma dice cuánto vale cada lado de la órbita (triángulo semicorchea, círculo negra)
     for (let q = to; q >= from; q--) {
       const T = tiles[q], x = SX(T.x), y = SY(T.y); if (x < -R || x > W + R || y < -R || y > H + R) continue;
-      const nt = q > 0 ? run.notes[q - 1] : null, sz = R * 0.56;
-      const fade = q < k ? 0.35 - 0.08 * (k - q) : MD.blind && q > k + 1 ? 1 - (q - k - 1) / 3 : q > k + 12 ? Math.max(0.25, 1 - (q - k - 12) / 20) : 1;
-      ctx.save(); ctx.translate(x, y); ctx.rotate(T.dir); ctx.globalAlpha = Math.max(0.15, fade);
-      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-sz / 2, -sz / 2, sz, sz, sz * 0.22) : ctx.rect(-sz / 2, -sz / 2, sz, sz);
+      const nt = q > 0 ? run.notes[q - 1] : null, rr = R * 0.5;
+      ctx.globalAlpha = q < k ? 0.35 - 0.08 * (k - q) : MD.blind && q > k + 1 ? Math.max(0.15, 1 - (q - k - 1) / 3) : q > k + 8 ? Math.max(0.15, 1 - (q - k - 8) / 9) : 1;
       const judged = nt && nt.judged, hitOk = judged && !nt.missed;
-      ctx.fillStyle = !nt ? 'rgba(255,255,255,0.5)' : hitOk ? (T.gold ? `rgba(${acc},0.9)` : 'rgba(255,255,255,0.78)') : judged ? '#2e2e33' : T.gold ? `rgba(${acc},0.28)` : 'rgba(255,255,255,0.13)';
+      hexPath(x, y, rr);
+      ctx.fillStyle = !nt ? 'rgba(255,255,255,0.5)' : hitOk ? (T.gold ? `rgba(${acc},0.9)` : 'rgba(255,255,255,0.78)') : judged ? '#2e2e33' : T.gold ? `rgba(${acc},0.28)` : 'rgba(255,255,255,0.12)';
       ctx.fill();
       ctx.lineWidth = q === k + 1 ? 3 : 1.5;
       ctx.strokeStyle = q === k + 1 ? `rgb(${acc})` : T.gold ? `rgba(${acc},0.9)` : 'rgba(255,255,255,0.35)'; ctx.stroke();
-      if (T.twirl) { ctx.rotate(-T.dir); ctx.strokeStyle = hitOk ? '#0d0d0e' : 'rgba(255,255,255,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, sz * 0.24, 0.3, Math.PI * 1.6); ctx.stroke(); }
-      ctx.restore();
+      const ink = hitOk || !nt ? 'rgba(13,13,14,0.75)' : 'rgba(255,255,255,0.85)';
+      if (q < n - 1 && T.u !== 2) {
+        ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 2;
+        if (T.u === 1) { ctx.beginPath(); for (let j = 0; j < 3; j++) { const a = -Math.PI / 2 + j * 2 * Math.PI / 3; j ? ctx.lineTo(x + rr * 0.42 * Math.cos(a), y + rr * 0.42 * Math.sin(a)) : ctx.moveTo(x + rr * 0.42 * Math.cos(a), y + rr * 0.42 * Math.sin(a)); } ctx.closePath(); ctx.fill(); }
+        else { ctx.beginPath(); ctx.arc(x, y, rr * 0.36, 0, Math.PI * 2); ctx.stroke(); }
+      }
+      if (tiles[q + 1] && tiles[q + 1].twirl) {   // el próximo giro cambia de sentido: borde doble
+        hexPath(x, y, rr * 1.22); ctx.strokeStyle = hitOk ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
+      }
     }
     ctx.globalAlpha = 1;
-    // planetas (Sin órbita: solo un pulso en la baldosa actual)
-    const px = SX(P.x), py = SY(P.y), mx = px + Math.cos(a) * R, my = py + Math.sin(a) * R, pr = R * 0.24;
+    const px = SX(P.x), py = SY(P.y), mx = px + (ax + (bx - ax) * f) * R, my = py + (ay + (by - ay) * f) * R, pr = R * 0.22;
     if (MD.still) {
       const bl = 60 / run.song.bpm, bp = t > LEAD ? 1 - (((t - LEAD) % bl) / bl) : 0;
-      ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.5 * bp})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, R * (0.35 + 0.15 * bp), 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.5 * bp})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, R * (0.3 + 0.12 * bp), 0, Math.PI * 2); ctx.stroke();
     } else {
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(px, py, R, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(mx, my); ctx.stroke();
-      const pivA = k % 2 === 0, f = Math.max(0, 1 - (now - flash[0]) / 220);
+      // órbita: hexágono por los 6 vecinos, con el tramo ya recorrido iluminado
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1.5; ctx.beginPath();
+      for (let j = 0; j <= 6; j++) { const [hx, hy] = vx(j); j ? ctx.lineTo(px + hx * R, py + hy * R) : ctx.moveTo(px + hx * R, py + hy * R); } ctx.stroke();
+      const start = P.D + 3;
+      ctx.strokeStyle = `rgba(${acc},0.55)`; ctx.lineWidth = 3; ctx.beginPath();
+      { const [hx, hy] = vx(start); ctx.moveTo(px + hx * R, py + hy * R); }
+      if (t >= P.t) { for (let j = 1; j <= Math.floor(Math.abs(v - start)); j++) { const [hx, hy] = vx(start + sg * j); ctx.lineTo(px + hx * R, py + hy * R); } ctx.lineTo(mx, my); ctx.stroke(); }
+      for (let j = 0; j < 6; j++) { const [hx, hy] = vx(j); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(px + hx * R, py + hy * R, 2.5, 0, Math.PI * 2); ctx.fill(); }
+      const pivA = k % 2 === 0, fl = Math.max(0, 1 - (now - flash[0]) / 220);
       const col = A => A ? '#f2f2f4' : `rgb(${acc})`;
-      for (let s = 1; s <= 5; s++) {   // estela del planeta que gira
-        const aa = a - (N1 ? N1.s : P.s) * s * 0.09;
-        ctx.globalAlpha = 0.18 * (1 - s / 6); ctx.fillStyle = col(!pivA);
-        ctx.beginPath(); ctx.arc(px + Math.cos(aa) * R, py + Math.sin(aa) * R, pr * (1 - s * 0.1), 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = col(pivA); ctx.beginPath(); ctx.arc(px, py, pr * (1 + 0.25 * f), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col(pivA); ctx.beginPath(); ctx.arc(px, py, pr * (1 + 0.25 * fl), 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = col(!pivA); ctx.beginPath(); ctx.arc(mx, my, pr, 0, Math.PI * 2); ctx.fill();
     }
     drawHud(U);
@@ -2479,7 +2516,14 @@ button.chip.mod:hover { border-color: var(--fg); }
       ctx.fillText(L('p_r_root') ? `RACHA x${dec(pathMult())}` : 'SEGUIDAS', W / 2, H * 0.17 + U * 0.07);
     }
     drawJudge(U, H * 0.3);
-    if (run.song.tut) tutMsg(t, U, H * 0.88, [[0, 'El planeta de color gira alrededor del blanco: tocá cualquier tecla cuando llegue a la próxima baldosa'], [0.25, 'Camino recto = un tiempo. Un giro de 90° = una corchea: tocá antes'], [0.55, 'Las baldosas siguen la melodía de la canción'], [0.85, 'Terminá el camino para abrir el mapa']]);
+    if (run.song.tut) tutMsg(t, U, H * 0.88, [
+      [0, 'El planeta de color recorre la órbita hexagonal: tocá cualquier tecla cuando llegue a la baldosa marcada'],
+      [0.12, 'Cada lado de la órbita es una corchea. Negra = 2 lados: el camino dobla'],
+      [0.24, 'Media nota = 4 lados: el planeta da más vuelta antes de tocar'],
+      [0.36, 'Derecho son 3 lados (negra con puntillo). Un solo lado es una corchea: giro cerrado'],
+      [0.52, 'Borde punteado: el próximo giro cambia de sentido'],
+      [0.7, 'Triángulo: cada lado es una semicorchea. Círculo: cada lado es una negra'],
+      [0.88, 'Terminá el camino para abrir el mapa']]);
     drawCountdown(t, U, H * 0.3, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
     const prog = Math.max(0, Math.min(1, t / ch.end));
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
@@ -2662,9 +2706,9 @@ button.chip.mod:hover { border-color: var(--fg); }
     if (m === 'stack') return ['<b>Fácil:</b> la pieza baja una fila por tiempo y el margen para moverse a tiempo es más amplio.',
       '<b>Normal:</b> la pieza baja dos filas por tiempo.',
       '<b>Difícil:</b> dos filas por tiempo y cada 4 compases sube una fila de chatarra desde abajo.'][di];
-    if (m === 'path') return ['<b>Fácil:</b> una baldosa por tiempo o cada pocos tiempos: el camino casi siempre va recto.',
-      '<b>Normal:</b> la melodía en corcheas, con giros de 90°. En los estribillos el sentido de giro puede invertirse.',
-      '<b>Difícil:</b> la melodía completa, con semicorcheas (en canciones lentas) y giros que se invierten en cada tramo.'][di];
+    if (m === 'path') return ['<b>Fácil:</b> negras, medias notas y algunas negras con puntillo. Baldosas hexágono (corchea por lado) y círculo (negra por lado).',
+      '<b>Normal:</b> la melodía y el bombo en corcheas. En algunos tramos el giro cambia de sentido.',
+      '<b>Difícil:</b> semicorcheas con baldosas triángulo, más cambios de sentido y de velocidad.'][di];
     if (m === 'signal') return ['<b>Fácil:</b> patrones en negras de un compás. La línea de tiempo marca cuándo tocar.',
       '<b>Normal:</b> patrones de un compás que pasan a corcheas. Sin marcas en la respuesta (salvo con Eco visual).',
       '<b>Difícil:</b> llamadas de dos compases con corcheas y semicorcheas.'][di];
@@ -2679,7 +2723,7 @@ button.chip.mod:hover { border-color: var(--fg); }
   const MENU_HINT = {
     arrows: 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras incluidas: más estrellas, más multiplicador. Tocar donde no hay flecha resta aguante. Si se vacía, te quedás con la mitad de lo ganado.',
     stack: 'Cada movimiento se juzga contra las corcheas de la canción: a tiempo suma racha, fuera de tiempo daña el casco. Si el casco se rompe o las piezas llegan arriba, te quedás con la mitad.',
-    path: 'Tocá cualquier tecla cuando el planeta que gira llegue a la próxima baldosa. El ángulo del camino marca el ritmo: recto es un tiempo, más cerrado es más rápido. Si fallás, el equilibrio baja; si se vacía, te quedás con la mitad.',
+    path: 'Tocá cualquier tecla cuando el planeta que gira llegue a la baldosa marcada. La órbita es un hexágono y cada lado vale una corchea (semicorchea en baldosas con triángulo, negra con círculo): derecho son 3 lados, cada lado menos o más dobla 60°. Borde punteado: el próximo giro cambia de sentido. Si se vacía el equilibrio, te quedás con la mitad.',
     signal: 'Durante la llamada podés tocar libremente para practicar. En la respuesta, cada nota se juzga como en Vía Pulso. Repetir un patrón entero da un bonus.',
   };
   function renderSongs() {
@@ -2810,17 +2854,14 @@ button.chip.mod:hover { border-color: var(--fg); }
   const tree = $('tree');
   tree.addEventListener('pointerover', e => {
     if (e.pointerType !== 'mouse') return;
-    const b = e.target.closest('.node'); if (!b || b === chargingEl) return;
+    const b = e.target.closest('.node'); if (!b) return;
     clearTimeout(hideT);
     if (tipOpen && b.dataset.id === selNode) return;
-    clearCharge();
-    chargingEl = b; b.classList.add('charging');
-    chargeT = setTimeout(() => openTip(b.dataset.id), 1000);
+    openTip(b.dataset.id);   // el detalle aparece apenas pasás el mouse
   });
   tree.addEventListener('pointerout', e => {
     if (e.pointerType !== 'mouse') return;
     const b = e.target.closest('.node'); if (!b || b.contains(e.relatedTarget)) return;
-    if (b === chargingEl) clearCharge();
     if (tipOpen) { clearTimeout(hideT); hideT = setTimeout(closeTip, 250); }
   });
   tip.addEventListener('pointerenter', () => clearTimeout(hideT));

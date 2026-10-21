@@ -23,7 +23,7 @@
     { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
       desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
     { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
-      desc: 'Dos planetas unidos que giran uno alrededor del otro. En cada nota de la melodía tocás para fijar uno y soltar el otro: el ángulo de cada baldosa te dice cuándo.' },
+      desc: 'Dos planetas unidos sobre un panal de baldosas. El que gira recorre una órbita hexagonal, un lado por corchea: contá los lados hasta la próxima baldosa y tocá al llegar.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
   const GAL_LINKS = [['pulso', 'ens'], ['pulso', 'sen'], ['ens', 'sen'], ['ens', 'com'], ['sen', 'com']];
@@ -77,7 +77,7 @@
       songs: [['Código Morse', 120], ['Transmisión Cruzada', 132], ['Mensaje Final', 144]] },
 
     { gal: 'com', id: 'com_base', style: 'base', name: 'Péndulo', genre: 'Tutorial', tutorial: true, root: 43,
-      desc: 'Un péndulo doble que marca el tiempo. Aprendé a tocar en cada baldosa para que los planetas sigan el camino.',
+      desc: 'Un péndulo doble que marca el tiempo. Aprendé a contar los lados de la órbita: curvas, rectas, medias notas y cambios de giro.',
       songs: [['Primer Giro', 88]] },
     { gal: 'com', id: 'com_a', style: 'bossa', name: 'Brisa', genre: 'Bossa nova', root: 45,
       desc: 'Un planeta de playas lentas y guitarras suaves. Caminos que se curvan con las síncopas.',
