@@ -11,7 +11,9 @@ Numeración: `x.y.z`. Cada cambio chico sube `z` (v0.2.2, v0.2.3…). Un paquete
 
 ## Sin publicar
 
-_(nada todavía)_
+### v0.2.2
+#### Corregido
+- Árboles de mejoras: los nombres de las mejoras ya no se cortan a mitad de palabra. Ocupan una o dos líneas y las mejoras principales de cada rama usan todo el ancho de su fila.
 
 ## v0.2.1
 ### Cambiado
