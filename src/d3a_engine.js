@@ -343,13 +343,21 @@
   const LINE_PTS = [0, 2, 5, 9, 16];
   function initStack(r) {
     const ch = r.ch;
-    COLS = r.mods.narrow ? 8 : 10;
+    COLS = r.song.tut ? 6 : r.mods.narrow ? 8 : 10;
     Object.assign(r, { board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)), bag: [], rs: rng(ch.seed), piece: null, queue: [], hold: null, holdUsed: false,
       gStep: 60 / r.song.bpm / ch.rpb, nextGrav: 0, rcombo: 0, rmax: 0, on: 0, off: 0, lines: 0, tetras: 0, soft: 2 * L('e_c_soft'),
       nextGarbage: LEAD + 128 * ch.step, fx: [], beatFlash: 0 });
+    if (r.song.tut) {
+      // Tutorial: tablero de 6 columnas con la fila de abajo casi completa. La primera pieza (una I) la cierra aunque no muevas nada.
+      // Después siguen piezas fáciles, con la sombra de recomendación. Si las piezas llegan arriba, el tablero se vacía y seguís.
+      r.tutSeq = ['I', 'O', 'O', 'I', 'L', 'J', 'I', 'O', 'T'];
+      r.board[ROWS - 1] = ['G', null, null, null, null, 'G'];
+    }
     for (let k = 0; k < 4; k++) r.queue.push(nextType(r));
   }
   function nextType(r) {
+    if (r.tutSeq) { if (!r.lines && r.tutIdx) return 'I';   // hasta la primera fila, siempre otra I
+      const t = r.tutSeq[(r.tutIdx = (r.tutIdx || 0) + 1) - 1]; if (t) return t; r.tutSeq = null; }
     if (!r.bag.length) { r.bag = Object.keys(SHAPES); for (let i = r.bag.length - 1; i > 0; i--) { const j = Math.floor(r.rs() * (i + 1)); [r.bag[i], r.bag[j]] = [r.bag[j], r.bag[i]]; } }
     return r.bag.pop();
   }
@@ -357,10 +365,48 @@
     const x = p.x + cx + dx, y = p.y + cy + dy;
     return x >= 0 && x < COLS && y < ROWS && (y < 0 || !run.board[y][x]);
   });
+  // Tutorial: si las piezas llegan arriba, el tablero se vacía (con la fila casi completa de nuevo) y seguís
+  function tutReset() {
+    run.board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    if (!run.lines) run.board[ROWS - 1] = ['G', null, null, null, null, 'G'];
+    run.boardVer = (run.boardVer || 0) + 1; setJudge('soft');
+  }
   function spawn(type) {
     type = type || run.queue.shift(); if (run.queue.length < 4) run.queue.push(nextType(run));
     run.piece = { type, rot: 0, x: Math.floor((COLS - (BOXN[type] || 3)) / 2), y: type === 'I' ? -1 : 0 };
+    if (!fits(run.piece) && run.song.tut) tutReset();
     if (!fits(run.piece)) { run.failed = true; setJudge('off'); finishStack(); }
+  }
+  // Sombra de recomendación: prueba cada giro y columna, deja caer la pieza y puntúa el tablero que queda
+  // (más filas completas, menos huecos, menos altura y una superficie más pareja)
+  function bestSpot(p) {
+    let best = null;
+    for (let rot = 0; rot < (p.type === 'O' ? 1 : 4); rot++) {
+      for (let x = -3; x < COLS + 3; x++) {
+        const q = { ...p, x, rot, y: p.y };
+        if (!fits(q, 0, 0, rot)) { q.y = 0; if (!fits(q, 0, 0, rot)) continue; }
+        while (fits(q, 0, 1, rot)) q.y++;
+        const b = run.board.map(row => row.slice()), cells = cellsOf(p.type, rot).map(([cx, cy]) => [q.x + cx, q.y + cy]);
+        if (cells.some(([, y]) => y < 0)) continue;
+        for (const [x2, y2] of cells) b[y2][x2] = 'X';
+        let lines = 0; for (let y = 0; y < ROWS; y++) if (b[y].every(Boolean)) lines++;
+        const keep = b.filter(row => !row.every(Boolean)); while (keep.length < ROWS) keep.unshift(Array(COLS).fill(null));
+        let holes = 0, agg = 0, bump = 0, prev = -1;
+        for (let c = 0; c < COLS; c++) {
+          let top = 0; while (top < ROWS && !keep[top][c]) top++;
+          const h = ROWS - top; agg += h; if (prev >= 0) bump += Math.abs(h - prev); prev = h;
+          for (let y = top + 1; y < ROWS; y++) if (!keep[y][c]) holes++;
+        }
+        const score = 0.76 * lines - 0.51 * agg / COLS * 4 - 0.36 * holes - 0.18 * bump;
+        if (!best || score > best.score) best = { score, x: q.x, y: q.y, rot, cells };
+      }
+    }
+    return best;
+  }
+  const hintOn = () => run && (run.song.tut || run.di === 0);
+  function hintFor(p) {
+    if (!run.hint || run.hint.p !== p || run.hint.ver !== run.boardVer) run.hint = { p, ver: run.boardVer, spot: bestSpot(p) };
+    return run.hint.spot;
   }
   const rhythmMult = () => L('e_c_root') ? Math.min(1 + Math.floor(run.rcombo / 8) * 0.25, 1.5 + 0.5 * L('e_c_rank')) : 1;
   const stackBase = () => 1 + L('e_base');
@@ -368,7 +414,7 @@
     const p = run.piece;
     for (const [cx, cy] of cellsOf(p.type, p.rot)) {
       const x = p.x + cx, y = p.y + cy;
-      if (y < 0) { run.failed = true; finishStack(); return; }
+      if (y < 0) { if (run.song.tut) { tutReset(); run.piece = null; spawn(); return; } run.failed = true; finishStack(); return; }
       run.board[y][x] = p.type;
     }
     run.earned += stackBase() * 0.2 * rhythmMult() * run.mult;
@@ -382,7 +428,7 @@
       run.fx.push({ rows: full, at: performance.now() });
       if (ac) for (let k = 0; k < n; k++) pluck(ac.currentTime + k * 0.05, run.song.root + 36 + [0, 4, 7, 12][k], 0.06, 0.3);
     }
-    run.holdUsed = false; run.piece = null;
+    run.holdUsed = false; run.piece = null; run.boardVer = (run.boardVer || 0) + 1;
     spawn();
   }
   function gravityStep() {
@@ -392,7 +438,7 @@
   function addGarbage() {
     if (run.board[0].some(Boolean)) { run.failed = true; finishStack(); return; }
     const gap = Math.floor(run.rs() * COLS);
-    run.board.shift(); run.board.push(Array.from({ length: COLS }, (_, x) => x === gap ? null : 'G'));
+    run.board.shift(); run.board.push(Array.from({ length: COLS }, (_, x) => x === gap ? null : 'G')); run.boardVer = (run.boardVer || 0) + 1;
     if (run.piece && !fits(run.piece)) run.piece.y--;
   }
   // Cada movimiento se juzga contra la grilla de corcheas: a tiempo suma racha, fuera de tiempo daña el casco

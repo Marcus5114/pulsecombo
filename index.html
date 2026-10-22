@@ -529,12 +529,25 @@ body.land .reactor { right: auto; bottom: auto; left: 4px; top: 2px; }
 body.land .rx-face { width: 40px; height: 40px; }
 body.land .rx-txt { display: none; }
 @media (prefers-reduced-motion: reduce) { .reactor .rx-face { animation: none !important; } }
+
+/* ---------- Mapas desplazables con paralaje ---------- */
+.map { overflow: hidden; }
+.map-par { position: absolute; inset: -60px; pointer-events: none; }
+.map-par .par-l { position: absolute; inset: 0; width: 100%; height: 100%; will-change: transform; }
+.map-scroll { position: absolute; inset: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; cursor: grab; overscroll-behavior: contain; }
+.map.drag .map-scroll { cursor: grabbing; user-select: none; }
+.map-inner { position: relative; width: max(100%, var(--mw, 720px)); height: max(100%, var(--mh, 420px)); }
+.map[data-layout="tall"] { --mw: 330px; --mh: 560px; }
+.map[data-layout="short"] { --mw: 680px; --mh: 250px; }
+#galMap[data-layout="wide"] { --mw: 760px; --mh: 460px; }
+#map[data-layout="wide"] { --mw: 720px; --mh: 440px; }
+@media (prefers-reduced-motion: reduce) { .map-par .par-l { transform: none !important; } }
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <h1>Combo Pulso <span>v0.4</span></h1>
+    <h1>Combo Pulso <span>v0.4.1</span></h1>
     <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
@@ -557,8 +570,11 @@ body.land .rx-txt { display: none; }
 <main>
   <section class="view" id="vGal" hidden>
     <div class="map" id="galMap">
-      <svg class="map-svg" id="galSvg" aria-hidden="true"></svg>
-      <div id="galaxies"></div>
+      <div class="map-par" aria-hidden="true"></div>
+      <div class="map-scroll"><div class="map-inner">
+        <svg class="map-svg" id="galSvg" aria-hidden="true"></svg>
+        <div id="galaxies"></div>
+      </div></div>
     </div>
     <div class="gal-info" id="galInfo"></div>
     <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La materia oscura se gana con hitos en cualquier galaxia: sirve para abrir galaxias nuevas y comprar el árbol global.</p>
@@ -566,8 +582,11 @@ body.land .rx-txt { display: none; }
 
   <section class="view" id="vMap">
     <div class="map" id="map">
-      <svg class="map-svg" id="mapSvg" aria-hidden="true"></svg>
-      <div id="planets"></div>
+      <div class="map-par" aria-hidden="true"></div>
+      <div class="map-scroll"><div class="map-inner">
+        <svg class="map-svg" id="mapSvg" aria-hidden="true"></svg>
+        <div id="planets"></div>
+      </div></div>
     </div>
     <p class="hint" id="mapHint"></p>
   </section>
@@ -1683,9 +1702,9 @@ body.land .rx-txt { display: none; }
   // ---------- Ensamble: piezas que caen al compás ----------
   function buildStack(si, di) {
     const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16;
-    const rpb = s.tut ? 0.5 : di === 0 ? 1 : 2;          // filas que baja por tiempo
+    const rpb = s.tut ? 2 : di === 0 ? 1 : 2;            // filas que baja por tiempo (el tutorial cae rápido: tablero angosto y piezas que llegan solas)
     const garbage = !s.tut && di === 2;                   // chatarra que sube desde abajo cada 4 compases
-    let stars = 0.6 + (s.bpm / 60) * rpb * 1.1 + (garbage ? 1.2 : 0) + (s.lvl - 1) * 0.15;
+    let stars = s.tut ? 1.2 : 0.6 + (s.bpm / 60) * rpb * 1.1 + (garbage ? 1.2 : 0) + (s.lvl - 1) * 0.15;
     stars = Math.round(stars * 10) / 10;
     return { step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, rpb, garbage, seed: 7000 + si * 97 + di * 13 };
   }
@@ -2153,13 +2172,21 @@ body.land .rx-txt { display: none; }
   const LINE_PTS = [0, 2, 5, 9, 16];
   function initStack(r) {
     const ch = r.ch;
-    COLS = r.mods.narrow ? 8 : 10;
+    COLS = r.song.tut ? 6 : r.mods.narrow ? 8 : 10;
     Object.assign(r, { board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)), bag: [], rs: rng(ch.seed), piece: null, queue: [], hold: null, holdUsed: false,
       gStep: 60 / r.song.bpm / ch.rpb, nextGrav: 0, rcombo: 0, rmax: 0, on: 0, off: 0, lines: 0, tetras: 0, soft: 2 * L('e_c_soft'),
       nextGarbage: LEAD + 128 * ch.step, fx: [], beatFlash: 0 });
+    if (r.song.tut) {
+      // Tutorial: tablero de 6 columnas con la fila de abajo casi completa. La primera pieza (una I) la cierra aunque no muevas nada.
+      // Después siguen piezas fáciles, con la sombra de recomendación. Si las piezas llegan arriba, el tablero se vacía y seguís.
+      r.tutSeq = ['I', 'O', 'O', 'I', 'L', 'J', 'I', 'O', 'T'];
+      r.board[ROWS - 1] = ['G', null, null, null, null, 'G'];
+    }
     for (let k = 0; k < 4; k++) r.queue.push(nextType(r));
   }
   function nextType(r) {
+    if (r.tutSeq) { if (!r.lines && r.tutIdx) return 'I';   // hasta la primera fila, siempre otra I
+      const t = r.tutSeq[(r.tutIdx = (r.tutIdx || 0) + 1) - 1]; if (t) return t; r.tutSeq = null; }
     if (!r.bag.length) { r.bag = Object.keys(SHAPES); for (let i = r.bag.length - 1; i > 0; i--) { const j = Math.floor(r.rs() * (i + 1)); [r.bag[i], r.bag[j]] = [r.bag[j], r.bag[i]]; } }
     return r.bag.pop();
   }
@@ -2167,10 +2194,48 @@ body.land .rx-txt { display: none; }
     const x = p.x + cx + dx, y = p.y + cy + dy;
     return x >= 0 && x < COLS && y < ROWS && (y < 0 || !run.board[y][x]);
   });
+  // Tutorial: si las piezas llegan arriba, el tablero se vacía (con la fila casi completa de nuevo) y seguís
+  function tutReset() {
+    run.board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    if (!run.lines) run.board[ROWS - 1] = ['G', null, null, null, null, 'G'];
+    run.boardVer = (run.boardVer || 0) + 1; setJudge('soft');
+  }
   function spawn(type) {
     type = type || run.queue.shift(); if (run.queue.length < 4) run.queue.push(nextType(run));
     run.piece = { type, rot: 0, x: Math.floor((COLS - (BOXN[type] || 3)) / 2), y: type === 'I' ? -1 : 0 };
+    if (!fits(run.piece) && run.song.tut) tutReset();
     if (!fits(run.piece)) { run.failed = true; setJudge('off'); finishStack(); }
+  }
+  // Sombra de recomendación: prueba cada giro y columna, deja caer la pieza y puntúa el tablero que queda
+  // (más filas completas, menos huecos, menos altura y una superficie más pareja)
+  function bestSpot(p) {
+    let best = null;
+    for (let rot = 0; rot < (p.type === 'O' ? 1 : 4); rot++) {
+      for (let x = -3; x < COLS + 3; x++) {
+        const q = { ...p, x, rot, y: p.y };
+        if (!fits(q, 0, 0, rot)) { q.y = 0; if (!fits(q, 0, 0, rot)) continue; }
+        while (fits(q, 0, 1, rot)) q.y++;
+        const b = run.board.map(row => row.slice()), cells = cellsOf(p.type, rot).map(([cx, cy]) => [q.x + cx, q.y + cy]);
+        if (cells.some(([, y]) => y < 0)) continue;
+        for (const [x2, y2] of cells) b[y2][x2] = 'X';
+        let lines = 0; for (let y = 0; y < ROWS; y++) if (b[y].every(Boolean)) lines++;
+        const keep = b.filter(row => !row.every(Boolean)); while (keep.length < ROWS) keep.unshift(Array(COLS).fill(null));
+        let holes = 0, agg = 0, bump = 0, prev = -1;
+        for (let c = 0; c < COLS; c++) {
+          let top = 0; while (top < ROWS && !keep[top][c]) top++;
+          const h = ROWS - top; agg += h; if (prev >= 0) bump += Math.abs(h - prev); prev = h;
+          for (let y = top + 1; y < ROWS; y++) if (!keep[y][c]) holes++;
+        }
+        const score = 0.76 * lines - 0.51 * agg / COLS * 4 - 0.36 * holes - 0.18 * bump;
+        if (!best || score > best.score) best = { score, x: q.x, y: q.y, rot, cells };
+      }
+    }
+    return best;
+  }
+  const hintOn = () => run && (run.song.tut || run.di === 0);
+  function hintFor(p) {
+    if (!run.hint || run.hint.p !== p || run.hint.ver !== run.boardVer) run.hint = { p, ver: run.boardVer, spot: bestSpot(p) };
+    return run.hint.spot;
   }
   const rhythmMult = () => L('e_c_root') ? Math.min(1 + Math.floor(run.rcombo / 8) * 0.25, 1.5 + 0.5 * L('e_c_rank')) : 1;
   const stackBase = () => 1 + L('e_base');
@@ -2178,7 +2243,7 @@ body.land .rx-txt { display: none; }
     const p = run.piece;
     for (const [cx, cy] of cellsOf(p.type, p.rot)) {
       const x = p.x + cx, y = p.y + cy;
-      if (y < 0) { run.failed = true; finishStack(); return; }
+      if (y < 0) { if (run.song.tut) { tutReset(); run.piece = null; spawn(); return; } run.failed = true; finishStack(); return; }
       run.board[y][x] = p.type;
     }
     run.earned += stackBase() * 0.2 * rhythmMult() * run.mult;
@@ -2192,7 +2257,7 @@ body.land .rx-txt { display: none; }
       run.fx.push({ rows: full, at: performance.now() });
       if (ac) for (let k = 0; k < n; k++) pluck(ac.currentTime + k * 0.05, run.song.root + 36 + [0, 4, 7, 12][k], 0.06, 0.3);
     }
-    run.holdUsed = false; run.piece = null;
+    run.holdUsed = false; run.piece = null; run.boardVer = (run.boardVer || 0) + 1;
     spawn();
   }
   function gravityStep() {
@@ -2202,7 +2267,7 @@ body.land .rx-txt { display: none; }
   function addGarbage() {
     if (run.board[0].some(Boolean)) { run.failed = true; finishStack(); return; }
     const gap = Math.floor(run.rs() * COLS);
-    run.board.shift(); run.board.push(Array.from({ length: COLS }, (_, x) => x === gap ? null : 'G'));
+    run.board.shift(); run.board.push(Array.from({ length: COLS }, (_, x) => x === gap ? null : 'G')); run.boardVer = (run.boardVer || 0) + 1;
     if (run.piece && !fits(run.piece)) run.piece.y--;
   }
   // Cada movimiento se juzga contra la grilla de corcheas: a tiempo suma racha, fuera de tiempo daña el casco
@@ -2611,6 +2676,16 @@ body.land .rx-txt { display: none; }
     }
     run.fx = run.fx.filter(f => now - f.at < 350);
     const p = run.piece;
+    // Sombra de recomendación (tutorial y Fácil): contorno punteado del color de la galaxia donde conviene encastrar
+    if (p && hintOn()) {
+      const sp = hintFor(p);
+      if (sp) {
+        const pulse = 0.55 + 0.3 * Math.sin(now / 220);
+        ctx.save(); ctx.setLineDash([4, 3]); ctx.lineWidth = 2; ctx.strokeStyle = `rgba(${XC()},${pulse})`; ctx.fillStyle = `rgba(${XC()},0.14)`;
+        for (const [x, y] of sp.cells) if (y >= 0) { ctx.fillRect(bx + x * cs + 2, by + y * cs + 2, cs - 4, cs - 4); ctx.strokeRect(bx + x * cs + 2.5, by + y * cs + 2.5, cs - 5, cs - 5); }
+        ctx.restore();
+      }
+    }
     // Destello: la pieza (y su proyección) solo se ve al principio de cada tiempo
     const lit = !run.mods.flash || t < LEAD || ((t - LEAD) % beat) / beat < 0.3;
     if (p && lit) {
@@ -2651,7 +2726,7 @@ body.land .rx-txt { display: none; }
     ctx.fillStyle = jf > 0 ? (good ? `rgba(255,255,255,${0.5 + 0.5 * jf})` : `rgba(120,120,126,${0.5 + 0.5 * jf})`) : 'rgba(255,255,255,0.5)';
     ctx.fillRect(cx0 - 2, sy - 16, 4, 32);
     drawJudge(U, by + bh * 0.42);
-    if (run.song.tut) tutMsg(t, U, sy + U * 0.07, [[0, 'Movés con ← →, girás con ↑ y soltás con Espacio'], [0.15, 'Cada movimiento tiene que caer sobre una marca de la tira de abajo'], [0.45, 'Completá filas enteras para ganar piezas'], [0.8, 'Con una fila completa ya abrís el mapa']]);
+    if (run.song.tut) tutMsg(t, U, sy + U * 0.07, [[0, 'La pieza cae sola. La sombra de color te muestra dónde conviene ponerla'], [0.12, 'Movés con ← →, girás con ↑ y soltás con Espacio'], [0.3, 'Si una fila queda llena, desaparece y ganás piezas'], [0.5, 'Probá moverte justo sobre las marcas de la tira de abajo: suma racha'], [0.8, 'Con una fila completa ya abrís el mapa']]);
     drawCountdown(t, U, by + bh * 0.4, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
     const prog = Math.max(0, Math.min(1, t / ch.end));
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);
@@ -3132,7 +3207,8 @@ body.land .rx-txt { display: none; }
   const SEL_MARK = '<span class="sel-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
   function renderGal() {
     const pos = GLAYOUT[layoutKey()];
-    $('galSvg').innerHTML = starsSvg() + GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
+    $('galMap').dataset.layout = layoutKey();
+    $('galSvg').innerHTML = GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('galaxies').innerHTML = GALAXIES.map(g => {
       const open = !!S.galOpen[g.id], here = S.galaxy === g.id;
       const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : `${g.cost} de materia oscura`;
@@ -3143,6 +3219,7 @@ body.land .rx-txt { display: none; }
       </button>`;
     }).join('');
     renderGalInfo();
+    requestAnimationFrame(() => galPan.center(...pos[S.galaxy]));
   }
   function renderGalInfo() {
     const g = GX[galSel], open = !!S.galOpen[g.id], here = S.galaxy === g.id;
@@ -3164,6 +3241,35 @@ body.land .rx-txt { display: none; }
     travel(g.id);
   });
 
+  // ---------- Mapas: arrastre para mover, estrellas en tres capas con paralaje ----------
+  // El contenido tiene un tamaño mínimo; si no entra en la pantalla se puede desplazar (rueda, dedo o arrastrando con el mouse).
+  // Las estrellas de fondo se mueven a distinta velocidad según el desplazamiento y la posición del mouse.
+  const PAR = [[0.12, 5, 70, 0.6, 0.35], [0.3, 12, 45, 1, 0.5], [0.55, 22, 22, 1.6, 0.75]];   // [factor de scroll, mouse px, cantidad, radio, brillo]
+  function setupMap(map) {
+    const scroll = map.querySelector('.map-scroll'), par = map.querySelector('.map-par');
+    par.innerHTML = PAR.map(([, , n, r, a], k) => { const R = rng(900 + k * 77);
+      return `<svg class="par-l">${Array.from({ length: n }, () => `<circle cx="${(R() * 100).toFixed(1)}%" cy="${(R() * 100).toFixed(1)}%" r="${(r * (0.6 + R() * 0.8)).toFixed(2)}" fill="#fff" fill-opacity="${(a * (0.4 + R() * 0.6)).toFixed(2)}"/>`).join('')}</svg>`; }).join('');
+    const layers = [...par.children]; let mx = 0, my = 0, raf = 0;
+    const paint = () => { raf = 0; layers.forEach((l, k) => { const [f, m] = PAR[k]; l.style.transform = `translate(${(-scroll.scrollLeft * f + mx * m).toFixed(1)}px, ${(-scroll.scrollTop * f + my * m).toFixed(1)}px)`; }); };
+    const ask = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    scroll.addEventListener('scroll', ask, { passive: true });
+    map.addEventListener('pointermove', e => { const b = map.getBoundingClientRect(); mx = (e.clientX - b.left) / b.width - 0.5; my = (e.clientY - b.top) / b.height - 0.5; ask(); });
+    // arrastre con el mouse (en pantallas táctiles se desplaza con el dedo de forma nativa)
+    let drag = null;
+    scroll.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse' || e.button !== 0) return; drag = { x: e.clientX, y: e.clientY, l: scroll.scrollLeft, t: scroll.scrollTop, moved: false }; });
+    window.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) > 5) { drag.moved = true; map.classList.add('drag'); }
+      if (drag.moved) { scroll.scrollLeft = drag.l - dx; scroll.scrollTop = drag.t - dy; }
+    });
+    window.addEventListener('pointerup', () => { if (!drag) return; const moved = drag.moved; drag = null; map.classList.remove('drag'); if (moved) { map.dataset.dragged = '1'; setTimeout(() => delete map.dataset.dragged, 0); } });
+    // si se arrastró, el clic que sigue no selecciona nada
+    scroll.addEventListener('click', e => { if (map.dataset.dragged) { e.stopPropagation(); e.preventDefault(); } }, true);
+    return { center(xPct, yPct) { const inner = scroll.firstElementChild; scroll.scrollLeft = inner.offsetWidth * xPct / 100 - scroll.clientWidth / 2; scroll.scrollTop = inner.offsetHeight * yPct / 100 - scroll.clientHeight / 2; ask(); }, ask };
+  }
+  const galPan = setupMap($('galMap')), mapPan = setupMap($('map'));
+
   // ---------- Mapa de planetas ----------
   const LAYOUT = {
     pulso: { wide: { base: [9, 26], rock: [22, 66], pop: [40, 24], jazz: [45, 77], disco: [66, 40], edm: [87, 66] },
@@ -3181,7 +3287,8 @@ body.land .rx-txt { display: none; }
   };
   function renderMap() {
     const gal = S.galaxy, g = GX[gal], pos = LAYOUT[gal][layoutKey()];
-    $('mapSvg').innerHTML = starsSvg() + LINKS[gal].map(([a, b]) => `<line class="${worldOpen(WI[a]) && worldOpen(WI[b]) ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
+    $('map').dataset.layout = layoutKey();
+    $('mapSvg').innerHTML = LINKS[gal].map(([a, b]) => `<line class="${worldOpen(WI[a]) && worldOpen(WI[b]) ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('planets').innerHTML = WORLDS.map((w, wi) => {
       if (w.gal !== gal) return '';
       const cleared = clearedIn(wi), n = w.idx.length, open = worldOpen(wi);
@@ -3193,6 +3300,7 @@ body.land .rx-txt { display: none; }
         <span class="pgn">${w.genre}</span><span class="pn">${w.name}</span><span class="pp">${status}</span>
       </button>`;
     }).join('');
+    { const cur = WORLDS[S.world] && WORLDS[S.world].gal === gal ? WORLDS[S.world].id : WORLDS.find(w => w.gal === gal && w.tutorial).id; requestAnimationFrame(() => mapPan.center(...pos[cur])); }
     const tw = WORLDS.find(w => w.gal === gal && w.tutorial), first = WORLDS[WI[LINKS[gal][0][1]]];
     const songsPer = WORLDS.find(w => w.gal === gal && !w.tutorial).idx.length;
     $('mapHint').textContent = tutDone(gal)

@@ -43,7 +43,8 @@
   const SEL_MARK = '<span class="sel-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
   function renderGal() {
     const pos = GLAYOUT[layoutKey()];
-    $('galSvg').innerHTML = starsSvg() + GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
+    $('galMap').dataset.layout = layoutKey();
+    $('galSvg').innerHTML = GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('galaxies').innerHTML = GALAXIES.map(g => {
       const open = !!S.galOpen[g.id], here = S.galaxy === g.id;
       const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : `${g.cost} de materia oscura`;
@@ -54,6 +55,7 @@
       </button>`;
     }).join('');
     renderGalInfo();
+    requestAnimationFrame(() => galPan.center(...pos[S.galaxy]));
   }
   function renderGalInfo() {
     const g = GX[galSel], open = !!S.galOpen[g.id], here = S.galaxy === g.id;
@@ -75,6 +77,35 @@
     travel(g.id);
   });
 
+  // ---------- Mapas: arrastre para mover, estrellas en tres capas con paralaje ----------
+  // El contenido tiene un tamaño mínimo; si no entra en la pantalla se puede desplazar (rueda, dedo o arrastrando con el mouse).
+  // Las estrellas de fondo se mueven a distinta velocidad según el desplazamiento y la posición del mouse.
+  const PAR = [[0.12, 5, 70, 0.6, 0.35], [0.3, 12, 45, 1, 0.5], [0.55, 22, 22, 1.6, 0.75]];   // [factor de scroll, mouse px, cantidad, radio, brillo]
+  function setupMap(map) {
+    const scroll = map.querySelector('.map-scroll'), par = map.querySelector('.map-par');
+    par.innerHTML = PAR.map(([, , n, r, a], k) => { const R = rng(900 + k * 77);
+      return `<svg class="par-l">${Array.from({ length: n }, () => `<circle cx="${(R() * 100).toFixed(1)}%" cy="${(R() * 100).toFixed(1)}%" r="${(r * (0.6 + R() * 0.8)).toFixed(2)}" fill="#fff" fill-opacity="${(a * (0.4 + R() * 0.6)).toFixed(2)}"/>`).join('')}</svg>`; }).join('');
+    const layers = [...par.children]; let mx = 0, my = 0, raf = 0;
+    const paint = () => { raf = 0; layers.forEach((l, k) => { const [f, m] = PAR[k]; l.style.transform = `translate(${(-scroll.scrollLeft * f + mx * m).toFixed(1)}px, ${(-scroll.scrollTop * f + my * m).toFixed(1)}px)`; }); };
+    const ask = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    scroll.addEventListener('scroll', ask, { passive: true });
+    map.addEventListener('pointermove', e => { const b = map.getBoundingClientRect(); mx = (e.clientX - b.left) / b.width - 0.5; my = (e.clientY - b.top) / b.height - 0.5; ask(); });
+    // arrastre con el mouse (en pantallas táctiles se desplaza con el dedo de forma nativa)
+    let drag = null;
+    scroll.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse' || e.button !== 0) return; drag = { x: e.clientX, y: e.clientY, l: scroll.scrollLeft, t: scroll.scrollTop, moved: false }; });
+    window.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) > 5) { drag.moved = true; map.classList.add('drag'); }
+      if (drag.moved) { scroll.scrollLeft = drag.l - dx; scroll.scrollTop = drag.t - dy; }
+    });
+    window.addEventListener('pointerup', () => { if (!drag) return; const moved = drag.moved; drag = null; map.classList.remove('drag'); if (moved) { map.dataset.dragged = '1'; setTimeout(() => delete map.dataset.dragged, 0); } });
+    // si se arrastró, el clic que sigue no selecciona nada
+    scroll.addEventListener('click', e => { if (map.dataset.dragged) { e.stopPropagation(); e.preventDefault(); } }, true);
+    return { center(xPct, yPct) { const inner = scroll.firstElementChild; scroll.scrollLeft = inner.offsetWidth * xPct / 100 - scroll.clientWidth / 2; scroll.scrollTop = inner.offsetHeight * yPct / 100 - scroll.clientHeight / 2; ask(); }, ask };
+  }
+  const galPan = setupMap($('galMap')), mapPan = setupMap($('map'));
+
   // ---------- Mapa de planetas ----------
   const LAYOUT = {
     pulso: { wide: { base: [9, 26], rock: [22, 66], pop: [40, 24], jazz: [45, 77], disco: [66, 40], edm: [87, 66] },
@@ -92,7 +123,8 @@
   };
   function renderMap() {
     const gal = S.galaxy, g = GX[gal], pos = LAYOUT[gal][layoutKey()];
-    $('mapSvg').innerHTML = starsSvg() + LINKS[gal].map(([a, b]) => `<line class="${worldOpen(WI[a]) && worldOpen(WI[b]) ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
+    $('map').dataset.layout = layoutKey();
+    $('mapSvg').innerHTML = LINKS[gal].map(([a, b]) => `<line class="${worldOpen(WI[a]) && worldOpen(WI[b]) ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('planets').innerHTML = WORLDS.map((w, wi) => {
       if (w.gal !== gal) return '';
       const cleared = clearedIn(wi), n = w.idx.length, open = worldOpen(wi);
@@ -104,6 +136,7 @@
         <span class="pgn">${w.genre}</span><span class="pn">${w.name}</span><span class="pp">${status}</span>
       </button>`;
     }).join('');
+    { const cur = WORLDS[S.world] && WORLDS[S.world].gal === gal ? WORLDS[S.world].id : WORLDS.find(w => w.gal === gal && w.tutorial).id; requestAnimationFrame(() => mapPan.center(...pos[cur])); }
     const tw = WORLDS.find(w => w.gal === gal && w.tutorial), first = WORLDS[WI[LINKS[gal][0][1]]];
     const songsPer = WORLDS.find(w => w.gal === gal && !w.tutorial).idx.length;
     $('mapHint').textContent = tutDone(gal)

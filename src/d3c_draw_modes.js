@@ -168,6 +168,16 @@
     }
     run.fx = run.fx.filter(f => now - f.at < 350);
     const p = run.piece;
+    // Sombra de recomendación (tutorial y Fácil): contorno punteado del color de la galaxia donde conviene encastrar
+    if (p && hintOn()) {
+      const sp = hintFor(p);
+      if (sp) {
+        const pulse = 0.55 + 0.3 * Math.sin(now / 220);
+        ctx.save(); ctx.setLineDash([4, 3]); ctx.lineWidth = 2; ctx.strokeStyle = `rgba(${XC()},${pulse})`; ctx.fillStyle = `rgba(${XC()},0.14)`;
+        for (const [x, y] of sp.cells) if (y >= 0) { ctx.fillRect(bx + x * cs + 2, by + y * cs + 2, cs - 4, cs - 4); ctx.strokeRect(bx + x * cs + 2.5, by + y * cs + 2.5, cs - 5, cs - 5); }
+        ctx.restore();
+      }
+    }
     // Destello: la pieza (y su proyección) solo se ve al principio de cada tiempo
     const lit = !run.mods.flash || t < LEAD || ((t - LEAD) % beat) / beat < 0.3;
     if (p && lit) {
@@ -208,7 +218,7 @@
     ctx.fillStyle = jf > 0 ? (good ? `rgba(255,255,255,${0.5 + 0.5 * jf})` : `rgba(120,120,126,${0.5 + 0.5 * jf})`) : 'rgba(255,255,255,0.5)';
     ctx.fillRect(cx0 - 2, sy - 16, 4, 32);
     drawJudge(U, by + bh * 0.42);
-    if (run.song.tut) tutMsg(t, U, sy + U * 0.07, [[0, 'Movés con ← →, girás con ↑ y soltás con Espacio'], [0.15, 'Cada movimiento tiene que caer sobre una marca de la tira de abajo'], [0.45, 'Completá filas enteras para ganar piezas'], [0.8, 'Con una fila completa ya abrís el mapa']]);
+    if (run.song.tut) tutMsg(t, U, sy + U * 0.07, [[0, 'La pieza cae sola. La sombra de color te muestra dónde conviene ponerla'], [0.12, 'Movés con ← →, girás con ↑ y soltás con Espacio'], [0.3, 'Si una fila queda llena, desaparece y ganás piezas'], [0.5, 'Probá moverte justo sobre las marcas de la tira de abajo: suma racha'], [0.8, 'Con una fila completa ya abrís el mapa']]);
     drawCountdown(t, U, by + bh * 0.4, `${WORLDS[run.song.wi].genre} · ${run.song.bpm} BPM`);
     const prog = Math.max(0, Math.min(1, t / ch.end));
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(0, H - 3, W, 3); ctx.fillStyle = GX[run.song.gal].color; ctx.fillRect(0, H - 3, W * prog, 3);

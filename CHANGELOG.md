@@ -9,6 +9,16 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
+## Sin publicar — próxima versión: v0.4.1
+
+### Cambiado
+- Tutorial de Ensamble rehecho para quien nunca jugó a encastrar piezas. El tablero tiene 6 columnas y la fila de abajo viene casi completa: la primera pieza (una I) la cierra aunque no muevas nada. Hasta completar esa fila siguen llegando I. Las piezas caen más rápido para que lleguen solas. Si las piezas llegan arriba, el tablero se vacía y seguís, en lugar de perder. Lo probé con 8 jugadores simulados que no saben jugar: antes ninguno completaba una fila; ahora la completan todos, salvo algún caso de teclas apretadas al azar.
+- Mapas de galaxias y de planetas: si no entran en la pantalla (celulares o pantallas muy anchas o bajas) se desplazan con la rueda, con el dedo o arrastrando con el mouse. Al abrirlos se centran en la galaxia o el planeta actual.
+
+### Agregado
+- Ensamble: sombra de recomendación en el tutorial y en Fácil. Un contorno punteado del color de la galaxia marca dónde conviene encastrar la pieza para armar filas (el juego prueba cada giro y columna y elige la que deja menos huecos y la superficie más pareja).
+- Mapas: estrellas de fondo en tres capas con efecto de paralaje, que se mueven a distinta velocidad al desplazar el mapa y al mover el mouse.
+
 ## v0.4
 
 ### Agregado (historia)

@@ -74,9 +74,9 @@
   // ---------- Ensamble: piezas que caen al compás ----------
   function buildStack(si, di) {
     const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16;
-    const rpb = s.tut ? 0.5 : di === 0 ? 1 : 2;          // filas que baja por tiempo
+    const rpb = s.tut ? 2 : di === 0 ? 1 : 2;            // filas que baja por tiempo (el tutorial cae rápido: tablero angosto y piezas que llegan solas)
     const garbage = !s.tut && di === 2;                   // chatarra que sube desde abajo cada 4 compases
-    let stars = 0.6 + (s.bpm / 60) * rpb * 1.1 + (garbage ? 1.2 : 0) + (s.lvl - 1) * 0.15;
+    let stars = s.tut ? 1.2 : 0.6 + (s.bpm / 60) * rpb * 1.1 + (garbage ? 1.2 : 0) + (s.lvl - 1) * 0.15;
     stars = Math.round(stars * 10) / 10;
     return { step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, rpb, garbage, seed: 7000 + si * 97 + di * 13 };
   }

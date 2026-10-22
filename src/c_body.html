@@ -1,6 +1,6 @@
 <header class="top">
   <div class="brand">
-    <h1>Combo Pulso <span>v0.4</span></h1>
+    <h1>Combo Pulso <span>v0.4.1</span></h1>
     <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
@@ -23,8 +23,11 @@
 <main>
   <section class="view" id="vGal" hidden>
     <div class="map" id="galMap">
-      <svg class="map-svg" id="galSvg" aria-hidden="true"></svg>
-      <div id="galaxies"></div>
+      <div class="map-par" aria-hidden="true"></div>
+      <div class="map-scroll"><div class="map-inner">
+        <svg class="map-svg" id="galSvg" aria-hidden="true"></svg>
+        <div id="galaxies"></div>
+      </div></div>
     </div>
     <div class="gal-info" id="galInfo"></div>
     <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La materia oscura se gana con hitos en cualquier galaxia: sirve para abrir galaxias nuevas y comprar el árbol global.</p>
@@ -32,8 +35,11 @@
 
   <section class="view" id="vMap">
     <div class="map" id="map">
-      <svg class="map-svg" id="mapSvg" aria-hidden="true"></svg>
-      <div id="planets"></div>
+      <div class="map-par" aria-hidden="true"></div>
+      <div class="map-scroll"><div class="map-inner">
+        <svg class="map-svg" id="mapSvg" aria-hidden="true"></svg>
+        <div id="planets"></div>
+      </div></div>
     </div>
     <p class="hint" id="mapHint"></p>
   </section>
