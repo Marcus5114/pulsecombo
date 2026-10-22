@@ -63,7 +63,8 @@
       : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de materia oscura</button>`
       : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
     $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
-    $('galInfo').innerHTML = `<div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3></div>${btn}<p>${g.desc}</p>
+    const amb = AMB[g.id], [ambName, ambRole] = SPK[amb];
+    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}<p>${g.desc}</p>
       <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
@@ -201,6 +202,7 @@
     chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
     $('mech').innerHTML = chips.join('');
     renderMods(W0.gal);
+    renderRep(S.world);
     $('mechHint').hidden = !Object.keys(TOGGLES).some(id => L(id));
   }
   $('songs').addEventListener('click', e => {

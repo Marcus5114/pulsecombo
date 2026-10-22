@@ -459,12 +459,15 @@ button.chip.mod:hover { border-color: var(--fg); }
 @keyframes dlgin { from { transform: translateY(16px); opacity: 0; } }
 .dlg-face { flex: none; width: 96px; height: 96px; }
 .dlg-face svg { width: 100%; height: 100%; display: block; }
-.dlg-face .bg { fill: #141417; stroke: color-mix(in srgb, var(--acc) 50%, transparent); stroke-width: 1.5; }
-.dlg-face .ln { fill: none; stroke: #d4d4d8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.dlg-face .hl { fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; opacity: 0.7; }
-.dlg-face .ac { fill: var(--acc); stroke: none; }
-.dlg-face .fl { fill: #d4d4d8; stroke: none; }
-.dlg-face .dk { fill: #0b0b0d; }
+.pf svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.pf .bg { fill: #141417; stroke: color-mix(in srgb, var(--acc) 50%, transparent); stroke-width: 1.5; }
+.pf .ln { fill: none; stroke: #d4d4d8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pf .hl { fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; opacity: 0.7; }
+.pf .as { fill: none; stroke: var(--acc); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pf .dkl { fill: none; stroke: #0b0b0d; stroke-width: 2; stroke-linecap: round; }
+.pf .ac { fill: var(--acc); stroke: none; }
+.pf .fl { fill: #d4d4d8; stroke: none; }
+.pf .dk { fill: #0b0b0d; }
 .dlg-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .dlg-name { font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85rem; color: var(--acc); }
 .dlg-name span { font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--muted); font-size: 0.75rem; margin-left: 6px; }
@@ -474,6 +477,58 @@ button.chip.mod:hover { border-color: var(--fg); }
 @media (prefers-reduced-motion: reduce) { .dlg-card { animation: none; } }
 .dlg-hint .ht { display: none; }
 @media (hover: none) { .dlg-hint .hk { display: none; } .dlg-hint .ht { display: inline; } }
+
+/* ---------- Representante del planeta (menú) ---------- */
+#vMenu { position: relative; }
+.rep { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.rep-face { flex: none; width: 64px; height: 64px; }
+.rep-txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rep-name { font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8rem; color: var(--acc); }
+.rep-role { font-size: 0.7rem; color: var(--muted); }
+.rep-say { font-size: 0.85rem; font-style: italic; }
+@media (min-width: 1040px) {
+  #vMenu { max-width: 814px; padding-left: 214px; }
+  .rep { position: absolute; top: 0; left: 0; width: 190px; flex-direction: column; text-align: center; padding: 16px 14px; }
+  .rep-face { width: 150px; height: 150px; }
+  .rep-say { margin-top: 6px; }
+}
+/* Embajador en el panel de galaxias */
+.gi-head { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.gi-amb { flex: none; width: 58px; height: 58px; }
+.gi-ambn { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+.gi-ambn b { color: var(--fg); }
+
+/* ---------- Reacciones en la partida ---------- */
+.stage { position: relative; }
+.reactor { position: absolute; z-index: 3; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 6px; right: calc(100% + 18px); top: 30px; width: 150px; text-align: center; }
+.rx-face { width: 120px; height: 120px; transition: filter 0.3s; }
+.rx-name { font-size: 0.7rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--acc); }
+.rx-say { font-size: 0.85rem; font-weight: 700; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; min-height: 1.4em; }
+.reactor.r-perfect .rx-face { animation: rxjump 0.4s ease-out; }
+.reactor.r-great .rx-face { animation: rxnod 0.35s ease-out; }
+.reactor.r-good .rx-face { animation: rxtilt 0.4s ease-out; }
+.reactor.r-miss .rx-face { animation: rxshake 0.4s ease-out; filter: grayscale(1) brightness(0.7); }
+.reactor.r-fever .rx-face { animation: rxfever 0.5s ease-in-out 3; filter: drop-shadow(0 0 12px var(--acc)); }
+.reactor.r-perfect .rx-say, .reactor.r-fever .rx-say { border-color: var(--acc); color: var(--acc); }
+.reactor.r-miss .rx-say { color: var(--muted); }
+@keyframes rxjump { 30% { transform: translateY(-12px) scale(1.06); } }
+@keyframes rxnod { 40% { transform: translateY(4px); } }
+@keyframes rxtilt { 40% { transform: rotate(-6deg); } }
+@keyframes rxshake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes rxfever { 50% { transform: scale(1.12) rotate(4deg); } }
+/* Pantallas angostas: retrato chico sobre la pista, sin globo de texto */
+@media (max-width: 899px) {
+  /* al lado del botón de pausa, para no tapar la pista */
+  .reactor { right: auto; top: auto; left: 0; bottom: 0; width: auto; }
+  .rx-face { width: 42px; height: 42px; }
+  .rx-txt { display: none; }
+  body:not(.land) #quitBtn { margin-left: 52px; }
+}
+/* celular acostado: arriba del grupo de botones de la izquierda */
+body.land .reactor { right: auto; bottom: auto; left: 4px; top: 2px; }
+body.land .rx-face { width: 40px; height: 40px; }
+body.land .rx-txt { display: none; }
+@media (prefers-reduced-motion: reduce) { .reactor .rx-face { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -523,6 +578,7 @@ button.chip.mod:hover { border-color: var(--fg); }
       <span class="orb sm" id="whOrb"></span>
       <div class="wh-text"><div class="wh-genre" id="whGenre"></div><h3 id="whName"></h3></div>
     </div>
+    <aside class="rep pf" id="repCard" aria-label="Representante del planeta"></aside>
     <p class="hint" id="whDesc"></p>
     <h2>Elegí canción y dificultad</h2>
     <div class="songs" id="songs"></div>
@@ -547,6 +603,7 @@ button.chip.mod:hover { border-color: var(--fg); }
 
   <section class="view" id="vPlay" hidden>
     <div class="stage" id="stage">
+    <div class="reactor" id="reactor" aria-hidden="true"><div class="rx-face pf"></div><div class="rx-txt"><div class="rx-name"></div><div class="rx-say"></div></div></div>
     <div class="cv-wrap">
       <canvas id="cv" aria-label="Pantalla de juego"></canvas>
       <div class="pause" id="pauseBox" hidden>
@@ -615,7 +672,7 @@ button.chip.mod:hover { border-color: var(--fg); }
 
 <div class="dlg" id="dlg" hidden role="dialog" aria-live="polite">
   <div class="dlg-card">
-    <div class="dlg-face" id="dlgFace"></div>
+    <div class="dlg-face pf" id="dlgFace"></div>
     <div class="dlg-body">
       <div class="dlg-name" id="dlgName"></div>
       <p class="dlg-text" id="dlgText"></p>
@@ -1807,7 +1864,7 @@ button.chip.mod:hover { border-color: var(--fg); }
       }
     }
     keyDown.fill(false);
-    judge = null;
+    judge = null; reactorStart(s);
     $('vPlay').classList.toggle('two', run.boards === 2);
     renderPads();
     setView('play'); fitPlay();
@@ -1828,7 +1885,7 @@ button.chip.mod:hover { border-color: var(--fg); }
       run.audioStep++;
     }
   }
-  function setJudge(j, gold) { judge = j; judgeGold = !!gold; judgeAt = performance.now(); }
+  function setJudge(j, gold) { judge = j; judgeGold = !!gold; judgeAt = performance.now(); reactTo(j); }
   function addCombo(k) {
     run.combo += k;
     if (run.combo > run.maxCombo) run.maxCombo = run.combo;
@@ -1901,7 +1958,7 @@ button.chip.mod:hover { border-color: var(--fg); }
       award(basePts() * JVAL[j] * (0.5 + 0.25 * L('x_val')), j);
       if (L('x_life')) run.life = Math.min(100, run.life + 1.5 * L('x_life'));
       run.xStreak++;
-      if (L('x_gold') && run.xStreak >= 8) { run.xStreak = 0; run.feverUntil = t + 3 + 2 * L('x_gold'); feverAt = performance.now(); }
+      if (L('x_gold') && run.xStreak >= 8) { run.xStreak = 0; run.feverUntil = t + 3 + 2 * L('x_gold'); feverAt = performance.now(); reactTo('fever'); }
       setJudge(j, true); blip(lane, j, true);
       return;
     }
@@ -2790,6 +2847,116 @@ button.chip.mod:hover { border-color: var(--fg); }
   };
   const REP = { base: 'bip', rock: 'brasa', pop: 'lumi', disco: 'duque', edm: 'neutron', jazz: 'smokey' };
 
+  // Retratos del resto de los personajes (embajadores y representantes de Ensamble, Señal y Compás)
+  Object.assign(FACE, {
+    tesela: `<rect x="38" y="14" width="24" height="24" rx="2" class="ln"/><circle cx="45" cy="25" r="2" class="fl"/><circle cx="55" cy="25" r="2" class="fl"/>
+      <rect x="26" y="42" width="16" height="16" class="ac"/><rect x="42" y="42" width="16" height="16" class="ln"/><rect x="58" y="42" width="16" height="16" class="ln"/><rect x="42" y="58" width="16" height="16" class="ac"/>
+      <rect x="12" y="50" width="12" height="12" class="ln"/><rect x="76" y="34" width="12" height="12" class="ac"/><rect x="34" y="78" width="12" height="16" class="ln"/><rect x="54" y="78" width="12" height="16" class="ln"/>`,
+    eco7: `<path d="M50 52v32M50 84l-12 10M50 84l12 10M36 94h28" class="ln"/><path d="M24 44q26 18 52 0" class="ln"/>
+      <circle cx="50" cy="28" r="12" class="ln"/><circle cx="50" cy="28" r="5" class="ac"/><path d="M70 16q8 10 0 20M78 10q14 16 0 32" class="as"/><path d="M30 16q-8 10 0 20" class="as" opacity="0.5"/>`,
+    vaiven: `<ellipse cx="50" cy="52" rx="40" ry="17" class="ln" opacity="0.35"/><path d="M30 46L70 58" class="as"/>
+      <circle cx="30" cy="46" r="15" class="ln"/><circle cx="25" cy="44" r="1.8" class="fl"/><circle cx="35" cy="44" r="1.8" class="fl"/><path d="M25 51q5 3 10 0" class="ln"/>
+      <circle cx="70" cy="58" r="15" class="ac"/><circle cx="65" cy="56" r="1.8" class="dk"/><circle cx="75" cy="56" r="1.8" class="dk"/><path d="M65 63q5 3 10 0" class="dkl"/>`,
+    grua: `<path d="M84 96V18H18M84 26L34 18M22 18v10q0 4 4 4" class="ln" opacity="0.35"/>
+      <path d="M30 42q0-22 20-22t20 22z" class="ac"/><path d="M26 42h48" class="ln"/><circle cx="50" cy="54" r="14" class="ln"/>
+      <circle cx="45" cy="51" r="1.8" class="fl"/><circle cx="55" cy="51" r="1.8" class="fl"/><path d="M42 59q4-3 8 0 4-3 8 0" class="ln"/><rect x="57" y="62" width="11" height="5" rx="2" class="fl"/>
+      <path d="M22 96q4-22 28-24 24 2 28 24" class="ln"/>`,
+    remache: `<circle cx="50" cy="44" r="16" class="ln"/><rect x="33" y="32" width="34" height="5" rx="2" class="ac"/>
+      <circle cx="44" cy="45" r="5" class="fl"/><circle cx="56" cy="45" r="5" class="fl"/><path d="M49 45h2" class="ln"/><path d="M44 54q6 4 12 0" class="ln"/><path d="M34 42v10M66 42v10" class="ln"/>
+      <path d="M28 70l22 12 22-12-4 26H32z" class="ln"/><path d="M74 98L94 58" class="ln"/><circle cx="76" cy="88" r="9" class="ac"/><rect x="90" y="52" width="6" height="8" class="fl"/>`,
+    yunque: `<path d="M18 26l6 4M14 38l8-2M22 16l4 8M82 30l-6 4" class="as"/>
+      <rect x="30" y="20" width="40" height="42" rx="8" class="ln"/><rect x="36" y="36" width="28" height="9" rx="2" class="ac" opacity="0.8"/><path d="M30 30h40" class="ln" opacity="0.4"/>
+      <path d="M30 70h40l4 26H26z" class="ln"/><path d="M80 72v24M72 66h16v8H72z" class="ln"/>`,
+    vector: `<path d="M6 94h88M24 86l-14 8M50 86v8M76 86l14 8" class="as" opacity="0.6"/>
+      <rect x="34" y="14" width="32" height="12" rx="2" class="fl"/><rect x="34" y="24" width="32" height="32" rx="10" class="ln"/>
+      <rect x="31" y="34" width="38" height="8" rx="2" class="ac"/><path d="M44 49q6 3 12 0" class="ln"/><path d="M14 80l20-14h32l20 14" class="ln"/><path d="M42 66l8 10 8-10" class="ln"/>`,
+    estatica: `<circle cx="50" cy="42" r="16" class="ln"/><path d="M31 42q0-24 19-24t19 24" class="ln"/><rect x="26" y="36" width="8" height="14" rx="3" class="ac"/><rect x="66" y="36" width="8" height="14" rx="3" class="ac"/>
+      <circle cx="45" cy="40" r="1.8" class="fl"/><circle cx="55" cy="40" r="1.8" class="fl"/><path d="M45 48q5 3 10 0" class="ln"/><path d="M33 48q2 12 12 12" class="ln"/><circle cx="46" cy="60" r="2.5" class="ac"/>
+      <path d="M22 98q4-24 28-26 24 2 28 26" class="ln"/><circle cx="50" cy="86" r="7" class="ln"/><path d="M50 86l4-5" class="as"/>`,
+    bruma: `<path d="M14 62q6-6 12 0M74 62q6-6 12 0M8 74q9-9 18 0M74 74q9-9 18 0" class="as" opacity="0.7"/>
+      <path d="M50 16c18 0 26 16 24 32s-6 32-24 32-22-16-24-32 6-32 24-32z" class="ln" opacity="0.85"/><path d="M50 26c10 0 14 10 13 20" class="hl" opacity="0.35"/>
+      <path d="M39 46q4 3 8 0M53 46q4 3 8 0" class="ln"/><path d="M46 58q4 2 8 0" class="ln"/>`,
+    nubi: `<path d="M24 64q0-44 26-44t26 44" class="ln"/><circle cx="50" cy="50" r="14" class="ln"/><path d="M30 44q0-20 20-20t20 20" class="ln" opacity="0.5"/>
+      <rect x="27" y="42" width="8" height="16" rx="4" class="ac"/><rect x="65" y="42" width="8" height="16" rx="4" class="ac"/><path d="M43 50h5M52 50h5" class="ln"/><path d="M47 57q3 2 6 0" class="ln"/>
+      <path d="M16 96q2-18 34-18" class="ln"/><path d="M14 80l4-8 4 6 4-6 4 8" class="ln"/><rect x="62" y="74" width="16" height="16" rx="2" class="ln"/><path d="M78 78q6 0 6 6t-6 6" class="ln"/><path d="M66 70q2-4 0-8M72 70q2-4 0-8" class="as"/>`,
+    morse: `<path d="M38 28l-6-14M62 28l6-14" class="ln"/><circle cx="32" cy="12" r="3.5" class="ac"/><rect x="65" y="10" width="10" height="4" rx="1" class="ac"/>
+      <rect x="30" y="28" width="40" height="34" rx="6" class="ln"/><rect x="36" y="36" width="28" height="10" rx="5" class="fl" opacity="0.15"/><circle cx="43" cy="41" r="2.5" class="ac"/><rect x="51" y="39.5" width="10" height="3" class="ac"/>
+      <path d="M40 54h20M40 58h20" class="ln" opacity="0.5"/><path d="M50 62v14M50 68l-24 8M50 68l22-16M50 76l-14 20M50 76l18 16" class="ln"/>`,
+    relojero: `<circle cx="50" cy="42" r="16" class="ln"/><path d="M38 34q4-4 8-2M54 32q4-2 8 2" class="ln"/><circle cx="44" cy="41" r="1.8" class="fl"/>
+      <circle cx="57" cy="41" r="7" class="as"/><circle cx="57" cy="41" r="3" class="ac" opacity="0.7"/><path d="M64 44l6 10" class="ln" opacity="0.6"/>
+      <path d="M36 48q14 24 28 0" class="ln"/><path d="M22 96q4-24 28-26 24 2 28 26" class="ln"/><path d="M50 70v16" class="ln"/><circle cx="50" cy="90" r="4.5" class="ac"/>`,
+    garua: `<path d="M36 32q2-18 14-18t14 18" class="ln"/><ellipse cx="50" cy="33" rx="34" ry="7" class="ln"/><path d="M37 29h26" class="as"/>
+      <circle cx="50" cy="48" r="13" class="ln"/><path d="M43 47q3 2 5 0M52 47q3 2 5 0" class="ln"/><path d="M45 54q5 3 10 0" class="ln"/>
+      <path d="M26 98q2-24 24-26 22 2 24 26" class="ln"/><circle cx="42" cy="86" r="3" class="ac"/><circle cx="58" cy="82" r="3" class="ac"/><circle cx="64" cy="93" r="2.5" class="ac"/>
+      <circle cx="20" cy="84" r="10" class="ln"/><circle cx="20" cy="84" r="3" class="fl"/><path d="M27 77l22-22" class="ln"/>`,
+    compadre: `<path d="M34 30l4-14h24l4 14" class="ln"/><path d="M20 32q30 6 60 0" class="ln"/><path d="M36 25h28" class="as"/>
+      <circle cx="50" cy="46" r="14" class="ln"/><circle cx="45" cy="44" r="1.8" class="fl"/><circle cx="55" cy="44" r="1.8" class="fl"/><path d="M43 52q7-3 14 0" class="ln"/>
+      <path d="M38 60l12 8 12-8-4 14-8-4-8 4z" class="ac"/><path d="M26 98l4-24 12-6M74 98l-4-24-12-6" class="ln"/>
+      <path d="M10 80h20v16H10zM15 80v16M20 80v16M25 80v16" class="ln"/><circle cx="12" cy="76" r="1.5" class="ac"/><circle cx="28" cy="76" r="1.5" class="ac"/>`,
+    rompeondas: `<path d="M8 38h14M4 50h18M8 62h14" class="as"/><path d="M26 66q-2-46 24-46t24 46" class="ln"/>
+      <path d="M38 42h8M54 42h8" class="ln"/><rect x="35" y="48" width="30" height="13" rx="5" class="ac"/><path d="M40 54h20" class="dkl"/>
+      <path d="M22 98q4-26 28-28 24 2 28 28" class="ln"/><path d="M66 74l12-4-2 8" class="ac"/>`,
+  });
+  Object.assign(SPK, {
+    tesela: ['Tesela', 'Embajadora de Ensamble'], eco7: ['Eco-7', 'Embajador de Señal'], vaiven: ['Los Gemelos Vaivén', 'Embajadores de Compás'],
+    grua: ['Capataz Grúa', 'Jefe del Muelle'], remache: ['Remache', 'Representante de Chatarra'], yunque: ['Yunque', 'Representante de Fundición'], vector: ['Vector', 'Representante de Órbita Alta'],
+    estatica: ['Operadora Estática', 'Antena de Señal'], bruma: ['Bruma', 'Representante de Eco'], nubi: ['Nubi', 'Representante de Estática'], morse: ['Morse Prime', 'Representante de Cuásar'],
+    relojero: ['El Relojero', 'Guardián del Péndulo'], garua: ['Dona Garúa', 'Representante de Brisa'], compadre: ['El Compadre', 'Representante de Arrabal'], rompeondas: ['Rompeondas', 'Representante de Vértigo'],
+  });
+  Object.assign(REP, { ens_base: 'grua', ens_a: 'remache', ens_b: 'yunque', ens_c: 'vector', sen_base: 'estatica', sen_a: 'bruma', sen_b: 'nubi', sen_c: 'morse', com_base: 'relojero', com_a: 'garua', com_b: 'compadre', com_c: 'rompeondas' });
+  const AMB = { pulso: 'kadenza', ens: 'tesela', sen: 'eco7', com: 'vaiven' };
+  const faceSvg = id => `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="49" class="bg"/>${FACE[id]}</svg>`;
+
+  // Frases de cada representante: al entrar (idle) y como reacción en la partida
+  const QUIPS = {
+    bip:        { idle: 'Protocolo listo. Bip.', perfect: 'Exacto. Bip.', great: 'Aceptable. Bip.', good: 'Dentro del margen.', miss: 'Error 404. Bip.', fever: '¡SOBRECARGA! Bip.' },
+    brasa:      { idle: '¡¿Listos para el riff?!', perfect: '¡ROCK AND ROLL!', great: '¡Eso, eso!', good: '¡Más fuerte!', miss: '¡Se cortó una cuerda!', fever: '¡QUE ARDA TODO!' },
+    lumi:       { idle: '¿Cantamos? ♥', perfect: '¡Perfecto! ♥♥', great: '¡Brillante!', good: 'Casi, casi…', miss: 'Ups, desafinamos', fever: '¡Todos juntos! ♥' },
+    duque:      { idle: 'La pista es tuya.', perfect: 'Divino.', great: 'Con estilo.', good: 'Le falta brillo…', miss: 'Ay, se rayó el disco', fever: '¡Fiebre de sábado!' },
+    neutron:    { idle: '¿LISTOS PARA EL DROP?', perfect: '¡DROP!', great: '¡ARRIBA ESAS MANOS!', good: 'Subí el volumen', miss: '¿SE CORTÓ EL AUDIO?', fever: '¡¡BASS BOOST!!' },
+    smokey:     { idle: 'Sin apuro, gato.', perfect: 'Swing puro.', great: 'Groovy.', good: 'Más suelto…', miss: 'Nota azul… muy azul', fever: '¡Improvisá!' },
+    grua:       { idle: '¡Casco puesto!', perfect: '¡Encastre perfecto!', great: 'Bien soldado.', good: 'Revisá el nivel', miss: '¡Pieza suelta!', fever: '¡Turno doble!' },
+    remache:    { idle: 'Sentí el groove.', perfect: '¡Funky!', great: 'Ahí está el bajo', good: 'Más cadera…', miss: 'Se zafó un tornillo', fever: '¡A bailar!' },
+    yunque:     { idle: 'Martillo listo.', perfect: 'Golpe exacto.', great: 'Acero firme.', good: 'Le falta temple', miss: 'Chispa perdida', fever: '¡Fundición total!' },
+    vector:     { idle: 'Ruta: 1986.', perfect: 'Neón perfecto.', great: 'Radical.', good: 'Rebobiná un poco', miss: 'Se trabó el casete', fever: '¡Velocidad de escape!' },
+    estatica:   { idle: 'Sintonizando…', perfect: 'Señal clara.', great: 'Buena recepción', good: 'Hay interferencia', miss: 'Se perdió la señal', fever: '¡Frecuencia máxima!' },
+    bruma:      { idle: 'Respirá…', perfect: 'Armonía.', great: 'Fluye…', good: 'Casi en calma', miss: 'Una ola rompió', fever: 'Todo resuena…' },
+    nubi:       { idle: 'Estudiemos un rato.', perfect: 'Chill total.', great: 'Buen beat.', good: 'Se enfrió el té', miss: 'Se despertó el gato', fever: '¡Modo concentración!' },
+    morse:      { idle: '·— ·—· ·—·', perfect: 'Código correcto.', great: 'Transmitido.', good: 'Ruido en la línea', miss: 'Paquete perdido', fever: '¡Sobrecarga eléctrica!' },
+    relojero:   { idle: 'Tic… tac…', perfect: 'Como un reloj.', great: 'Bien templado.', good: 'Un segundo tarde', miss: 'Se atrasó…', fever: '¡Tiempo de oro!' },
+    garua:      { idle: 'Devagar, devagar…', perfect: 'Que lindo.', great: 'Suave…', good: 'Más saudade', miss: 'Ay, llovió', fever: '¡Carnaval!' },
+    compadre:   { idle: 'Che, ¿bailamos?', perfect: '¡Qué firulete!', great: 'Con garra.', good: 'Más arrastre', miss: 'Me pisaste', fever: '¡Milonga brava!' },
+    rompeondas: { idle: 'Ajustate el casco.', perfect: '¡Velocidad pura!', great: 'Rompiendo.', good: 'Más rápido', miss: 'Te pasé', fever: '¡Hiperdrive!' },
+  };
+  const repOf = wi => REP[WORLDS[wi].id] || 'cora';
+
+  // Tarjeta del representante al costado del selector de canciones
+  function renderRep(wi) {
+    const id = repOf(wi), [name, role] = SPK[id];
+    $('repCard').innerHTML = `<div class="rep-face">${faceSvg(id)}</div><div class="rep-txt"><div class="rep-name">${name}</div><div class="rep-role">${role}</div><div class="rep-say">“${QUIPS[id]?.idle || ''}”</div></div>`;
+  }
+
+  // Reacciones en la partida: animación del retrato y una frase según el juicio
+  const REACT = { perfect: 'perfect', great: 'great', good: 'good', ok: 'great', on: 'great', line: 'great', dec: 'perfect', tetra: 'perfect', tramo: 'perfect',
+    miss: 'miss', early: 'miss', drop: 'miss', spam: 'miss', off: 'miss', lost: 'miss' };
+  let rxId = null, rxSayAt = 0, rxKind = '';
+  function reactorStart(song) {
+    rxId = repOf(song.wi); rxSayAt = 0; rxKind = '';
+    const el = $('reactor');
+    el.className = 'reactor'; el.querySelector('.rx-face').innerHTML = faceSvg(rxId);
+    el.querySelector('.rx-say').textContent = QUIPS[rxId]?.idle || '';
+    el.querySelector('.rx-name').textContent = SPK[rxId][0];
+  }
+  function reactTo(j) {
+    const kind = j === 'fever' ? 'fever' : REACT[j]; if (!kind || !rxId) return;
+    const el = $('reactor'), now = performance.now();
+    el.classList.remove('r-perfect', 'r-great', 'r-good', 'r-miss', 'r-fever'); void el.offsetWidth; el.classList.add('r-' + kind);
+    // la frase cambia como mucho una vez por segundo, salvo fallo o fiebre, que siempre se dicen
+    if (kind !== rxKind && (now - rxSayAt > 1000 || kind === 'miss' || kind === 'fever')) {
+      rxSayAt = now; rxKind = kind; el.querySelector('.rx-say').textContent = QUIPS[rxId]?.[kind] || '';
+    }
+  }
+
   // Textos. Lumen no tiene género marcado: nadie le habla con adjetivos en masculino o femenino.
   const STORY = {
     prologue: [
@@ -2897,7 +3064,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     if (!dlgLine) { $('dlg').hidden = true; return; }
     const [who, text] = dlgLine, [name, role] = SPK[who];
     $('dlg').hidden = false;
-    $('dlgFace').innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="49" class="bg"/>${FACE[who]}</svg>`;
+    $('dlgFace').innerHTML = faceSvg(who);
     $('dlgName').innerHTML = `${name} <span>${role}</span>`;
     dlgShown = 0; $('dlgText').textContent = '';
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2985,7 +3152,8 @@ button.chip.mod:hover { border-color: var(--fg); }
       : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de materia oscura</button>`
       : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
     $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
-    $('galInfo').innerHTML = `<div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3></div>${btn}<p>${g.desc}</p>
+    const amb = AMB[g.id], [ambName, ambRole] = SPK[amb];
+    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}<p>${g.desc}</p>
       <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
@@ -3123,6 +3291,7 @@ button.chip.mod:hover { border-color: var(--fg); }
     chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
     $('mech').innerHTML = chips.join('');
     renderMods(W0.gal);
+    renderRep(S.world);
     $('mechHint').hidden = !Object.keys(TOGGLES).some(id => L(id));
   }
   $('songs').addEventListener('click', e => {

@@ -54,7 +54,7 @@
       }
     }
     keyDown.fill(false);
-    judge = null;
+    judge = null; reactorStart(s);
     $('vPlay').classList.toggle('two', run.boards === 2);
     renderPads();
     setView('play'); fitPlay();
@@ -75,7 +75,7 @@
       run.audioStep++;
     }
   }
-  function setJudge(j, gold) { judge = j; judgeGold = !!gold; judgeAt = performance.now(); }
+  function setJudge(j, gold) { judge = j; judgeGold = !!gold; judgeAt = performance.now(); reactTo(j); }
   function addCombo(k) {
     run.combo += k;
     if (run.combo > run.maxCombo) run.maxCombo = run.combo;
@@ -148,7 +148,7 @@
       award(basePts() * JVAL[j] * (0.5 + 0.25 * L('x_val')), j);
       if (L('x_life')) run.life = Math.min(100, run.life + 1.5 * L('x_life'));
       run.xStreak++;
-      if (L('x_gold') && run.xStreak >= 8) { run.xStreak = 0; run.feverUntil = t + 3 + 2 * L('x_gold'); feverAt = performance.now(); }
+      if (L('x_gold') && run.xStreak >= 8) { run.xStreak = 0; run.feverUntil = t + 3 + 2 * L('x_gold'); feverAt = performance.now(); reactTo('fever'); }
       setJudge(j, true); blip(lane, j, true);
       return;
     }

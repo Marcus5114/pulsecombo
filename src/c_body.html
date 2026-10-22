@@ -44,6 +44,7 @@
       <span class="orb sm" id="whOrb"></span>
       <div class="wh-text"><div class="wh-genre" id="whGenre"></div><h3 id="whName"></h3></div>
     </div>
+    <aside class="rep pf" id="repCard" aria-label="Representante del planeta"></aside>
     <p class="hint" id="whDesc"></p>
     <h2>Elegí canción y dificultad</h2>
     <div class="songs" id="songs"></div>
@@ -68,6 +69,7 @@
 
   <section class="view" id="vPlay" hidden>
     <div class="stage" id="stage">
+    <div class="reactor" id="reactor" aria-hidden="true"><div class="rx-face pf"></div><div class="rx-txt"><div class="rx-name"></div><div class="rx-say"></div></div></div>
     <div class="cv-wrap">
       <canvas id="cv" aria-label="Pantalla de juego"></canvas>
       <div class="pause" id="pauseBox" hidden>
@@ -136,7 +138,7 @@
 
 <div class="dlg" id="dlg" hidden role="dialog" aria-live="polite">
   <div class="dlg-card">
-    <div class="dlg-face" id="dlgFace"></div>
+    <div class="dlg-face pf" id="dlgFace"></div>
     <div class="dlg-body">
       <div class="dlg-name" id="dlgName"></div>
       <p class="dlg-text" id="dlgText"></p>

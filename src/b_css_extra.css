@@ -217,12 +217,15 @@ button.chip.mod:hover { border-color: var(--fg); }
 @keyframes dlgin { from { transform: translateY(16px); opacity: 0; } }
 .dlg-face { flex: none; width: 96px; height: 96px; }
 .dlg-face svg { width: 100%; height: 100%; display: block; }
-.dlg-face .bg { fill: #141417; stroke: color-mix(in srgb, var(--acc) 50%, transparent); stroke-width: 1.5; }
-.dlg-face .ln { fill: none; stroke: #d4d4d8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.dlg-face .hl { fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; opacity: 0.7; }
-.dlg-face .ac { fill: var(--acc); stroke: none; }
-.dlg-face .fl { fill: #d4d4d8; stroke: none; }
-.dlg-face .dk { fill: #0b0b0d; }
+.pf svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.pf .bg { fill: #141417; stroke: color-mix(in srgb, var(--acc) 50%, transparent); stroke-width: 1.5; }
+.pf .ln { fill: none; stroke: #d4d4d8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pf .hl { fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; opacity: 0.7; }
+.pf .as { fill: none; stroke: var(--acc); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pf .dkl { fill: none; stroke: #0b0b0d; stroke-width: 2; stroke-linecap: round; }
+.pf .ac { fill: var(--acc); stroke: none; }
+.pf .fl { fill: #d4d4d8; stroke: none; }
+.pf .dk { fill: #0b0b0d; }
 .dlg-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .dlg-name { font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85rem; color: var(--acc); }
 .dlg-name span { font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--muted); font-size: 0.75rem; margin-left: 6px; }
@@ -232,3 +235,55 @@ button.chip.mod:hover { border-color: var(--fg); }
 @media (prefers-reduced-motion: reduce) { .dlg-card { animation: none; } }
 .dlg-hint .ht { display: none; }
 @media (hover: none) { .dlg-hint .hk { display: none; } .dlg-hint .ht { display: inline; } }
+
+/* ---------- Representante del planeta (menú) ---------- */
+#vMenu { position: relative; }
+.rep { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.rep-face { flex: none; width: 64px; height: 64px; }
+.rep-txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rep-name { font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8rem; color: var(--acc); }
+.rep-role { font-size: 0.7rem; color: var(--muted); }
+.rep-say { font-size: 0.85rem; font-style: italic; }
+@media (min-width: 1040px) {
+  #vMenu { max-width: 814px; padding-left: 214px; }
+  .rep { position: absolute; top: 0; left: 0; width: 190px; flex-direction: column; text-align: center; padding: 16px 14px; }
+  .rep-face { width: 150px; height: 150px; }
+  .rep-say { margin-top: 6px; }
+}
+/* Embajador en el panel de galaxias */
+.gi-head { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.gi-amb { flex: none; width: 58px; height: 58px; }
+.gi-ambn { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+.gi-ambn b { color: var(--fg); }
+
+/* ---------- Reacciones en la partida ---------- */
+.stage { position: relative; }
+.reactor { position: absolute; z-index: 3; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 6px; right: calc(100% + 18px); top: 30px; width: 150px; text-align: center; }
+.rx-face { width: 120px; height: 120px; transition: filter 0.3s; }
+.rx-name { font-size: 0.7rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--acc); }
+.rx-say { font-size: 0.85rem; font-weight: 700; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; min-height: 1.4em; }
+.reactor.r-perfect .rx-face { animation: rxjump 0.4s ease-out; }
+.reactor.r-great .rx-face { animation: rxnod 0.35s ease-out; }
+.reactor.r-good .rx-face { animation: rxtilt 0.4s ease-out; }
+.reactor.r-miss .rx-face { animation: rxshake 0.4s ease-out; filter: grayscale(1) brightness(0.7); }
+.reactor.r-fever .rx-face { animation: rxfever 0.5s ease-in-out 3; filter: drop-shadow(0 0 12px var(--acc)); }
+.reactor.r-perfect .rx-say, .reactor.r-fever .rx-say { border-color: var(--acc); color: var(--acc); }
+.reactor.r-miss .rx-say { color: var(--muted); }
+@keyframes rxjump { 30% { transform: translateY(-12px) scale(1.06); } }
+@keyframes rxnod { 40% { transform: translateY(4px); } }
+@keyframes rxtilt { 40% { transform: rotate(-6deg); } }
+@keyframes rxshake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes rxfever { 50% { transform: scale(1.12) rotate(4deg); } }
+/* Pantallas angostas: retrato chico sobre la pista, sin globo de texto */
+@media (max-width: 899px) {
+  /* al lado del botón de pausa, para no tapar la pista */
+  .reactor { right: auto; top: auto; left: 0; bottom: 0; width: auto; }
+  .rx-face { width: 42px; height: 42px; }
+  .rx-txt { display: none; }
+  body:not(.land) #quitBtn { margin-left: 52px; }
+}
+/* celular acostado: arriba del grupo de botones de la izquierda */
+body.land .reactor { right: auto; bottom: auto; left: 4px; top: 2px; }
+body.land .rx-face { width: 40px; height: 40px; }
+body.land .rx-txt { display: none; }
+@media (prefers-reduced-motion: reduce) { .reactor .rx-face { animation: none !important; } }

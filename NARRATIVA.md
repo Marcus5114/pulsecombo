@@ -1,6 +1,6 @@
 # Combo Pulso — Hilo narrativo (borrador)
 
-> **Decisiones tomadas:** Lumen, sin género marcado (nadie le habla con adjetivos en masculino o femenino). Tono mixto: humor en los planetas y con CORA, más serio con los embajadores. El Silencio queda para más adelante. Fases 1 y 2 hechas en v0.4: motor de diálogos, prólogo y Vía Pulso con retratos.
+> **Decisiones tomadas:** Lumen, sin género marcado (nadie le habla con adjetivos en masculino o femenino). Tono mixto: humor en los planetas y con CORA, más serio con los embajadores. El Silencio queda para más adelante. Fases 1 y 2 hechas en v0.4: motor de diálogos, prólogo y diálogos de Vía Pulso. Ya están los retratos de todos los personajes: los representantes se ven en el menú de cada planeta y reaccionan en la partida, y los embajadores aparecen en el panel de galaxias. Faltan los diálogos de Ensamble, Señal y Compás.
 
 ## Premisa
 Sos una exploradora o un explorador de la Tierra a bordo de **El Metrónomo**, una nave diplomática. Las civilizaciones de las otras galaxias no hablan con palabras: se comunican con ritmo, y cada galaxia tiene su propio idioma, que es su forma de juego. Tu misión es aprender esos idiomas y establecer relaciones con cada pueblo.
