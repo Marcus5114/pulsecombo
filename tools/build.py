@@ -14,7 +14,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / 'src'
 ORDER = ['a_css_base.css', 'b_css_extra.css', 'c_body.html',
          'd1_data.js', 'd2a_audio_arrows.js', 'd2c_music.js', 'd2b_modes.js',
-         'd3a_engine.js', 'd3b_draw_arrows.js', 'd3c_draw_modes.js', 'd4_ui.js']
+         'd3a_engine.js', 'd3b_draw_arrows.js', 'd3c_draw_modes.js', 'd3d_story.js', 'd4_ui.js']
 
 RESET = """<style>
 *,*::before,*::after{box-sizing:border-box}

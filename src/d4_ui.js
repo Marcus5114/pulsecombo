@@ -23,6 +23,7 @@
       : g.mode === 'path' ? 'Cualquier tecla: <kbd>Espacio</kbd>, flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa'
       : 'Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa';
     renderUI(true);
+    if (v === 'map' || v === 'menu') storyCheck(v);
   }
   function travel(gal) {
     S.galaxy = gal; S.world = WORLDS.findIndex(w => w.gal === gal && w.tutorial); S.sel = WORLDS[S.world].idx[0]; S.diff = 0;

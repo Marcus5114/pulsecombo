@@ -11,6 +11,12 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 
 ## Sin publicar — próxima versión: v0.4
 
+### Agregado (historia)
+- Comienzo del hilo narrativo: Lumen viaja desde la Tierra en El Metrónomo para entablar relaciones con cada galaxia, y cada galaxia habla con su juego. Cuadro de diálogo con retrato, texto que se escribe letra por letra y opción de saltar (clic, Espacio o Enter para seguir; Escape para saltar).
+- Prólogo con CORA, la computadora de la nave, y Vía Pulso completa: la embajadora Kadenza (bienvenida, tutorial superado y acuerdo final) y los representantes Bip (Estación), Brasa (Magma, rock), Lumi (Prisma, pop), Duque Lentejuela (Espejo, disco), DJ Neutrón (Púlsar, EDM) y Smokey (Nebulosa, jazz). Se presentan en tu primera visita, CORA avisa cuando se abre un planeta y cada representante te regala un recuerdo cuando superás todas sus canciones.
+- Retratos minimalistas en SVG para los 9 personajes, en gris con detalles del color de la galaxia.
+- En partidas que ya venían avanzadas se muestran el prólogo y la bienvenida del embajador; el resto se da por visto.
+
 ### Corregido
 - Compás: el camino podía terminar mucho antes que la canción. Si un hueco entre notas no se podía contar en lados (por ejemplo 14 semicorcheas), esa baldosa se descartaba y, en cadena, todas las siguientes. Ahora se agregan baldosas intermedias cada negra hasta que el hueco entre.
 - La música (y con ella los caminos de Compás) podía salir distinta según el navegador, porque el orden de las progresiones se sorteaba con un método que cada navegador resuelve a su manera. Ahora usa una mezcla con semilla, igual en todos lados. Las canciones suenan algo distinto que antes.

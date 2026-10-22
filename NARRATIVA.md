@@ -1,5 +1,7 @@
 # Combo Pulso — Hilo narrativo (borrador)
 
+> **Decisiones tomadas:** Lumen, sin género marcado (nadie le habla con adjetivos en masculino o femenino). Tono mixto: humor en los planetas y con CORA, más serio con los embajadores. El Silencio queda para más adelante. Fases 1 y 2 hechas en v0.4: motor de diálogos, prólogo y Vía Pulso con retratos.
+
 ## Premisa
 Sos una exploradora o un explorador de la Tierra a bordo de **El Metrónomo**, una nave diplomática. Las civilizaciones de las otras galaxias no hablan con palabras: se comunican con ritmo, y cada galaxia tiene su propio idioma, que es su forma de juego. Tu misión es aprender esos idiomas y establecer relaciones con cada pueblo.
 
@@ -19,7 +21,7 @@ Sos una exploradora o un explorador de la Tierra a bordo de **El Metrónomo**, u
 **El Silencio**: una interferencia que avanza entre las galaxias y apaga los ritmos. Los modificadores (Oculto, Destello, Solo audio, Ciego…) se pueden contar como zonas donde el Silencio distorsiona la comunicación. Las Bombas del backlog serían sabotajes del Silencio, notas falsas que hay que ignorar. El final con la Sinfonía es la respuesta de todas las galaxias juntas.
 
 ## Protagonista
-- **Nombre de trabajo:** Enviada/o Lumen (se puede elegir pronombre o escribir el nombre al empezar).
+- **Nombre:** Lumen, sin género marcado.
 - **Tono:** curiosa, torpe con los idiomas al principio, y cada vez más fluida. Escribe una **bitácora** con lo que aprende.
 - **Compañera de nave:** **CORA**, la computadora de El Metrónomo. Seca y un poco sarcástica, da las indicaciones de los tutoriales.
 
@@ -27,7 +29,7 @@ Sos una exploradora o un explorador de la Tierra a bordo de **El Metrónomo**, u
 
 | Galaxia | Embajador | Cómo es | Cómo habla |
 |---|---|---|---|
-| Vía Pulso (flechas) | **Kadenza** | Ser de luz con cuatro brazos largos que apuntan a los cuatro puntos cardinales. Cambia de color con cada gesto. | Señala direcciones. Para ella, una flecha es una palabra y un combo es una frase. |
+| Vía Pulso (flechas) | **Kadenza** ✓ | Ser de luz con cuatro brazos largos que apuntan a los cuatro puntos cardinales. Cambia de color con cada gesto. | Señala direcciones. Para ella, una flecha es una palabra y un combo es una frase. |
 | Ensamble (encastre) | **Tesela** | Cuerpo hecho de bloques que se reacomodan todo el tiempo. Nunca tiene la misma forma dos veces. | Construye. Una fila completa es un "sí". Desconfía de quien se mueve fuera de tiempo. |
 | Señal (llamada y respuesta) | **Eco-7** | Una antena alta con un solo ojo y platos que giran. Su voz llega con estática. | Solo habla repitiendo, y espera que repitas. Repetir mal es de mala educación. |
 | Compás (camino de baldosas) | **Los Gemelos Vaivén** | Dos esferas unidas por un hilo de luz que giran una alrededor de la otra. Terminan las frases del otro. | Se turnan. Sus caminos son mapas de la conversación. |
