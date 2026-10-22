@@ -439,6 +439,19 @@ button.chip.mod:hover { border-color: var(--fg); }
 .dev { display: flex; gap: 8px; align-items: center; margin: 0; }
 .dev input { font: inherit; font-size: 0.75rem; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 150px; }
 .dev input:focus { outline: 2px solid var(--acc); outline-offset: 1px; }
+
+/* Resultado: contador, multiplicadores que aparecen de a uno y calificación al final */
+.r-calc .rv { opacity: 0; transform: translateY(4px); transition: opacity 0.25s, transform 0.25s; }
+.r-calc .rv.on { opacity: 1; transform: none; }
+.r-mults { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.r-mults b { display: inline-block; min-width: 4.2em; color: var(--acc); font-weight: 800; }
+.r-notes { display: flex; flex-direction: column; gap: 2px; }
+.r-gain { transform-origin: left center; transition: color 0.3s; }
+.r-gain.pop { color: var(--acc); animation: gainpop 0.45s ease-out; }
+@keyframes gainpop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.r-grade { opacity: 0; transform: scale(1.8); transition: opacity 0.3s, transform 0.35s cubic-bezier(.2,1.6,.4,1); }
+.r-grade.on { opacity: 1; transform: scale(1); }
+@media (prefers-reduced-motion: reduce) { .r-calc .rv, .r-grade { transition: none; } .r-gain.pop { animation: none; } }
 </style>
 </head>
 <body>
@@ -1914,11 +1927,11 @@ button.chip.mod:hover { border-color: var(--fg); }
     if (tutFail) run.failed = true;
     const fc = !run.failed && c.miss === 0 && run.drops === 0;
     const grade = run.failed || run.vfail ? 'E' : GRADES.find(([min]) => acc >= min)[1];
-    let gain = run.earned; const notes = [];
+    let gain = run.earned; const notes = [], mults = [];
     if (tutFail) notes.push(run.mode === 'path' ? 'Tocá a tiempo al menos la mitad de las baldosas para completar el tutorial' : run.mode === 'signal' ? 'Repetí bien al menos la mitad de las notas para completar el tutorial' : 'Acertá al menos la mitad de las flechas para completar el tutorial');
-    else if (run.failed) { gain *= 0.5; notes.push(`${run.mode === 'signal' ? 'Señal perdida' : run.mode === 'path' ? 'Te saliste del camino' : 'Aguante agotado'}: te quedás con el 50%`); }
+    else if (run.failed) { gain *= 0.5; mults.push([run.mode === 'signal' ? 'Señal perdida' : run.mode === 'path' ? 'Te saliste del camino' : 'Aguante agotado', 0.5]); }
     if (fc && run.mode === 'arrows') {
-      if (L('c_fc')) { const b = 0.25 * L('c_fc'); gain *= 1 + b; notes.push(`Bonus Full Combo: +${Math.round(b * 100)}%`); }
+      if (L('c_fc')) { const b = 0.25 * L('c_fc'); gain *= 1 + b; mults.push(['Bonus Full Combo', 1 + b]); }
       else notes.push('Full Combo sin bonus: desbloquealo en la rama Combo');
     }
     const ch = run.ch;
@@ -1928,11 +1941,11 @@ button.chip.mod:hover { border-color: var(--fg); }
     if (ch.extras) rows.push(['Notas extra', `${run.xHit}/${ch.extras}`]);
     if (ch.holds) rows.push(['Largas', `${run.holdsDone}/${ch.holds}`]);
     rows.push(['Golpes al aire', run.ghost]);
-    settle({ gain, grade, fc, notes, rows });
+    settle({ gain, grade, fc, notes, rows, mults });
   }
 
   // Cierre común a todas las galaxias: récord, moneda (con multiplicador global), materia oscura y desbloqueos
-  function settle({ gain, grade, fc, notes, rows }) {
+  function settle({ gain, grade, fc, notes, rows, mults = [] }) {
     const s = run.song, gal = s.gal, g = GX[gal], key = `${s.id}-${run.di}`;
     const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
     const before = { ...(S.rec[key] || {}) };
@@ -1949,28 +1962,68 @@ button.chip.mod:hover { border-color: var(--fg); }
     const mo = (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult();
     S.mo += mo;
     save();
-    if (mult > 1.001) notes.push(`Multiplicador global x${dec(mult)}`);
     if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
     if (newWorlds.length) notes.push(`Se abrió la ruta a ${newWorlds.map(wi => WORLDS[wi].name).join(' y ')}${gal === 'pulso' ? '. Aguante puede subir un nivel más' : ''}`);
     if (run.vfail) notes.push('Sin caída: el aguante se habría vaciado, así que no cuenta como superada');
     if (cleared && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
     if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmtRate(ecoPerCycle(s) / ecoInterval(s) * 60)} ${g.unit} por minuto`);
-    showResult({ grade, paid, notes, rows, fc });
+    // Desglose para el contador: lo ganado en la canción, cada multiplicador y el total
+    const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
+    const steps = [[`Dificultad ${dec1(run.stars)}★${ml}`, run.mult], ...mults];
+    if (mult > 1.001) steps.push(['Multiplicador global', mult]);
+    showResult({ grade, base: run.mult ? run.earned / run.mult : run.earned, steps, paid, notes, rows, fc });
   }
-  function showResult({ grade, paid, notes, rows, fc }) {
-    const s = run.song, g = GX[s.gal];
+  // Pantalla de resultado: el contador sube con lo ganado, después aplica cada multiplicador, muestra el total y al final la calificación.
+  // Un clic o Enter/Espacio adelanta todo.
+  let resultAnim = 0, resultSkip = false;
+  function showResult({ grade, base, steps, paid, notes, rows, fc }) {
+    const s = run.song, g = GX[s.gal], token = ++resultAnim;
+    resultSkip = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     $('rSong').textContent = `${s.name} · ${DIFFS[run.di].name}`;
     $('worldBtn').textContent = s.tut && tutDone(s.gal) ? 'Ir al mapa' : `Volver a ${WORLDS[s.wi].name}`;
     $('rStatus').textContent = run.failed || run.vfail ? 'No superada' : fc ? `Superada · ${run.mode === 'stack' ? 'Sin errores de ritmo' : 'Full Combo'}` : 'Superada';
-    $('rGrade').textContent = grade;
-    $('rGainLbl').textContent = `${g.curName} ${s.gal === 'ens' ? 'ganadas' : 'ganados'}`;
-    $('rGain').textContent = '+' + fmt(paid);
-    const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
-    const lines = [`Dificultad ${dec1(run.stars)}★${ml} → multiplicador x${dec(run.mult)}`, ...notes];
-    $('rCalc').innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+    const gradeEl = $('rGrade'), gainEl = $('rGain'), lbl = $('rGainLbl');
+    gradeEl.textContent = grade; gradeEl.classList.remove('on');
+    gainEl.classList.remove('pop'); gainEl.textContent = '+0';
+    lbl.textContent = `${g.curName} en la canción`;
+    $('rCalc').innerHTML = `<div class="r-mults">${steps.map(([label, m]) => `<div class="rv"><b>x${dec(m)}</b> ${label}</div>`).join('')}</div>`
+      + `<div class="r-notes rv">${notes.map(l => `<div>${l}</div>`).join('')}</div>`;
     $('rRows').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     setView('result');
+    const lines = [...document.querySelectorAll('#rCalc .r-mults .rv')];
+    const alive = () => token === resultAnim && view === 'result';
+    const wait = ms => resultSkip ? Promise.resolve() : new Promise(r => setTimeout(r, ms));
+    const tween = (from, to, ms) => new Promise(res => {
+      if (resultSkip) { gainEl.textContent = '+' + fmt(to); return res(); }
+      const t0 = performance.now();
+      const f = now => {
+        if (!alive()) return res();
+        const p = resultSkip ? 1 : Math.min(1, (now - t0) / ms), e = 1 - (1 - p) ** 3;
+        gainEl.textContent = '+' + fmt(from + (to - from) * e);
+        if (p < 1) requestAnimationFrame(f); else res();
+      };
+      requestAnimationFrame(f);
+    });
+    (async () => {
+      await wait(250); await tween(0, base, 900);
+      let v = base;
+      for (let k = 0; k < steps.length; k++) {
+        if (!alive()) return;
+        await wait(220); lines[k].classList.add('on');
+        const nv = v * steps[k][1]; await tween(v, nv, 600); v = nv;
+      }
+      if (!alive()) return;
+      await wait(250);
+      lbl.textContent = `Total · ${g.curName} ${s.gal === 'ens' ? 'ganadas' : 'ganados'}`;
+      gainEl.textContent = '+' + fmt(paid); gainEl.classList.add('pop');
+      await wait(450); if (!alive()) return;
+      gradeEl.classList.add('on');
+      await wait(350); if (!alive()) return;
+      document.querySelector('#rCalc .r-notes')?.classList.add('on');
+    })();
   }
+  $('vResult').addEventListener('pointerdown', e => { if (!e.target.closest('button')) resultSkip = true; });
+  window.addEventListener('keydown', e => { if (view === 'result' && (e.code === 'Enter' || e.code === 'Space') && !resultSkip) { resultSkip = true; e.preventDefault(); } }, true);
 
   // ---------- Ensamble ----------
   let COLS = 10; const ROWS = 18;   // Pozo angosto: 8 columnas
@@ -2076,11 +2129,11 @@ button.chip.mod:hover { border-color: var(--fg); }
     if (tutFail) run.failed = true;
     const fc = !run.failed && run.off === 0 && tot > 0;
     const grade = run.failed ? 'E' : GRADES.find(([m]) => acc >= m)[1];
-    let gain = run.earned; const notes = [];
+    let gain = run.earned; const notes = [], mults = [];
     if (tutFail) notes.push('Completá al menos una fila para terminar el tutorial');
-    else if (run.failed) { gain *= 0.5; notes.push('El casco no aguantó: te quedás con el 50%'); }
+    else if (run.failed) { gain *= 0.5; mults.push(['El casco no aguantó', 0.5]); }
     const rows = [['A tiempo', run.on], ['Fuera de tiempo', run.off], ['Filas', run.lines], ['Cuádruples', run.tetras], ['Racha máx.', run.rmax], ['Precisión', Math.round(acc) + '%']];
-    settle({ gain, grade, fc, notes, rows });
+    settle({ gain, grade, fc, notes, rows, mults });
   }
 
   function quit() { hidePause(); if (run && !run.over) run.over = true; run = null; setView('menu'); }

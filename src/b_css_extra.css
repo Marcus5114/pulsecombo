@@ -197,3 +197,16 @@ button.chip.mod:hover { border-color: var(--fg); }
 .dev { display: flex; gap: 8px; align-items: center; margin: 0; }
 .dev input { font: inherit; font-size: 0.75rem; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 150px; }
 .dev input:focus { outline: 2px solid var(--acc); outline-offset: 1px; }
+
+/* Resultado: contador, multiplicadores que aparecen de a uno y calificación al final */
+.r-calc .rv { opacity: 0; transform: translateY(4px); transition: opacity 0.25s, transform 0.25s; }
+.r-calc .rv.on { opacity: 1; transform: none; }
+.r-mults { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.r-mults b { display: inline-block; min-width: 4.2em; color: var(--acc); font-weight: 800; }
+.r-notes { display: flex; flex-direction: column; gap: 2px; }
+.r-gain { transform-origin: left center; transition: color 0.3s; }
+.r-gain.pop { color: var(--acc); animation: gainpop 0.45s ease-out; }
+@keyframes gainpop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.r-grade { opacity: 0; transform: scale(1.8); transition: opacity 0.3s, transform 0.35s cubic-bezier(.2,1.6,.4,1); }
+.r-grade.on { opacity: 1; transform: scale(1); }
+@media (prefers-reduced-motion: reduce) { .r-calc .rv, .r-grade { transition: none; } .r-gain.pop { animation: none; } }
