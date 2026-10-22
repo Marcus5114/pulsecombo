@@ -102,7 +102,7 @@
     // Fácil: negras y más largas · Normal: corcheas · Difícil: semicorcheas (en canciones rápidas, solo de a pares) y baldosas triángulo
     const grid = di === 2 ? 1 : 2, minGap = di === 0 ? 4 : di === 1 ? 2 : 1, maxGap = di === 0 ? 16 : 12, end = total - 8, fast = s.bpm > 140;
     const units = di === 2 ? [2, 1, 4] : [2, 4];
-    const DRUMS = di === 2 ? 'kKsc' : 'kK';   // Fácil y Normal suman el bombo (Fácil solo en los tiempos)
+    const DRUMS = di === 2 ? 'kKsc' : 'kK';   // Fácil y Normal suman el bombo (Fácil solo en los tiempos 1 y 3)
     let taps = [];
     if (s.tut) {
       let i = 16, ph = 0;
@@ -114,7 +114,7 @@
         const bar = i >> 4, p = i & 15;
         let on;
         if (bar < 2) on = p % 4 === 0;
-        else { const sec = secAt(M, bar), S = M.sec[sec], drums = di === 1 && sec !== 'B' ? '' : DRUMS; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || ((di !== 0 || p % 4 === 0) && S.dr[p].some(([d]) => drums.includes(d)))); }
+        else { const sec = secAt(M, bar), S = M.sec[sec], drums = di === 1 && sec !== 'B' ? '' : DRUMS; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || ((di !== 0 || p % 8 === 0) && S.dr[p].some(([d]) => drums.includes(d)))); }
         if (on) cand.push(i);
       }
       // 2. Separación mínima, sin rachas de semicorcheas, y huecos largos rellenados con negras
@@ -126,6 +126,17 @@
         if (c - last < minGap) continue;
         taps.push(c); last = c;
       }
+    }
+    // 2a. Fácil: si hay muchas negras seguidas, cada tanto se saltea una (queda una media nota) para que el camino no sea una recta
+    if (di === 0 && !s.tut) {
+      const out = []; let run = 0;
+      for (let k = 0; k < taps.length; k++) {
+        const g = k ? taps[k] - taps[k - 1] : 0;
+        run = g === 4 ? run + 1 : 0;
+        if (run >= 3 && k + 1 < taps.length && taps[k + 1] - taps[k] === 4 && R() < 0.6) { run = 0; continue; }
+        out.push(taps[k]);
+      }
+      taps = out;
     }
     // 2b. Cada hueco tiene que poder contarse en lados (1 a 5 lados de semicorchea, corchea o negra).
     //     Si no se puede (por ejemplo 14 semicorcheas), se agrega una baldosa intermedia cada negra hasta que entre.
@@ -168,7 +179,9 @@
     }
     // la baldosa de llegada (de la nota k) guarda cuántos lados y en qué sentido se recorrieron hasta ella
     const dur = total * step, secs = new Set(notes.map(n => n.i >> 7)).size, nGold = notes.filter(n => n.gold).length;
-    let stars = 0.3 + 1.3 * notes.length / dur + 1.4 * quick / dur + 1.5 * uchg / dur + 0.012 * twirls;
+    // variedad: cuántas veces cambia la cantidad de lados de una baldosa a la siguiente (un camino parejo es más fácil de leer)
+    let vary = 0; for (let q = 2; q < tiles.length; q++) if (tiles[q].m !== tiles[q - 1].m) vary++;
+    let stars = 0.3 + 1.2 * notes.length / dur + 1.4 * quick / dur + 1.5 * uchg / dur + 0.9 * vary / dur + 0.012 * twirls;
     stars = Math.round(stars * 10) / 10;
     return { notes, tiles, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, golds: nGold, secs };
   }

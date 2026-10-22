@@ -30,7 +30,8 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 
 ### Cambiado
 - Sinfonía pide también el Amplificador Compás en nivel 3.
-- Compás: Fácil suma el bombo en los tiempos y Normal solo lo suma en los estribillos, así el salto de estrellas entre Fácil y Normal es más parejo (Ola Quieta: 2,1★ → 4,4★).
+- Compás: Fácil suma el bombo en los tiempos 1 y 3 y, cuando hay muchas negras seguidas, cada tanto se saltea una (queda una media nota). Así el camino deja de ser una recta, como pasaba en Último Tango en Titán. Normal suma el bombo solo en los estribillos, para que el salto de Fácil a Normal sea más parejo.
+- Compás: las estrellas también cuentan cuánto varía el camino, es decir, cuántas veces cambia la cantidad de lados de una baldosa a la siguiente.
 - Pantalla de resultado animada: el contador sube con lo ganado en la canción y después aplica, uno por uno, cada multiplicador (dificultad, Full Combo, caída, multiplicador global). Al final muestra el total y aparece la calificación. Un clic, Enter o Espacio adelantan la animación.
 - Señal: entre la llamada y la respuesta hay una pausa de radio (clic de cambio y ruido blanco), de un tiempo en canciones lentas y dos en las rápidas. Así la primera nota de la respuesta se puede tocar a tiempo. En pantalla dice "CAMBIO…", con estática alrededor de la antena, y el indicador de la barra recorre rápido todo el patrón como muestra de lo que hay que repetir.
 - Árboles de mejoras: el detalle de cada mejora aparece apenas pasás el mouse, sin la espera de 1 segundo.
