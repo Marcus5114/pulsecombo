@@ -158,7 +158,7 @@
       '<b>Normal:</b> la melodía y el bombo en corcheas. En algunos tramos el giro cambia de sentido.',
       '<b>Difícil:</b> semicorcheas con baldosas triángulo, más cambios de sentido y de velocidad.'][di];
     if (m === 'signal') return ['<b>Fácil:</b> patrones en negras de un compás. La línea de tiempo marca cuándo tocar.',
-      '<b>Normal:</b> patrones de un compás que pasan a corcheas. Sin marcas en la respuesta (salvo con Eco visual).',
+      '<b>Normal:</b> patrones de un compás que pasan a corcheas. Sin marcas en la respuesta (salvo con Marcas de ritmo).',
       '<b>Difícil:</b> llamadas de dos compases con corcheas y semicorcheas.'][di];
     const off = (name, req, id) => `<span>${name} (${L(id) ? 'apagada' : 'se activa con ' + req})</span>`;
     if (di === 0) return '<b>Fácil:</b> sin saltos, con menos notas extra y menos largas.';

@@ -105,7 +105,7 @@
       // Solo audio oculta los puntos; Al revés y Memoria diferida no muestran qué flecha va en la respuesta
       const MD = run.mods, twist = MD.reverse || MD.delay;
       const showDots = !MD.audio && (callish || run.di === 0 || run.song.tut || L('s_m_root'));
-      const showLanes = callish || (!twist && (run.song.tut || L('s_m_root')));
+      const showLanes = callish || (!twist && (run.song.tut || L('s_m_arrows')));
       const stackAt = {};   // acordes: la segunda flecha va encima de la primera
       if (showDots) (callish ? R.callSlots : R.slots).forEach((sl, k) => {
         if (phase === 'call' && sl.off > local) return;   // en la llamada aparecen a medida que suenan

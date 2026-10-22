@@ -17,6 +17,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - Fácil: 2 a 4 negras por compás y, hacia el final, a veces una corchea (antes llegaba a 3 notas).
   - Normal: 2 a 4 negras más 0 a 2 corcheas (antes llegaba a 7 corcheas por compás).
   - Difícil: dos compases con 3 a 7 negras, 1 a 4 corcheas y, en la segunda mitad, a veces un par de semicorcheas (antes eran hasta 12 notas con semicorcheas seguidas).
+- Señal: Eco visual se separó en dos mejoras de la rama Memoria. **Marcas de ritmo** (la raíz) muestra en la respuesta los puntos de cuándo tocar, en cualquier dificultad. **Eco visual**, que la necesita, agrega qué flecha va en cada punto. Si ya tenías Eco visual, conservás las dos.
 - Señal: en la línea de tiempo, las flechas se achican para no superponerse aunque las notas estén juntas, y una semicorchea pegada a otra nota se dibuja un escalón más arriba.
 - Mapas de galaxias y de planetas: si no entran en la pantalla (celulares o pantallas muy anchas o bajas) se desplazan con la rueda, con el dedo o arrastrando con el mouse. Al abrirlos se centran en la galaxia o el planeta actual.
 

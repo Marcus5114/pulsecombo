@@ -196,7 +196,8 @@
         { id: 's_base', br: 'core', parent: 's_core', name: 'Potencia', cost: [10, 1.8], desc: 'Cada nota que repetís bien vale más datos.', fx: lv => `${1 + lv} datos por nota` },
         { id: 's_win',  br: 'core', parent: 's_core', name: 'Sintonía', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing al repetir.', fx: lv => `+${10 * lv}% de margen` },
         { id: 's_life', br: 'core', parent: 's_core', name: 'Redundancia', max: 5, cost: [180, 7.3], desc: 'Los fallos vacían menos la barra de señal.', fx: lv => `Un fallo resta ${100 - 12 * lv}% de lo normal` },
-        { id: 's_m_root', br: 'sm', pos: [2, 1], root: true, name: 'Eco visual', max: 1, cost: [60, 1], req: [['s_core', 1]], desc: 'La línea de tiempo muestra qué flecha va en cada punto del patrón, en cualquier dificultad.', fx: lv => lv ? 'Flechas visibles' : 'Solo tiempos (en Fácil)' },
+        { id: 's_m_root', br: 'sm', pos: [2, 1], root: true, name: 'Marcas de ritmo', max: 1, cost: [60, 1], req: [['s_core', 1]], desc: 'En la respuesta, la línea de tiempo muestra los puntos de cuándo tocar, en cualquier dificultad.', fx: lv => lv ? 'Puntos visibles' : 'Puntos solo en Fácil' },
+        { id: 's_m_arrows', br: 'sm', pos: [2, 2], name: 'Eco visual', max: 1, cost: [160, 1], req: [['s_m_root', 1]], desc: 'Sobre cada punto de la respuesta aparece qué flecha va. Con Al revés o Memoria diferida no se muestra.', fx: lv => lv ? 'Flechas sobre los puntos' : 'Solo puntos' },
         { id: 's_m_dec', br: 'sm', pos: [1, 2], name: 'Decodificador', max: 5, cost: [280, 6.6], req: [['s_m_root', 1]], desc: 'Repetir un patrón entero da un bonus más grande.', fx: lv => `Bonus de ${100 + 40 * lv}% por patrón` },
         { id: 's_m_streak', br: 'sm', pos: [3, 2], name: 'Racha de señal', max: 4, cost: [480, 8.7], req: [['s_m_root', 1]], desc: 'Cada patrón decodificado seguido suma +10% a todo lo que ganás, hasta un tope.', fx: lv => lv ? `Hasta +${50 * lv}%` : 'Sin racha' },
         { id: 's_t_gain', br: 'st', pos: [2, 1], root: true, name: 'Amplificador de datos', max: 5, cost: [320, 6.6], req: [['s_core', 1]], desc: 'Todos los datos que ganás en una canción valen más.', fx: lv => `+${25 * lv}% de datos` },
@@ -259,7 +260,7 @@
 
   // ---------- Estado ----------
   const KEY = 'comboPulso_v3';
-  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, giros: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0, com: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, cond: {}, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
+  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, giros: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0, com: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, cond: {}, sMarks: 1, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
   let S = fresh();
   try {
     const raw = localStorage.getItem(KEY);
@@ -267,6 +268,7 @@
       const d = JSON.parse(raw);
       S = { ...fresh(), ...d, moInit: d.moInit || false };
       S.n = S.n || {}; S.rec = S.rec || {}; S.off = S.off || {}; S.mods = S.mods || {}; S.cond = S.cond || {};
+      if (S.n.s_m_root && !d.sMarks) { S.n.s_m_arrows = 1; S.sMarks = 1; }   // v0.4.1: Eco visual se separó en Marcas de ritmo + Eco visual
       S.tot = { pulso: 0, ens: 0, sen: 0, com: 0, ...(d.tot || {}) };
       if (d.total && !d.tot) S.tot.pulso = d.total;
       S.galOpen = { pulso: true, ...(d.galOpen || {}) };
