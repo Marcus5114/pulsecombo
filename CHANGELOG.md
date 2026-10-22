@@ -9,7 +9,7 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
-## Sin publicar — próxima versión: v0.4
+## v0.4
 
 ### Agregado (historia)
 - Comienzo del hilo narrativo: Lumen viaja desde la Tierra en El Metrónomo para entablar relaciones con cada galaxia, y cada galaxia habla con su juego. Cuadro de diálogo con retrato, texto que se escribe letra por letra y opción de saltar (clic, Espacio o Enter para seguir; Escape para saltar).
