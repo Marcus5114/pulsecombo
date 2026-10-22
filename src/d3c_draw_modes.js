@@ -109,12 +109,14 @@
       const stackAt = {};   // acordes: la segunda flecha va encima de la primera
       if (showDots) (callish ? R.callSlots : R.slots).forEach((sl, k) => {
         if (phase === 'call' && sl.off > local) return;   // en la llamada aparecen a medida que suenan
-        const lift = (stackAt[sl.off] = (stackAt[sl.off] || 0) + 1) - 1;
+        let lift = (stackAt[sl.off] = (stackAt[sl.off] || 0) + 1) - 1;
+        if (stackAt[sl.off - 1]) lift += 1;   // semicorchea pegada a la anterior: va un escalón más arriba
         const x = tx0 + tw * sl.off / ch.len, n = phase === 'resp' ? run.roundNotes[rIdx][k] : null;
         const passed = phase === 'gap' && sl.off <= sweep, flashS = passed ? Math.max(0, 1 - (sweep - sl.off) / (ch.len * 0.25)) : 0;
         const hitOk = (n && n.judged && !n.missed) || flashS > 0.5, missed = n && n.missed;
         if (showLanes) {
-          arrow(x, ty - U * 0.06 - lift * U * 0.06, U * 0.05, ANG[sl.lane]);
+          const asz = Math.min(U * 0.05, tw * 2 / ch.len * 0.85);   // nunca más ancha que una corchea
+          arrow(x, ty - U * 0.03 - asz * 0.6 - lift * asz * 1.15, asz, ANG[sl.lane]);
           ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : callish ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
         }
         ctx.beginPath(); ctx.arc(x, ty, U * 0.012, 0, Math.PI * 2);

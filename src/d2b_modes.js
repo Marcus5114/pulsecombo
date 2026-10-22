@@ -27,17 +27,25 @@
     const pats = [];   // patrón de cada llamada: para Memoria diferida, la respuesta usa el de la ronda anterior
     for (let r = 0; r < nR; r++) {
       const start = 16 + r * cycle, resp = start + len + gap, prog = nR > 1 ? r / (nR - 1) : 0;
-      const grid = s.tut || di === 0 ? 4 : di === 1 ? (prog < 0.3 ? 4 : 2) : (prog < 0.4 ? 2 : r % 2 ? 1 : 2);
-      const slots = len / grid;
-      let count = s.tut ? Math.min(1 + Math.floor(r / 2), 3)
-        : di === 0 ? 2 + Math.floor(prog * 2.5) + lvlAdj
-        : di === 1 ? 3 + Math.floor(prog * 3.5) + lvlAdj
-        : 5 + Math.floor(prog * 4.5) + lvlAdj;
-      count = Math.max(1, Math.min(count, slots - 1, di === 0 ? 4 : di === 1 ? 7 : 12));
+      // Subida pareja: notas en los tiempos (negras), algunas a contratiempo (corcheas) y, solo en Difícil, alguna semicorchea suelta.
+      //   Fácil:   2 a 4 negras; hacia el final, a veces una corchea.
+      //   Normal:  2 a 4 negras + 0 a 2 corcheas.
+      //   Difícil: dos compases, 3 a 7 negras + 1 a 4 corcheas y, en la segunda mitad, a veces un par de semicorcheas.
+      const beats = len / 4;
+      let nq, ne, ns = 0;
+      if (s.tut) { nq = Math.min(1 + Math.floor(r / 2), 3); ne = 0; }
+      else if (di === 0) { nq = 2 + Math.floor(prog * 2.5); ne = prog > 0.6 && R() < 0.5 ? 1 : 0; }
+      else if (di === 1) { nq = 2 + Math.floor(prog * 2.5) + (lvlAdj > 1 ? 1 : 0); ne = Math.floor(prog * 2.5) + (lvlAdj > 0 ? 1 : 0); }
+      else { nq = 3 + Math.floor(prog * 4) + lvlAdj; ne = 1 + Math.floor(prog * 3); ns = prog > 0.5 && R() < 0.6 ? 1 : 0; }
+      nq = Math.max(1, Math.min(nq, beats)); ne = Math.min(ne, beats - 1, di === 1 ? 2 : 4);
       const pick = new Set();
       if (s.tut || R() < 0.7) pick.add(0);
-      while (pick.size < count) pick.add(Math.floor(R() * slots));
-      let offs = [...pick].sort((a, b) => a - b).map(k => k * grid);
+      while (pick.size < nq) pick.add(Math.floor(R() * beats) * 4);
+      for (let k = 0, tries = 0; k < ne && tries < 40; tries++) { const o = Math.floor(R() * beats) * 4 + 2; if (!pick.has(o)) { pick.add(o); k++; } }
+      // semicorchea: justo después de una nota existente, sin pegarse a otra
+      for (let k = 0, tries = 0; k < ns && tries < 40; tries++) { const base = [...pick][Math.floor(R() * pick.size)], o = base + 1; if (o < len && !pick.has(o) && !pick.has(o + 1)) { pick.add(o); k++; } }
+      let offs = [...pick].sort((a, b) => a - b);
+      const grid = ns ? 1 : ne ? 2 : 4;
       // Ráfagas: un tiempo del patrón trae dos o tres notas seguidas en semicorcheas
       if (mods.includes('burst') && grid > 1 && offs.length > 1) {
         const b = Math.floor(R() * (offs.length - 1)), o = offs[b], next = offs[b + 1], add = [o + 1];

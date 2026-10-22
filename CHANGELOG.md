@@ -13,6 +13,11 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 
 ### Cambiado
 - Tutorial de Ensamble rehecho para quien nunca jugó a encastrar piezas. El tablero tiene 6 columnas y la fila de abajo viene casi completa: la primera pieza (una I) la cierra aunque no muevas nada. Hasta completar esa fila siguen llegando I. Las piezas caen más rápido para que lleguen solas. Si las piezas llegan arriba, el tablero se vacía y seguís, en lugar de perder. Lo probé con 8 jugadores simulados que no saben jugar: antes ninguno completaba una fila; ahora la completan todos, salvo algún caso de teclas apretadas al azar.
+- Señal: subida de dificultad más pareja.
+  - Fácil: 2 a 4 negras por compás y, hacia el final, a veces una corchea (antes llegaba a 3 notas).
+  - Normal: 2 a 4 negras más 0 a 2 corcheas (antes llegaba a 7 corcheas por compás).
+  - Difícil: dos compases con 3 a 7 negras, 1 a 4 corcheas y, en la segunda mitad, a veces un par de semicorcheas (antes eran hasta 12 notas con semicorcheas seguidas).
+- Señal: en la línea de tiempo, las flechas se achican para no superponerse aunque las notas estén juntas, y una semicorchea pegada a otra nota se dibuja un escalón más arriba.
 - Mapas de galaxias y de planetas: si no entran en la pantalla (celulares o pantallas muy anchas o bajas) se desplazan con la rueda, con el dedo o arrastrando con el mouse. Al abrirlos se centran en la galaxia o el planeta actual.
 
 ### Agregado

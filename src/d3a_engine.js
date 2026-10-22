@@ -54,7 +54,7 @@
       }
     }
     keyDown.fill(false);
-    judge = null; reactorStart(s);
+    judge = null; reactorStart(s); if (dlgOpen()) dlgSkip();
     $('vPlay').classList.toggle('two', run.boards === 2);
     renderPads();
     setView('play'); fitPlay();
