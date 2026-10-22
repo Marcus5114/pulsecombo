@@ -102,7 +102,7 @@
     // Fácil: negras y más largas · Normal: corcheas · Difícil: semicorcheas (en canciones rápidas, solo de a pares) y baldosas triángulo
     const grid = di === 2 ? 1 : 2, minGap = di === 0 ? 4 : di === 1 ? 2 : 1, maxGap = di === 0 ? 16 : 12, end = total - 8, fast = s.bpm > 140;
     const units = di === 2 ? [2, 1, 4] : [2, 4];
-    const DRUMS = di === 1 ? 'kK' : di === 2 ? 'kKsc' : '';
+    const DRUMS = di === 2 ? 'kKsc' : 'kK';   // Fácil y Normal suman el bombo (Fácil solo en los tiempos)
     let taps = [];
     if (s.tut) {
       let i = 16, ph = 0;
@@ -114,7 +114,7 @@
         const bar = i >> 4, p = i & 15;
         let on;
         if (bar < 2) on = p % 4 === 0;
-        else { const S = M.sec[secAt(M, bar)]; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || S.dr[p].some(([d]) => DRUMS.includes(d))); }
+        else { const sec = secAt(M, bar), S = M.sec[sec], drums = di === 1 && sec !== 'B' ? '' : DRUMS; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || ((di !== 0 || p % 4 === 0) && S.dr[p].some(([d]) => drums.includes(d)))); }
         if (on) cand.push(i);
       }
       // 2. Separación mínima, sin rachas de semicorcheas, y huecos largos rellenados con negras
@@ -126,6 +126,16 @@
         if (c - last < minGap) continue;
         taps.push(c); last = c;
       }
+    }
+    // 2b. Cada hueco tiene que poder contarse en lados (1 a 5 lados de semicorchea, corchea o negra).
+    //     Si no se puede (por ejemplo 14 semicorcheas), se agrega una baldosa intermedia cada negra hasta que entre.
+    {
+      const fixed = []; let lastI = taps[0] - 4;
+      for (const i of taps) {
+        while (!hexSplit(i - lastI, 2, units) && !hexSplit(i - lastI, 2, [1, 2, 4])) { lastI += i - lastI > 8 ? 4 : 2; fixed.push(lastI); }
+        fixed.push(i); lastI = i;
+      }
+      taps = fixed;
     }
     // 3. Baldosas en la grilla hexagonal. Si una cae sobre otra reciente, el giro cambia de sentido.
     const golds = L('p_c_gold') && !s.tut;

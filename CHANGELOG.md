@@ -11,6 +11,10 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 
 ## Sin publicar — próxima versión: v0.4
 
+### Corregido
+- Compás: el camino podía terminar mucho antes que la canción. Si un hueco entre notas no se podía contar en lados (por ejemplo 14 semicorcheas), esa baldosa se descartaba y, en cadena, todas las siguientes. Ahora se agregan baldosas intermedias cada negra hasta que el hueco entre.
+- La música (y con ella los caminos de Compás) podía salir distinta según el navegador, porque el orden de las progresiones se sorteaba con un método que cada navegador resuelve a su manera. Ahora usa una mezcla con semilla, igual en todos lados. Las canciones suenan algo distinto que antes.
+
 ### Agregado
 - Campo para código de desarrollador (botón "Código" al pie, junto a Reiniciar progreso): abre todas las galaxias y da moneda y materia oscura para comprar todas las mejoras con tope. El código no queda escrito en el archivo; se compara un hash.
 - Señal, tres modificadores nuevos: Sin cambio (+15%, la respuesta empieza sin pausa, como antes), Acordes (+20%, algunas notas son dos flechas a la vez, que se ven apiladas en la línea de tiempo) y Ráfagas (+20%, un tiempo de cada patrón trae dos o tres notas en semicorcheas).
@@ -26,6 +30,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 
 ### Cambiado
 - Sinfonía pide también el Amplificador Compás en nivel 3.
+- Compás: Fácil suma el bombo en los tiempos y Normal solo lo suma en los estribillos, así el salto de estrellas entre Fácil y Normal es más parejo (Ola Quieta: 2,1★ → 4,4★).
 - Pantalla de resultado animada: el contador sube con lo ganado en la canción y después aplica, uno por uno, cada multiplicador (dificultad, Full Combo, caída, multiplicador global). Al final muestra el total y aparece la calificación. Un clic, Enter o Espacio adelantan la animación.
 - Señal: entre la llamada y la respuesta hay una pausa de radio (clic de cambio y ruido blanco), de un tiempo en canciones lentas y dos en las rápidas. Así la primera nota de la respuesta se puede tocar a tiempo. En pantalla dice "CAMBIO…", con estática alrededor de la antena, y el indicador de la barra recorre rápido todo el patrón como muestra de lo que hay que repetir.
 - Árboles de mejoras: el detalle de cada mejora aparece apenas pasás el mouse, sin la espera de 1 segundo.

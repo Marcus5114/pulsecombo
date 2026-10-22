@@ -260,7 +260,9 @@
     if (MUSIC[si]) return MUSIC[si];
     const s = SONGS[si], w = WORLDS[s.wi], G = GEN[w.style] || GEN.base, R = rng(77 + si * 1013);
     const pk = a => a[Math.floor(R() * a.length)];
-    const progs = [...G.progs].sort(() => R() - 0.5).map(parseProg);
+    // Mezcla Fisher-Yates con la semilla: igual en todos los navegadores (sort con comparador al azar no lo es)
+    const progs = [...G.progs]; for (let k = progs.length - 1; k > 0; k--) { const j = Math.floor(R() * (k + 1)); [progs[k], progs[j]] = [progs[j], progs[k]]; }
+    for (let k = 0; k < progs.length; k++) progs[k] = parseProg(progs[k]);
     const sect = (prog, drums, comp, anchor) => {
       const bass = Array(16).fill(null), pat = pk(G.bass);
       for (const [k, sym, n] of onsets(pat)) bass[k] = [sym, n];
