@@ -9,7 +9,7 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
-## Sin publicar — próxima versión: v0.4.1
+## v0.4.1
 
 ### Cambiado
 - Tutorial de Ensamble rehecho para quien nunca jugó a encastrar piezas. El tablero tiene 6 columnas y la fila de abajo viene casi completa: la primera pieza (una I) la cierra aunque no muevas nada. Hasta completar esa fila siguen llegando I. Las piezas caen más rápido para que lleguen solas. Si las piezas llegan arriba, el tablero se vacía y seguís, en lugar de perder. Lo probé con 8 jugadores simulados que no saben jugar: antes ninguno completaba una fila; ahora la completan todos, salvo algún caso de teclas apretadas al azar.
