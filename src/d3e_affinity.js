@@ -197,10 +197,18 @@
     const id = affCharOfWorld(WORLDS[wi].id); if (!id) return '';
     const a = affState(id), ch = AFF_CHARS[id], k = affTier(a.pts), next = AFF_TIERS[k + 1];
     if (worldOpen(wi)) fillRequests(id);
-    const lo = AFF_TIERS[k][0], hi = next ? next[0] : 100, pct = next ? (a.pts - lo) / (hi - lo) * 100 : 100;
+    // Barra por tramos: un segmento por nivel, ancho proporcional a los puntos que pide. Los pasados van llenos,
+    // el actual muestra cuánto falta y los siguientes quedan vacíos.
+    const pts = Math.floor(a.pts), lo = AFF_TIERS[k][0], hi = next ? next[0] : 100;
+    const segs = AFF_TIERS.slice(1).map(([end, name], i) => {
+      const start = AFF_TIERS[i][0], fill = Math.max(0, Math.min(1, (a.pts - start) / (end - start)));
+      const cls = i < k ? 'done' : i === k ? 'now' : '';
+      return `<div class="aff-seg ${cls}" style="flex:${end - start}" title="${AFF_TIERS[i][1]} → ${name}: ${start} a ${end}"><i style="width:${(fill * 100).toFixed(0)}%"></i></div>`;
+    }).join('');
     return `<div class="aff">
-      <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${Math.floor(a.pts)}/100</span></div>
-      <div class="aff-bar"><i style="width:${pct.toFixed(0)}%"></i></div>
+      <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${next ? `${pts - lo}/${hi - lo}` : 'Máximo'}</span></div>
+      <div class="aff-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pts}" aria-label="Sintonía: ${AFF_TIERS[k][1]}, ${pts} de 100">${segs}</div>
+      <div class="aff-next">${next ? `Faltan <b>${Math.ceil(hi - a.pts)}</b> para <b>${next[1]}</b>` : 'Llegaron a Pareja de baile'}</div>
       <div class="aff-like">Le gusta: ${ch.likes.map(t => TASTE[t].label).join(', ')}. No le gusta: ${ch.dislikes.map(t => TASTE[t].label).join(', ')}.</div>
       ${a.reqs.length ? `<div class="aff-reqs"><b>Pedidos</b>${a.reqs.map(q => `<div class="aff-req">${reqText(q)}</div>`).join('')}</div>` : ''}
     </div>`;

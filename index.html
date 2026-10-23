@@ -547,8 +547,13 @@ body.land .rx-txt { display: none; }
 .aff { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; text-align: left; font-size: 0.72rem; color: var(--muted); }
 .aff-top { display: flex; justify-content: space-between; gap: 8px; }
 .aff-tier { font-weight: 800; color: var(--fg); text-transform: uppercase; letter-spacing: 0.06em; }
-.aff-bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
-.aff-bar i { display: block; height: 100%; background: var(--acc); border-radius: 3px; }
+.aff-bar { display: flex; gap: 3px; height: 7px; }
+.aff-seg { position: relative; background: var(--line); border-radius: 2px; overflow: hidden; }
+.aff-seg i { display: block; height: 100%; background: var(--acc); }
+.aff-seg.done i { opacity: 0.55; }
+.aff-seg.now { outline: 1px solid var(--acc); outline-offset: 1px; }
+.aff-next { font-size: 0.68rem; }
+.aff-next b { color: var(--fg); }
 .aff-like { line-height: 1.35; }
 .aff-reqs { display: flex; flex-direction: column; gap: 4px; }
 .aff-reqs > b { color: var(--acc); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.66rem; }
@@ -3416,10 +3421,18 @@ body.land .rx-txt { display: none; }
     const id = affCharOfWorld(WORLDS[wi].id); if (!id) return '';
     const a = affState(id), ch = AFF_CHARS[id], k = affTier(a.pts), next = AFF_TIERS[k + 1];
     if (worldOpen(wi)) fillRequests(id);
-    const lo = AFF_TIERS[k][0], hi = next ? next[0] : 100, pct = next ? (a.pts - lo) / (hi - lo) * 100 : 100;
+    // Barra por tramos: un segmento por nivel, ancho proporcional a los puntos que pide. Los pasados van llenos,
+    // el actual muestra cuánto falta y los siguientes quedan vacíos.
+    const pts = Math.floor(a.pts), lo = AFF_TIERS[k][0], hi = next ? next[0] : 100;
+    const segs = AFF_TIERS.slice(1).map(([end, name], i) => {
+      const start = AFF_TIERS[i][0], fill = Math.max(0, Math.min(1, (a.pts - start) / (end - start)));
+      const cls = i < k ? 'done' : i === k ? 'now' : '';
+      return `<div class="aff-seg ${cls}" style="flex:${end - start}" title="${AFF_TIERS[i][1]} → ${name}: ${start} a ${end}"><i style="width:${(fill * 100).toFixed(0)}%"></i></div>`;
+    }).join('');
     return `<div class="aff">
-      <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${Math.floor(a.pts)}/100</span></div>
-      <div class="aff-bar"><i style="width:${pct.toFixed(0)}%"></i></div>
+      <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${next ? `${pts - lo}/${hi - lo}` : 'Máximo'}</span></div>
+      <div class="aff-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pts}" aria-label="Sintonía: ${AFF_TIERS[k][1]}, ${pts} de 100">${segs}</div>
+      <div class="aff-next">${next ? `Faltan <b>${Math.ceil(hi - a.pts)}</b> para <b>${next[1]}</b>` : 'Llegaron a Pareja de baile'}</div>
       <div class="aff-like">Le gusta: ${ch.likes.map(t => TASTE[t].label).join(', ')}. No le gusta: ${ch.dislikes.map(t => TASTE[t].label).join(', ')}.</div>
       ${a.reqs.length ? `<div class="aff-reqs"><b>Pedidos</b>${a.reqs.map(q => `<div class="aff-req">${reqText(q)}</div>`).join('')}</div>` : ''}
     </div>`;

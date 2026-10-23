@@ -305,8 +305,13 @@ body.land .rx-txt { display: none; }
 .aff { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; text-align: left; font-size: 0.72rem; color: var(--muted); }
 .aff-top { display: flex; justify-content: space-between; gap: 8px; }
 .aff-tier { font-weight: 800; color: var(--fg); text-transform: uppercase; letter-spacing: 0.06em; }
-.aff-bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
-.aff-bar i { display: block; height: 100%; background: var(--acc); border-radius: 3px; }
+.aff-bar { display: flex; gap: 3px; height: 7px; }
+.aff-seg { position: relative; background: var(--line); border-radius: 2px; overflow: hidden; }
+.aff-seg i { display: block; height: 100%; background: var(--acc); }
+.aff-seg.done i { opacity: 0.55; }
+.aff-seg.now { outline: 1px solid var(--acc); outline-offset: 1px; }
+.aff-next { font-size: 0.68rem; }
+.aff-next b { color: var(--fg); }
 .aff-like { line-height: 1.35; }
 .aff-reqs { display: flex; flex-direction: column; gap: 4px; }
 .aff-reqs > b { color: var(--acc); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.66rem; }
