@@ -236,20 +236,47 @@ button.chip.mod:hover { border-color: var(--fg); }
 .dlg-hint .ht { display: none; }
 @media (hover: none) { .dlg-hint .hk { display: none; } .dlg-hint .ht { display: inline; } }
 
-/* ---------- Representante del planeta (menú) ---------- */
+/* ---------- Representante del planeta (menú): franja compacta + detalle ---------- */
 #vMenu { position: relative; }
-.rep { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
-.rep-face { flex: none; width: 64px; height: 64px; }
-.rep-txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rep { position: relative; }
+.rep-strip { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px 6px 6px; cursor: pointer; min-height: 52px; }
+.rep-strip:hover, .rep.open .rep-strip { border-color: var(--acc); }
+.rep-face { flex: none; width: 40px; height: 40px; display: block; }
+.rs-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; row-gap: 3px; }
+.rs-aff { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 8px; font-size: 0.72rem; color: var(--muted); }
+.rs-aff .aff-bar { flex: 1; min-width: 60px; }
+.rs-tier { font-weight: 800; color: var(--fg); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.66rem; white-space: nowrap; }
+.rs-pts { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rs-chev { flex: none; font-size: 1.3rem; color: var(--muted); transition: transform 0.2s; }
+.rep.open .rs-chev { transform: rotate(90deg); color: var(--acc); }
 .rep-name { font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8rem; color: var(--acc); }
 .rep-role { font-size: 0.7rem; color: var(--muted); }
 .rep-say { font-size: 0.85rem; font-style: italic; }
-@media (min-width: 1040px) {
-  #vMenu { max-width: 814px; padding-left: 214px; }
-  .rep { position: absolute; top: 0; left: 0; width: 190px; flex-direction: column; text-align: center; padding: 16px 14px; }
-  .rep-face { width: 150px; height: 150px; }
-  .rep-say { margin-top: 6px; }
+.rep-back { display: none; }
+.rep-more { display: none; flex-direction: column; gap: 6px; margin-top: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.rep.open .rep-more { display: flex; animation: repin 0.18s ease-out; }
+@keyframes repin { from { opacity: 0; transform: translateY(-4px); } }
+.rm-head { display: flex; align-items: center; gap: 12px; }
+.rm-head .rep-face { width: 72px; height: 72px; }
+.rm-head > div { flex: 1; min-width: 0; }
+.rm-close { flex: none; padding: 4px 10px; }
+/* Celular: el detalle sube como hoja desde abajo y no empuja la lista */
+@media (max-width: 640px) {
+  .rep.open .rep-back { display: block; position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); }
+  .rep-more { position: fixed; left: 0; right: 0; bottom: 0; z-index: 61; margin: 0; max-height: 78vh; overflow-y: auto; border-radius: 14px 14px 0 0; border-bottom: 0;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5); }
+  .rep.open .rep-more { animation: repup 0.22s ease-out; }
+  @keyframes repup { from { transform: translateY(100%); } }
+  .rs-aff { min-width: 0; flex-basis: 100%; }
 }
+@media (min-width: 641px) { .rm-close { display: none; } }
+@media (prefers-reduced-motion: reduce) { .rep.open .rep-more { animation: none; } .rs-chev { transition: none; } }
+/* Pedidos en la lista de canciones */
+.req-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border: 1px solid var(--acc); border-radius: 999px; color: var(--acc); font-size: 0.64rem; font-weight: 800; letter-spacing: 0.04em; vertical-align: 2px; white-space: nowrap; }
+.req-dot { color: var(--acc); font-weight: 900; }
+.diff.on .req-dot { color: var(--bg); }
+.req-line { margin: 0 12px 10px; padding-left: 8px; border-left: 2px solid var(--acc); font-size: 0.8rem; line-height: 1.4; }
+.req-line b { color: var(--acc); }
 /* Embajador en el panel de galaxias */
 .gi-head { display: flex; gap: 12px; align-items: center; min-width: 0; }
 .gi-amb { flex: none; width: 58px; height: 58px; }
@@ -316,7 +343,6 @@ body.land .rx-txt { display: none; }
 .aff-reqs { display: flex; flex-direction: column; gap: 4px; }
 .aff-reqs > b { color: var(--acc); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.66rem; }
 .aff-req { line-height: 1.35; color: var(--fg); border-left: 2px solid var(--acc); padding-left: 6px; }
-.rep-txt { flex: 1; }
 
 /* Pedido cumplido en la pantalla de resultado */
 .r-reqs { display: flex; flex-direction: column; gap: 8px; }

@@ -186,14 +186,14 @@
       const st = ds.map(d => charts[d].stars), lo = Math.min(...st), hi = Math.max(...st);
       const grades = ds.map(d => recOf(s, d)).filter(r => r && r.grade).map(r => r.grade);
       const best = grades.sort((a, b) => gradeRank(b) - gradeRank(a))[0] || '';
-      const sel = i === S.sel, eb = ecoBest(s), iv = ecoInterval(s);
+      const sel = i === S.sel, eb = ecoBest(s), iv = ecoInterval(s), reqs = affReqsForSong(i);
       // Eco por minuto: la barra se llena cada 60 s (sincronizada con el reloj) y al completarse destella y muestra lo ganado
       const perMin = ecoPerCycle(s) / iv * 60;
       const eco = eb > 0 ? `<span class="eco" style="--delay:-${((Date.now() / 1000) % 60).toFixed(2)}s"><i></i>Eco: +${fmtRate(perMin)} ${unit}/min<b class="eco-pop" aria-hidden="true">+${fmtRate(perMin)}</b></span>` : '';
       let h = `<div class="songwrap${sel ? ' sel' : ''}">
         <button class="song" data-i="${i}" aria-expanded="${sel}">
           <span class="num">${String(s.k + 1).padStart(2, '0')}</span>
-          <span class="title">${s.name}</span>
+          <span class="title">${s.name}${reqs.length ? ` <span class="req-tag" title="${reqs.map(q => q.text).join(' · ')}">◆ ${reqs.length > 1 ? reqs.length + ' pedidos' : 'Pedido'}</span>` : ''}</span>
           <span class="grade">${best}</span>
           <span class="meta">${s.bpm} BPM · ${s.tut ? 'Tutorial · ' + dec1(lo) + '★' : dec1(lo) + '–' + dec1(hi) + '★'} · ${ds.filter(d => diffOpen(s, d)).length}/${ds.length} abiertas</span>
           ${eco}
@@ -207,13 +207,14 @@
             <span class="dbar"><i style="width:${Math.min(100, c.stars / 14 * 100)}%"></i></span>
             <span class="dm">Superá ${DIFFS[k - 1].name}</span>
           </button>`;
+          const rq = reqs.some(q => !q.any && q.di === k);
           return `<button class="diff${k === S.diff ? ' on' : ''}" data-d="${k}" aria-pressed="${k === S.diff}">
-            <span class="dn">${d.name}${d.boards === 2 ? ' · 2 tableros' : ''}</span>
+            <span class="dn">${d.name}${d.boards === 2 ? ' · 2 tableros' : ''}${rq ? ' <b class="req-dot" title="Hay un pedido en esta dificultad">◆</b>' : ''}</span>
             <span class="ds">${dec1(c.stars)}★</span>
             <span class="dbar"><i style="width:${Math.min(100, c.stars / 14 * 100)}%"></i></span>
             <span class="dm">x${dec(c.mult)}${r && r.grade ? ' · ' + r.grade : ''}${r && r.fc ? ' · FC' : ''}</span>
           </button>`;
-        }).join('')}</div><p class="dinfo">${diffInfo(s, S.diff)}</p>`;
+        }).join('')}</div><p class="dinfo">${diffInfo(s, S.diff)}</p>${reqs.map(q => `<p class="req-line"><b>◆ Pedido de ${q.who}:</b> ${q.text}</p>`).join('')}`;
       }
       return h + '</div>';
     }).join('');

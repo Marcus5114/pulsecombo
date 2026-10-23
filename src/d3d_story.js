@@ -134,8 +134,26 @@
   // Tarjeta del representante al costado del selector de canciones
   function renderRep(wi) {
     const id = repOf(wi), [name, role] = SPK[id];
-    $('repCard').innerHTML = `<div class="rep-face">${faceSvg(id)}</div><div class="rep-txt"><div class="rep-name">${name}</div><div class="rep-role">${role}</div><div class="rep-say">“${QUIPS[id]?.idle || ''}”</div>${affCardHtml(wi)}</div>`;
+    const card = $('repCard'); if (card.dataset.wi !== String(wi)) card.classList.remove('open'); card.dataset.wi = wi;
+    const open = card.classList.contains('open');
+    card.innerHTML = `<button class="rep-strip" id="repStrip" aria-expanded="${open}" aria-controls="repMore">
+        <span class="rep-face">${faceSvg(id)}</span>
+        <span class="rs-main"><span class="rep-name">${name}</span>${affStripHtml(wi) ? `<span class="rs-aff">${affStripHtml(wi)}</span>` : `<span class="rep-role">${role}</span>`}</span>
+        <span class="rs-chev" aria-hidden="true">›</span>
+      </button>
+      <div class="rep-back" id="repBack"></div>
+      <div class="rep-more" id="repMore" role="dialog" aria-label="${name}">
+        <div class="rm-head"><span class="rep-face">${faceSvg(id)}</span><div><div class="rep-name">${name}</div><div class="rep-role">${role}</div></div><button class="ghost-btn rm-close" id="repClose" aria-label="Cerrar">✕</button></div>
+        <div class="rep-say">“${QUIPS[id]?.idle || ''}”</div>${affCardHtml(wi)}
+      </div>`;
   }
+  // Abrir y cerrar el detalle del representante
+  const repToggle = on => { const c = $('repCard'); c.classList.toggle('open', on); $('repStrip')?.setAttribute('aria-expanded', on); };
+  $('repCard').addEventListener('click', e => {
+    if (e.target.closest('#repStrip')) repToggle(!$('repCard').classList.contains('open'));
+    else if (e.target.closest('#repClose') || e.target.id === 'repBack') repToggle(false);
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('repCard').classList.contains('open')) { repToggle(false); e.stopPropagation(); } }, true);
 
   // Reacciones en la partida: animación del retrato y una frase según el juicio
   const REACT = { perfect: 'perfect', great: 'great', good: 'good', ok: 'great', on: 'great', line: 'great', dec: 'perfect', tetra: 'perfect', tramo: 'perfect',

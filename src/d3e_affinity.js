@@ -192,22 +192,38 @@
     return { notes: out, done, gain: REQ_GAIN };
   }
 
-  // Bloque de Sintonía en la tarjeta del representante (menú del planeta)
+  // Barra por tramos (se usa en la franja compacta y en el detalle)
+  function affBarHtml(a) {
+    const k = affTier(a.pts), pts = Math.floor(a.pts);
+    const segs = AFF_TIERS.slice(1).map(([end, name], i) => {
+      const start = AFF_TIERS[i][0], fill = Math.max(0, Math.min(1, (a.pts - start) / (end - start)));
+      return `<div class="aff-seg ${i < k ? 'done' : i === k ? 'now' : ''}" style="flex:${end - start}" title="${AFF_TIERS[i][1]} → ${name}: ${start} a ${end}"><i style="width:${(fill * 100).toFixed(0)}%"></i></div>`;
+    }).join('');
+    return `<div class="aff-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pts}" aria-label="Sintonía: ${AFF_TIERS[k][1]}, ${pts} de 100">${segs}</div>`;
+  }
+  const affTierText = a => { const k = affTier(a.pts), next = AFF_TIERS[k + 1]; return next ? `${Math.floor(a.pts) - AFF_TIERS[k][0]}/${next[0] - AFF_TIERS[k][0]}` : 'Máximo'; };
+  // Franja compacta del menú del planeta
+  function affStripHtml(wi) {
+    const id = affCharOfWorld(WORLDS[wi].id); if (!id) return '';
+    const a = affState(id);
+    return `<span class="rs-tier">${AFF_TIERS[affTier(a.pts)][1]}</span>${affBarHtml(a)}<span class="rs-pts">${affTierText(a)}</span>`;
+  }
+  // Pedidos activos del representante del planeta que se juegan en esta canción
+  function affReqsForSong(si) {
+    const s = SONGS[si], id = affCharOfWorld(WORLDS[s.wi].id); if (!id || !worldOpen(s.wi)) return [];
+    fillRequests(id);
+    return affState(id).reqs.filter(q => q.si === si).map(q => ({ ...q, who: SPK[id][0], text: reqText(q), any: !!TPL[q.tpl]?.prog }));
+  }
+  // Bloque de Sintonía en el detalle del representante (menú del planeta)
   function affCardHtml(wi) {
     const id = affCharOfWorld(WORLDS[wi].id); if (!id) return '';
     const a = affState(id), ch = AFF_CHARS[id], k = affTier(a.pts), next = AFF_TIERS[k + 1];
     if (worldOpen(wi)) fillRequests(id);
-    // Barra por tramos: un segmento por nivel, ancho proporcional a los puntos que pide. Los pasados van llenos,
-    // el actual muestra cuánto falta y los siguientes quedan vacíos.
-    const pts = Math.floor(a.pts), lo = AFF_TIERS[k][0], hi = next ? next[0] : 100;
-    const segs = AFF_TIERS.slice(1).map(([end, name], i) => {
-      const start = AFF_TIERS[i][0], fill = Math.max(0, Math.min(1, (a.pts - start) / (end - start)));
-      const cls = i < k ? 'done' : i === k ? 'now' : '';
-      return `<div class="aff-seg ${cls}" style="flex:${end - start}" title="${AFF_TIERS[i][1]} → ${name}: ${start} a ${end}"><i style="width:${(fill * 100).toFixed(0)}%"></i></div>`;
-    }).join('');
+    // Barra por tramos: un segmento por nivel, ancho proporcional a los puntos que pide
+    const hi = next ? next[0] : 100;
     return `<div class="aff">
-      <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${next ? `${pts - lo}/${hi - lo}` : 'Máximo'}</span></div>
-      <div class="aff-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pts}" aria-label="Sintonía: ${AFF_TIERS[k][1]}, ${pts} de 100">${segs}</div>
+      <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${affTierText(a)}</span></div>
+      ${affBarHtml(a)}
       <div class="aff-next">${next ? `Faltan <b>${Math.ceil(hi - a.pts)}</b> para <b>${next[1]}</b>` : 'Llegaron a Pareja de baile'}</div>
       <div class="aff-like">Le gusta: ${ch.likes.map(t => TASTE[t].label).join(', ')}. No le gusta: ${ch.dislikes.map(t => TASTE[t].label).join(', ')}.</div>
       ${a.reqs.length ? `<div class="aff-reqs"><b>Pedidos</b>${a.reqs.map(q => `<div class="aff-req">${reqText(q)}</div>`).join('')}</div>` : ''}
