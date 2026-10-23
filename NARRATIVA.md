@@ -91,3 +91,19 @@ Sos una exploradora o un explorador de la Tierra a bordo de **El Metrónomo**, u
 3. **Ensamble, Señal y Compás:** textos y retratos.
 4. **Bitácora.**
 5. **El Silencio** (opcional): cómo se integra con los modificadores y las bombas.
+
+## Sintonía (sistema de relaciones)
+Código en `src/d3e_affinity.js`. Elegido: un medidor por personaje (1A), gustos según cómo jugás (2B) y pedidos (2C).
+
+- **Niveles** (`AFF_TIERS`): Primer contacto (0), Simpatía (20), Confianza (45), Complicidad (70), Pareja de baile (100).
+- **Cuánto sube por canción:** +1,5 si la superás (+0,5 si no). Cada gusto suma hasta +2,5 según cuánto se cumplió y cada disgusto resta hasta −1,2. Cumplir un pedido da +15. Una buena partida suma unos 5 puntos.
+- **Gustos** (`TASTE`): combos largos, Full Combo, PERFECTO, no fallar, fiebre, notas extra, dificultad alta, volver a sus canciones, modificadores, moverse a tiempo (Ensamble), filas de a cuatro, decodificar todo (Señal), tramos perfectos y baldosas doradas (Compás). Disgustos: tocar sin nota, fallos, jugar en Fácil.
+- **Personajes** (`AFF_CHARS`): los 18 representantes, cada uno con su planeta, 2 gustos y 1 disgusto.
+- **Pedidos** (`REQ_TEMPLATES`): calificación mínima, Full Combo, combo, filas, decodificar todo, tramos perfectos. Se eligen según el modo de juego y las dificultades abiertas.
+
+### Puntos de extensión
+- `AFF_SCENES[personaje][nivel]`: diálogos que se muestran al subir de nivel (hoy vacío).
+- `AFF_HOOKS.tierUp / requestDone / result`: funciones que se llaman en cada evento, para bonos, regalos o logros.
+- `affBonus(personaje, tipo)`: lugar para bonos por nivel (hoy devuelve 0).
+- Sumar un embajador o a CORA: agregarlo a `AFF_CHARS` con su `world` (o extender `affCharOfWorld` para que lo asigne por galaxia).
+- Pendiente de decidir: escenas con elecciones, regalos con los recuerdos, acompañante con habilidad y objetivo final (Pareja de baile para la Sinfonía).

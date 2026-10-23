@@ -300,3 +300,14 @@ body.land .rx-txt { display: none; }
 #galMap[data-layout="wide"] { --mw: 760px; --mh: 460px; }
 #map[data-layout="wide"] { --mw: 720px; --mh: 440px; }
 @media (prefers-reduced-motion: reduce) { .map-par .par-l { transform: none !important; } }
+
+/* ---------- Sintonía ---------- */
+.aff { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; text-align: left; font-size: 0.72rem; color: var(--muted); }
+.aff-top { display: flex; justify-content: space-between; gap: 8px; }
+.aff-tier { font-weight: 800; color: var(--fg); text-transform: uppercase; letter-spacing: 0.06em; }
+.aff-bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.aff-bar i { display: block; height: 100%; background: var(--acc); border-radius: 3px; }
+.aff-like { line-height: 1.35; }
+.aff-req { line-height: 1.35; color: var(--fg); border-left: 2px solid var(--acc); padding-left: 6px; }
+.aff-req b { color: var(--acc); }
+.rep-txt { flex: 1; }

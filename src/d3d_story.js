@@ -134,7 +134,7 @@
   // Tarjeta del representante al costado del selector de canciones
   function renderRep(wi) {
     const id = repOf(wi), [name, role] = SPK[id];
-    $('repCard').innerHTML = `<div class="rep-face">${faceSvg(id)}</div><div class="rep-txt"><div class="rep-name">${name}</div><div class="rep-role">${role}</div><div class="rep-say">“${QUIPS[id]?.idle || ''}”</div></div>`;
+    $('repCard').innerHTML = `<div class="rep-face">${faceSvg(id)}</div><div class="rep-txt"><div class="rep-name">${name}</div><div class="rep-role">${role}</div><div class="rep-say">“${QUIPS[id]?.idle || ''}”</div>${affCardHtml(wi)}</div>`;
   }
 
   // Reacciones en la partida: animación del retrato y una frase según el juicio

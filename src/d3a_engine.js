@@ -148,7 +148,7 @@
       award(basePts() * JVAL[j] * (0.5 + 0.25 * L('x_val')), j);
       if (L('x_life')) run.life = Math.min(100, run.life + 1.5 * L('x_life'));
       run.xStreak++;
-      if (L('x_gold') && run.xStreak >= 8) { run.xStreak = 0; run.feverUntil = t + 3 + 2 * L('x_gold'); feverAt = performance.now(); reactTo('fever'); }
+      if (L('x_gold') && run.xStreak >= 8) { run.xStreak = 0; run.feverUntil = t + 3 + 2 * L('x_gold'); feverAt = performance.now(); run.fevers = (run.fevers || 0) + 1; reactTo('fever'); }
       setJudge(j, true); blip(lane, j, true);
       return;
     }
@@ -274,6 +274,7 @@
     if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmtRate(ecoPerCycle(s) / ecoInterval(s) * 60)} ${g.unit} por minuto`);
     // Desglose para el contador: lo ganado en la canción, cada multiplicador y el total
     const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
+    notes.push(...affinityOnResult(run, { grade, fc, cleared })); save();
     const steps = [[`Dificultad ${dec1(run.stars)}★${ml}`, run.mult], ...mults];
     if (mult > 1.001) steps.push(['Multiplicador global', mult]);
     showResult({ grade, base: run.mult ? run.earned / run.mult : run.earned, steps, paid, notes, rows, fc });

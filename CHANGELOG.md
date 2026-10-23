@@ -22,6 +22,11 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 - Mapas de galaxias y de planetas: si no entran en la pantalla (celulares o pantallas muy anchas o bajas) se desplazan con la rueda, con el dedo o arrastrando con el mouse. Al abrirlos se centran en la galaxia o el planeta actual.
 
 ### Agregado
+- **Sintonía**, la base del sistema de relaciones. Cada representante de planeta tiene un medidor de 0 a 100 con cinco niveles: Primer contacto, Simpatía, Confianza, Complicidad y Pareja de baile.
+  - Cada personaje tiene gustos propios sobre cómo jugás en su planeta. Brasa valora los combos largos y los Full Combo, pero no que juegues en Fácil. Lumi, que vuelvas a sus canciones. Duque Lentejuela, la fiebre y las notas extra. Bruma, no fallar, y no le gusta que toques sin nota. Al terminar una canción, el resultado muestra cuánto cambió la Sintonía y por qué.
+  - Pedidos: cada personaje propone un desafío concreto en una de sus canciones (calificación mínima, Full Combo, combo, filas, decodificar todo, tramos perfectos). Cumplirlo da mucha Sintonía, y después llega un pedido nuevo.
+  - La tarjeta del representante en el menú muestra el nivel, la barra, sus gustos y el pedido actual.
+  - Está armado para crecer: niveles, gustos, personajes y plantillas de pedidos son tablas. Hay lugar listo para escenas por nivel, bonos y ganchos de eventos.
 - Ensamble: sombra de recomendación en el tutorial y en Fácil. Un contorno punteado del color de la galaxia marca dónde conviene encastrar la pieza para armar filas (el juego prueba cada giro y columna y elige la que deja menos huecos y la superficie más pareja).
 - Mapas: estrellas de fondo en tres capas con efecto de paralaje, que se mueven a distinta velocidad al desplazar el mapa y al mover el mouse.
 
