@@ -22,6 +22,8 @@
       fevers: r.fevers || 0,
       extrasRatio: r.ch.extras ? (r.xHit || 0) / r.ch.extras : 0,
       replays: (S.plays && S.plays[r.song.id]) || 0,
+      acc: (() => { const all = judged + (r.ghost || 0) * 0.5; return all ? (c.perfect + c.great * 0.7 + c.good * 0.4) / all * 100 : 0; })(),
+      rmax: r.rmax || 0,
       // Ensamble
       onRatio: r.mode === 'stack' && (r.on + r.off) ? r.on / (r.on + r.off) : 0, lines: r.lines || 0, tetras: r.tetras || 0,
       // Señal
@@ -75,37 +77,76 @@
     rompeondas: { world: 'com_c',    likes: ['hard', 'combo'],      dislikes: ['sloppy'] },
   };
   const affCharOfWorld = wid => Object.keys(AFF_CHARS).find(id => AFF_CHARS[id].world === wid);
-  const affState = id => { S.aff = S.aff || {}; return S.aff[id] = S.aff[id] || { pts: 0, req: null, reqDone: 0 }; };
+  const affState = id => { S.aff = S.aff || {}; const a = S.aff[id] = S.aff[id] || { pts: 0, reqs: [], reqDone: 0 }; a.reqs = a.reqs || []; return a; };
 
-  // Pedidos: plantillas que arman un desafío concreto en una canción del planeta del personaje.
-  // ok(st, r) dice si la partida lo cumple. Para sumar uno nuevo, se agrega una plantilla.
+  // Pedidos: cada personaje tiene hasta 3 activos, sacados de un pool común de plantillas.
+  // Cada plantilla dice en qué modos de juego sirve (modes), si se puede pedir ahora (can), cómo se arma (make),
+  // cómo se lee (text) y cuándo se cumple (ok). Las que llevan "count" se completan de a poco, en varias partidas.
   const GR = ['D', 'C', 'B', 'A', 'S'];
+  const REQ_MAX = 3, REQ_GAIN = 12;
+  const at = q => `${q.songName} (${DIFFS[q.di].name})`;
   const REQ_TEMPLATES = [
-    { id: 'grade', modes: ['arrows', 'stack', 'signal', 'path'], make: (song, di, R) => ({ grade: di === 0 ? 'A' : 'B' }),
-      text: q => `Superá ${q.songName} en ${DIFFS[q.di].name} con ${q.grade} o más`, ok: (st, q) => st.cleared && GR.indexOf(st.grade) >= GR.indexOf(q.grade) },
-    { id: 'fc', modes: ['arrows', 'path', 'signal'], make: () => ({}),
-      text: q => `Hacé Full Combo en ${q.songName} (${DIFFS[q.di].name})`, ok: st => st.fc },
-    { id: 'combo', modes: ['arrows', 'path'], make: (song, di, R) => ({ n: [20, 40, 60, 80][di] || 40 }),
-      text: q => `Llegá a ${q.n} de combo en ${q.songName} (${DIFFS[q.di].name})`, ok: (st, q, r) => r.maxCombo >= q.n },
-    { id: 'lines', modes: ['stack'], make: (song, di) => ({ n: [4, 6, 8][di] }),
-      text: q => `Completá ${q.n} filas en ${q.songName} (${DIFFS[q.di].name})`, ok: (st, q) => st.cleared && st.lines >= q.n },
+    { id: 'grade', modes: ['arrows', 'stack', 'signal', 'path'], make: (s, di) => ({ grade: di === 0 ? 'A' : 'B' }),
+      text: q => `Superá ${at(q)} con ${q.grade} o más`, ok: (st, q) => st.cleared && GR.indexOf(st.grade) >= GR.indexOf(q.grade) },
+    { id: 'gradeS', modes: ['arrows', 'stack', 'signal', 'path'], can: (s, di) => di <= 1, make: () => ({}),
+      text: q => `Sacá una S en ${at(q)}`, ok: st => st.cleared && st.grade === 'S' },
+    { id: 'fc', modes: ['arrows', 'path', 'signal'], can: s => !s.tut, make: () => ({}),
+      text: q => `Hacé Full Combo en ${at(q)}`, ok: st => st.fc },
+    { id: 'combo', modes: ['arrows', 'path'], make: (s, di) => ({ n: [20, 40, 60, 80][di] || 40 }),
+      text: q => `Llegá a ${q.n} de combo en ${at(q)}`, ok: (st, q, r) => r.maxCombo >= q.n },
+    { id: 'perfects', modes: ['arrows', 'path', 'signal'], make: (s, di) => { const c = getChart(SONGS.indexOf(s), di); return { n: Math.max(10, Math.round((c.required || 20) * 0.6 / 5) * 5) }; },
+      text: q => `Conseguí ${q.n} PERFECTO en ${at(q)}`, ok: (st, q, r) => (r.counts?.perfect || 0) >= q.n },
+    { id: 'acc', modes: ['arrows', 'path', 'signal'], make: (s, di) => ({ n: di === 0 ? 95 : 90 }),
+      text: q => `Superá ${at(q)} con ${q.n}% de precisión o más`, ok: (st, q) => st.cleared && st.acc >= q.n },
+    { id: 'noghost', modes: ['arrows', 'path', 'signal'], make: () => ({}),
+      text: q => `Superá ${at(q)} sin tocar donde no hay nota`, ok: st => st.cleared && st.ghost === 0 },
+    { id: 'mod', modes: ['arrows', 'stack', 'signal', 'path'], can: s => !s.tut && Object.keys(MODS).some(m => MODS[m].gal === s.gal && modOpen(m) && MODS[m].pct > 0),
+      make: (s, di, R) => { const ms = Object.keys(MODS).filter(m => MODS[m].gal === s.gal && modOpen(m) && MODS[m].pct > 0); return { mod: ms[Math.floor(R() * ms.length)] }; },
+      text: q => `Superá ${at(q)} con el modificador ${MODS[q.mod].label}`, ok: (st, q, r) => st.cleared && r.ch.mods.includes(q.mod) },
+    { id: 'replay', modes: ['arrows', 'stack', 'signal', 'path'], count: 3, make: () => ({ n: 3, c: 0 }),
+      text: q => `Jugá ${q.songName} 3 veces, en cualquier dificultad`, prog: true },
+    { id: 'fever', modes: ['arrows'], can: () => !!L('x_gold'), make: () => ({ n: 2 }),
+      text: q => `Activá la fiebre ${q.n} veces en ${at(q)}`, ok: (st, q) => st.fevers >= q.n },
+    { id: 'extras', modes: ['arrows'], can: () => !!E('x_root'), make: () => ({ n: 80 }),
+      text: q => `Tocá el ${q.n}% de las notas extra en ${at(q)}`, ok: (st, q) => st.extrasRatio * 100 >= q.n },
+    { id: 'holds', modes: ['arrows'], can: () => !!E('l_root'), make: () => ({}),
+      text: q => `Completá todas las flechas largas en ${at(q)}`, ok: (st, q, r) => r.ch.holds > 0 && r.holdsDone >= r.ch.holds },
+    { id: 'lines', modes: ['stack'], make: (s, di) => ({ n: s.tut ? 2 : [4, 6, 8][di] }),
+      text: q => `Completá ${q.n} filas en ${at(q)}`, ok: (st, q) => st.cleared && st.lines >= q.n },
+    { id: 'tetra', modes: ['stack'], can: s => !s.tut, make: () => ({}),
+      text: q => `Hacé un cuádruple (4 filas de una) en ${at(q)}`, ok: st => st.tetras >= 1 },
+    { id: 'rhythm', modes: ['stack'], make: (s, di) => ({ n: [12, 16, 20][di] || 12 }),
+      text: q => `Hacé una racha de ${q.n} movimientos a tiempo en ${at(q)}`, ok: (st, q) => st.rmax >= q.n },
     { id: 'decode', modes: ['signal'], make: () => ({}),
-      text: q => `Decodificá todos los patrones de ${q.songName} (${DIFFS[q.di].name})`, ok: st => st.cleared && st.decodedRatio >= 1 },
+      text: q => `Decodificá todos los patrones de ${at(q)}`, ok: st => st.cleared && st.decodedRatio >= 1 },
     { id: 'tramo', modes: ['path'], make: () => ({}),
-      text: q => `Hacé todos los tramos perfectos en ${q.songName} (${DIFFS[q.di].name})`, ok: st => st.cleared && st.tramoRatio >= 1 },
+      text: q => `Hacé todos los tramos perfectos en ${at(q)}`, ok: st => st.cleared && st.tramoRatio >= 1 },
+    { id: 'gold', modes: ['path'], can: s => !s.tut && !!L('p_c_gold'), make: () => ({}),
+      text: q => `Tocá todas las baldosas doradas en ${at(q)}`, ok: st => st.goldRatio >= 1 },
   ];
-  // Elige un pedido nuevo: una canción del planeta con dificultad abierta y una plantilla que corresponda al modo
+  const TPL = Object.fromEntries(REQ_TEMPLATES.map(t => [t.id, t]));
+  // Arma un pedido nuevo que no repita plantilla ni canción con los que ya tiene
   function newRequest(id) {
     const ch = AFF_CHARS[id], wi = WI[ch.world]; if (wi == null || !worldOpen(wi)) return null;
-    const a = affState(id), R = rng(4242 + Object.keys(AFF_CHARS).indexOf(id) * 97 + a.reqDone * 13);
+    const a = affState(id), R = rng(4242 + Object.keys(AFF_CHARS).indexOf(id) * 97 + a.reqDone * 13 + a.reqs.length * 7);
     const songs = WORLDS[wi].idx.filter(i => !SONGS[i].tut), pool = songs.length ? songs : WORLDS[wi].idx;
-    const si = pool[Math.floor(R() * pool.length)], song = SONGS[si];
-    const open = diffsOf(song).filter(d => diffOpen(song, d)), di = open[Math.min(open.length - 1, Math.floor(R() * open.length))];
-    const tpls = REQ_TEMPLATES.filter(t => t.modes.includes(modeOf(song)) && !(song.tut && t.id === 'fc'));
-    const t = tpls[Math.floor(R() * tpls.length)];
-    return { tpl: t.id, si, di, songName: song.name, ...t.make(song, di, R) };
+    for (let tries = 0; tries < 30; tries++) {
+      const si = pool[Math.floor(R() * pool.length)], song = SONGS[si];
+      const open = diffsOf(song).filter(d => diffOpen(song, d)), di = open[Math.floor(R() * open.length)];
+      const tpls = REQ_TEMPLATES.filter(t => t.modes.includes(modeOf(song)) && (!t.can || t.can(song, di)) && !a.reqs.some(q => q.tpl === t.id));
+      if (!tpls.length) continue;
+      const t = tpls[Math.floor(R() * tpls.length)];
+      if (a.reqs.some(q => q.si === si && q.di === di)) continue;
+      return { tpl: t.id, si, di, songName: song.name, ...t.make(song, di, R) };
+    }
+    return null;
   }
-  const reqText = q => q ? REQ_TEMPLATES.find(t => t.id === q.tpl).text(q) : '';
+  function fillRequests(id) {
+    const a = affState(id);
+    if (a.req) { a.reqs.push(a.req); delete a.req; }   // partidas de antes: un solo pedido
+    while (a.reqs.length < REQ_MAX) { const q = newRequest(id); if (!q) break; a.reqs.push(q); }
+  }
+  const reqText = q => q && TPL[q.tpl] ? TPL[q.tpl].text(q) + (TPL[q.tpl].prog ? ` · ${q.c}/${q.n}` : '') : '';
 
   // Ganchos para futuras incorporaciones (escenas, bonos, regalos…): se llaman con (id, datos)
   const AFF_HOOKS = { tierUp: [], requestDone: [], result: [] };
@@ -115,7 +156,7 @@
   // Al terminar una canción: Sintonía con el personaje del planeta según sus gustos y su pedido
   function affinityOnResult(r, res) {
     S.plays = S.plays || {}; S.plays[r.song.id] = (S.plays[r.song.id] || 0) + 1;
-    const id = affCharOfWorld(WORLDS[r.song.wi].id); if (!id) return [];
+    const id = affCharOfWorld(WORLDS[r.song.wi].id); if (!id) return { notes: [], done: [] };
     const ch = AFF_CHARS[id], a = affState(id), st = runStats(r, res), name = SPK[id][0], out = [];
     const before = a.pts, tier0 = affTier(before);
     // gustos: lo que más le gustó y lo que menos se menciona
@@ -124,19 +165,23 @@
     for (const [, v] of likes) gain += 2.5 * v;
     for (const [, v] of dislikes) gain -= 1.2 * v;
     const best = likes.sort((x, y) => y[1] - x[1])[0], worst = dislikes.sort((x, y) => y[1] - x[1])[0];
-    // pedido
-    if (!a.req) a.req = newRequest(id);
-    let reqOk = false;
-    if (a.req && a.req.si === SONGS.indexOf(r.song) && a.req.di === r.di) {
-      const t = REQ_TEMPLATES.find(t => t.id === a.req.tpl);
-      if (t && t.ok(st, a.req, r)) { reqOk = true; gain += 15; a.reqDone++; for (const h of AFF_HOOKS.requestDone) h(id, a.req); }
+    // pedidos: se revisan todos los activos de esta canción (los de progreso cuentan cualquier dificultad)
+    fillRequests(id);
+    const done = [], si = SONGS.indexOf(r.song);
+    for (const q of [...a.reqs]) {
+      const t = TPL[q.tpl]; if (!t || q.si !== si) continue;
+      if (t.prog) { q.c = Math.min(q.n, (q.c || 0) + 1); if (q.c < q.n) continue; }
+      else if (q.di !== r.di || !t.ok(st, q, r)) continue;
+      done.push({ id, text: reqText(q).replace(/ · \d+\/\d+$/, '') });
+      a.reqs.splice(a.reqs.indexOf(q), 1); a.reqDone++; gain += REQ_GAIN;
+      for (const h of AFF_HOOKS.requestDone) h(id, q);
     }
     gain = Math.round(gain * 10) / 10;
     a.pts = Math.max(0, Math.min(100, before + gain));
     const diff = Math.round((a.pts - before) * 10) / 10;
     const why = diff > 0 && best && best[1] > 0.5 ? ` (le encantó: ${TASTE[best[0]].label})` : worst && worst[1] > 0.3 ? ` (no le gustó: ${TASTE[worst[0]].label})` : '';
     if (diff || why) out.push(`Sintonía con ${name}: ${diff ? (diff > 0 ? '+' : '') + dec1(diff) : 'sin cambios'}${why}`);
-    if (reqOk) { out.push(`Cumpliste el pedido de ${name}`); a.req = newRequest(id); }
+    if (done.length) fillRequests(id);
     const tier1 = affTier(a.pts);
     if (tier1 > tier0) {
       out.push(`${name} y vos: ${AFF_TIERS[tier1][1]}`);
@@ -144,19 +189,19 @@
       const scene = AFF_SCENES[id]?.[tier1]; if (scene) dlgQueue.push(...scene);
     }
     for (const h of AFF_HOOKS.result) h(id, st, diff);
-    return out;
+    return { notes: out, done, gain: REQ_GAIN };
   }
 
   // Bloque de Sintonía en la tarjeta del representante (menú del planeta)
   function affCardHtml(wi) {
     const id = affCharOfWorld(WORLDS[wi].id); if (!id) return '';
     const a = affState(id), ch = AFF_CHARS[id], k = affTier(a.pts), next = AFF_TIERS[k + 1];
-    if (!a.req && worldOpen(wi)) a.req = newRequest(id);
+    if (worldOpen(wi)) fillRequests(id);
     const lo = AFF_TIERS[k][0], hi = next ? next[0] : 100, pct = next ? (a.pts - lo) / (hi - lo) * 100 : 100;
     return `<div class="aff">
       <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${Math.floor(a.pts)}/100</span></div>
       <div class="aff-bar"><i style="width:${pct.toFixed(0)}%"></i></div>
       <div class="aff-like">Le gusta: ${ch.likes.map(t => TASTE[t].label).join(', ')}. No le gusta: ${ch.dislikes.map(t => TASTE[t].label).join(', ')}.</div>
-      ${a.req ? `<div class="aff-req"><b>Pedido:</b> ${reqText(a.req)}</div>` : ''}
+      ${a.reqs.length ? `<div class="aff-reqs"><b>Pedidos</b>${a.reqs.map(q => `<div class="aff-req">${reqText(q)}</div>`).join('')}</div>` : ''}
     </div>`;
   }

@@ -308,6 +308,30 @@ body.land .rx-txt { display: none; }
 .aff-bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
 .aff-bar i { display: block; height: 100%; background: var(--acc); border-radius: 3px; }
 .aff-like { line-height: 1.35; }
+.aff-reqs { display: flex; flex-direction: column; gap: 4px; }
+.aff-reqs > b { color: var(--acc); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.66rem; }
 .aff-req { line-height: 1.35; color: var(--fg); border-left: 2px solid var(--acc); padding-left: 6px; }
-.aff-req b { color: var(--acc); }
 .rep-txt { flex: 1; }
+
+/* Pedido cumplido en la pantalla de resultado */
+.r-reqs { display: flex; flex-direction: column; gap: 8px; }
+.r-reqs:empty { display: none; }
+.r-req { position: relative; display: flex; gap: 12px; align-items: center; border: 1px solid var(--acc); border-radius: 10px; padding: 10px 12px; background: color-mix(in srgb, var(--acc) 10%, var(--surface));
+  opacity: 0; transform: scale(0.9); }
+.r-req.on { animation: reqin 0.45s cubic-bezier(.2,1.5,.4,1) forwards; }
+@keyframes reqin { to { opacity: 1; transform: none; } }
+.rq-face { flex: none; width: 54px; height: 54px; }
+.r-req.on .rq-face { animation: rxjump 0.5s 0.2s ease-out; }
+.rq-txt { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.rq-who { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--acc); }
+.rq-what { font-size: 0.85rem; line-height: 1.35; }
+.rq-gain { font-size: 0.75rem; font-weight: 800; color: var(--acc); }
+.rq-stamp { position: absolute; right: 10px; top: 50%; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.08em; color: var(--acc); border: 2px solid var(--acc); border-radius: 6px; padding: 3px 8px;
+  transform: translateY(-50%) rotate(-12deg) scale(2.2); opacity: 0; background: var(--surface); }
+.r-req.on .rq-stamp { animation: stamp 0.35s 0.35s ease-in forwards; }
+@keyframes stamp { to { transform: translateY(-50%) rotate(-12deg) scale(1); opacity: 1; } }
+.r-req .cf { position: absolute; left: 40px; top: 50%; width: 6px; height: 6px; background: var(--acc); border-radius: 1px; opacity: 0; pointer-events: none; }
+.r-req.on .cf { animation: confetti 0.9s 0.3s ease-out forwards; }
+@keyframes confetti { 0% { opacity: 1; transform: rotate(var(--a)) translateX(0) rotate(0); } 100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)) rotate(var(--r)); } }
+@media (max-width: 520px) { .rq-stamp { position: static; transform: rotate(-8deg); align-self: flex-start; } .r-req { flex-wrap: wrap; } .r-req.on .rq-stamp { animation: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .r-req, .r-req.on { animation: none; opacity: 1; transform: none; } .r-req .rq-stamp { opacity: 1; transform: translateY(-50%) rotate(-12deg); animation: none !important; } .r-req .cf { display: none; } }

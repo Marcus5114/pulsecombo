@@ -96,10 +96,10 @@ Sos una exploradora o un explorador de la Tierra a bordo de **El Metrónomo**, u
 Código en `src/d3e_affinity.js`. Elegido: un medidor por personaje (1A), gustos según cómo jugás (2B) y pedidos (2C).
 
 - **Niveles** (`AFF_TIERS`): Primer contacto (0), Simpatía (20), Confianza (45), Complicidad (70), Pareja de baile (100).
-- **Cuánto sube por canción:** +1,5 si la superás (+0,5 si no). Cada gusto suma hasta +2,5 según cuánto se cumplió y cada disgusto resta hasta −1,2. Cumplir un pedido da +15. Una buena partida suma unos 5 puntos.
+- **Cuánto sube por canción:** +1,5 si la superás (+0,5 si no). Cada gusto suma hasta +2,5 según cuánto se cumplió y cada disgusto resta hasta −1,2. Cumplir un pedido da +12. Una buena partida suma unos 5 puntos.
 - **Gustos** (`TASTE`): combos largos, Full Combo, PERFECTO, no fallar, fiebre, notas extra, dificultad alta, volver a sus canciones, modificadores, moverse a tiempo (Ensamble), filas de a cuatro, decodificar todo (Señal), tramos perfectos y baldosas doradas (Compás). Disgustos: tocar sin nota, fallos, jugar en Fácil.
 - **Personajes** (`AFF_CHARS`): los 18 representantes, cada uno con su planeta, 2 gustos y 1 disgusto.
-- **Pedidos** (`REQ_TEMPLATES`): calificación mínima, Full Combo, combo, filas, decodificar todo, tramos perfectos. Se eligen según el modo de juego y las dificultades abiertas.
+- **Pedidos** (`REQ_TEMPLATES`): un pool de 18 plantillas. Las generales sirven en todos los modos: calificación mínima, sacar S, Full Combo, combo, cantidad de PERFECTO, precisión, no tocar sin nota, jugar con un modificador y volver a una canción 3 veces. También hay plantillas propias de cada modo: fiebre, notas extra y flechas largas (Vía Pulso); filas y filas de a cuatro, racha de ritmo (Ensamble); decodificar todo (Señal); tramos perfectos y baldosas doradas (Compás). Cada personaje tiene **3 pedidos activos** a la vez, elegidos según su planeta, las dificultades abiertas y las mejoras compradas. Al cumplir uno se repone otro, y en la pantalla de resultado aparece una tarjeta animada con su retrato y el sello de ¡CUMPLIDO! (`REQ_MAX`, `REQ_GAIN`).
 
 ### Puntos de extensión
 - `AFF_SCENES[personaje][nivel]`: diálogos que se muestran al subir de nivel (hoy vacío).

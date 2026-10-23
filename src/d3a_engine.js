@@ -274,15 +274,15 @@
     if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmtRate(ecoPerCycle(s) / ecoInterval(s) * 60)} ${g.unit} por minuto`);
     // Desglose para el contador: lo ganado en la canción, cada multiplicador y el total
     const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
-    notes.push(...affinityOnResult(run, { grade, fc, cleared })); save();
+    const aff = affinityOnResult(run, { grade, fc, cleared }); notes.push(...aff.notes); save();
     const steps = [[`Dificultad ${dec1(run.stars)}★${ml}`, run.mult], ...mults];
     if (mult > 1.001) steps.push(['Multiplicador global', mult]);
-    showResult({ grade, base: run.mult ? run.earned / run.mult : run.earned, steps, paid, notes, rows, fc });
+    showResult({ grade, base: run.mult ? run.earned / run.mult : run.earned, steps, paid, notes, rows, fc, reqs: aff.done, reqGain: aff.gain });
   }
   // Pantalla de resultado: el contador sube con lo ganado, después aplica cada multiplicador, muestra el total y al final la calificación.
   // Un clic o Enter/Espacio adelanta todo.
   let resultAnim = 0, resultSkip = false;
-  function showResult({ grade, base, steps, paid, notes, rows, fc }) {
+  function showResult({ grade, base, steps, paid, notes, rows, fc, reqs = [], reqGain = 0 }) {
     const s = run.song, g = GX[s.gal], token = ++resultAnim;
     resultSkip = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     $('rSong').textContent = `${s.name} · ${DIFFS[run.di].name}`;
@@ -295,6 +295,10 @@
     $('rCalc').innerHTML = `<div class="r-mults">${steps.map(([label, m]) => `<div class="rv"><b>x${dec(m)}</b> ${label}</div>`).join('')}</div>`
       + `<div class="r-notes rv">${notes.map(l => `<div>${l}</div>`).join('')}</div>`;
     $('rRows').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+    // Pedidos cumplidos: tarjeta con el retrato, sello de CUMPLIDO y papelitos del color de la galaxia
+    $('rReqs').innerHTML = reqs.map(q => `<div class="r-req"><div class="rq-face pf">${faceSvg(q.id)}</div>
+      <div class="rq-txt"><div class="rq-who">Pedido de ${SPK[q.id][0]}</div><div class="rq-what">${q.text}</div><div class="rq-gain">+${reqGain} de Sintonía</div></div>
+      <div class="rq-stamp">¡CUMPLIDO!</div>${Array.from({ length: 14 }, (_, k) => `<i class="cf" style="--a:${(k / 14 * 360).toFixed(0)}deg;--d:${(40 + (k * 37) % 50)}px;--r:${(k * 53) % 360}deg"></i>`).join('')}</div>`).join('');
     setView('result');
     const lines = [...document.querySelectorAll('#rCalc .r-mults .rv')];
     const alive = () => token === resultAnim && view === 'result';
@@ -324,11 +328,13 @@
       gainEl.textContent = '+' + fmt(paid); gainEl.classList.add('pop');
       await wait(450); if (!alive()) return;
       gradeEl.classList.add('on');
+      for (const el of document.querySelectorAll('#rReqs .r-req')) { await wait(500); if (!alive()) return; el.classList.add('on'); if (ac) for (let k = 0; k < 3; k++) pluck(ac.currentTime + k * 0.07, run.song.root + 36 + [0, 4, 7][k], 0.05, 0.3); }
       await wait(350); if (!alive()) return;
       document.querySelector('#rCalc .r-notes')?.classList.add('on');
     })();
   }
   $('vResult').addEventListener('pointerdown', e => { if (!e.target.closest('button')) resultSkip = true; });
+  // (con resultSkip las esperas son cero, así que las tarjetas de pedido se muestran enseguida)
   window.addEventListener('keydown', e => { if (view === 'result' && (e.code === 'Enter' || e.code === 'Space') && !resultSkip) { resultSkip = true; e.preventDefault(); } }, true);
 
   // ---------- Ensamble ----------
