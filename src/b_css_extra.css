@@ -379,3 +379,7 @@ body.land .rx-txt { display: none; }
 .dlg.cine .dlg-text { font-size: 1.15rem; min-height: 4.5em; }
 .dlg.cine .dlg-name span { display: none; }
 @media (prefers-reduced-motion: reduce) { .dlg.cine { animation: none; } }
+
+.rep-say .glyph, .rx-say .glyph { color: var(--acc); font-style: normal; font-weight: 800; }
+.aff-lang { font-size: 0.68rem; }
+.rm-talk { align-self: flex-start; margin-top: 4px; }

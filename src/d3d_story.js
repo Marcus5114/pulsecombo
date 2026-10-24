@@ -144,14 +144,18 @@
       <div class="rep-back" id="repBack"></div>
       <div class="rep-more" id="repMore" role="dialog" aria-label="${name}">
         <div class="rm-head"><span class="rep-face">${faceSvg(id)}</span><div><div class="rep-name">${name}</div><div class="rep-role">${role}</div></div><button class="ghost-btn rm-close" id="repClose" aria-label="Cerrar">✕</button></div>
-        <div class="rep-say">“${QUIPS[id]?.idle || ''}”</div>${affCardHtml(wi)}
+        <div class="rep-say">“${paintGlyphs(speak(id, QUIPS[id]?.idle || ''))}”</div>${affCardHtml(wi)}
+        ${repTalkLines(wi).length ? '<button class="ghost-btn rm-talk" id="repTalk">Volver a charlar</button>' : ''}
       </div>`;
   }
+  // Volver a charlar: repite lo que ya te dijo, ahora con lo que entendés según la Sintonía
+  const repTalkLines = wi => { const wid = WORLDS[wi].id; return ['meet_' + wid, 'done_' + wid].filter(k => STORY[k] && (k[0] === 'm' || S.story?.[k])).flatMap(k => STORY[k]); };
   // Abrir y cerrar el detalle del representante
   const repToggle = on => { const c = $('repCard'); c.classList.toggle('open', on); $('repStrip')?.setAttribute('aria-expanded', on); };
   $('repCard').addEventListener('click', e => {
     if (e.target.closest('#repStrip')) repToggle(!$('repCard').classList.contains('open'));
     else if (e.target.closest('#repClose') || e.target.id === 'repBack') repToggle(false);
+    else if (e.target.closest('#repTalk')) { repToggle(false); dlgQueue.push(...repTalkLines(S.world)); dlgNext(); }
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('repCard').classList.contains('open')) { repToggle(false); e.stopPropagation(); } }, true);
 
@@ -163,7 +167,7 @@
     rxId = repOf(song.wi); rxSayAt = 0; rxKind = '';
     const el = $('reactor');
     el.className = 'reactor'; el.querySelector('.rx-face').innerHTML = faceSvg(rxId);
-    el.querySelector('.rx-say').textContent = QUIPS[rxId]?.idle || '';
+    el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, QUIPS[rxId]?.idle || ''));
     el.querySelector('.rx-name').textContent = SPK[rxId][0];
   }
   function reactTo(j) {
@@ -172,7 +176,7 @@
     el.classList.remove('r-perfect', 'r-great', 'r-good', 'r-miss', 'r-fever'); void el.offsetWidth; el.classList.add('r-' + kind);
     // la frase cambia como mucho una vez por segundo, salvo fallo o fiebre, que siempre se dicen
     if (kind !== rxKind && (now - rxSayAt > 1000 || kind === 'miss' || kind === 'fever')) {
-      rxSayAt = now; rxKind = kind; el.querySelector('.rx-say').textContent = QUIPS[rxId]?.[kind] || '';
+      rxSayAt = now; rxKind = kind; el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, QUIPS[rxId]?.[kind] || ''));
     }
   }
 
@@ -313,6 +317,10 @@
       if (!ok || S.story[id]) continue;
       S.story[id] = true; save();
       if (STORY[id]) dlgQueue.push(...STORY[id]);
+      if (id.startsWith('meet_') && !S.story.lang_hint && STORY[id] && comprehension(STORY[id][0][0]) < 0.6) {
+        S.story.lang_hint = true; save();
+        dlgQueue.push(['cora', 'No entendí todo. Los representantes hablan el idioma de su galaxia. Cuanta más Sintonía tengan, más palabras vas a entender.']);
+      }
     }
     if (dlgQueue.length) dlgNext();
   }
@@ -325,13 +333,15 @@
   // Glifos de los idiomas alienígenas (flechas, bloques, ondas, órbitas): se pintan del color de la galaxia
   const GLYPHS = /([←↑→↓↖↗↘↙]+|[▀▄█▙▚▛▜▝▞▟▖▗▘]+|[∿〰]+|[◐◑◇]+|kssh)/g;
   const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-  const dlgPaint = t => { $('dlgText').innerHTML = esc(t).replace(GLYPHS, '<span class="glyph">$1</span>'); };
+  const paintGlyphs = t => esc(t).replace(GLYPHS, '<span class="glyph">$1</span>');
+  const dlgPaint = t => { $('dlgText').innerHTML = paintGlyphs(t); };
   function dlgNext() {
     clearInterval(dlgTimer);
     dlgLine = dlgQueue.shift();
     while (typeof dlgLine === 'function') { $('dlg').hidden = true; dlgLine(); if (dlgOpen()) return; dlgLine = dlgQueue.shift(); }
     if (!dlgLine) { $('dlg').hidden = true; return; }
-    const [who, text] = dlgLine, [name, role] = SPK[who];
+    const [who, raw] = dlgLine, [name, role] = SPK[who], text = speak(who, raw);
+    dlgLine = [who, text];
     $('dlg').hidden = false;
     $('dlgFace').innerHTML = faceSvg(who);
     $('dlgName').innerHTML = `${name} <span>${role}</span>`;

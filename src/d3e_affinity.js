@@ -214,6 +214,46 @@
     fillRequests(id);
     return affState(id).reqs.filter(q => q.si === si).map(q => ({ ...q, who: SPK[id][0], text: reqText(q), any: !!TPL[q.tpl]?.prog }));
   }
+  // ---------- Idioma de los representantes ----------
+  // Cada representante habla el idioma de su galaxia. Cuanta más Sintonía, más palabras se entienden.
+  // Cada palabra tiene un umbral fijo (sale de un hash), así que lo que ya entendés no se vuelve a perder al subir de nivel.
+  const AFF_COMP = [0.25, 0.45, 0.65, 0.85, 1];   // parte de las palabras que se entienden en cada nivel
+  const TUT_COMP = 0.3;                            // los operadores de los tutoriales saben más idioma terrestre
+  const LANG = { pulso: '←↑→↓↗↘↙↖', ens: '▙▟▛▜▄▀▚▞', sen: '∿〰', com: '◐◑◇' };
+  // Glosario: palabras clave del juego que se entienden siempre (son las primeras que aprende cualquier visitante)
+  const GLOSSARY = {
+    all: ['ritmo', 'tiempo', 'combo', 'perfecto', 'fiebre', 'tierra', 'terricola', 'visitante', 'hola', 'gracias', 'si', 'no', 'amigo', 'amigos', 'bip'],
+    pulso: ['flecha', 'flechas', 'riff', 'estribillo', 'bombo', 'drop', 'swing', 'pista', 'nota', 'notas'],
+    ens: ['pieza', 'piezas', 'fila', 'filas', 'encastre', 'grua', 'chatarra', 'casco'],
+    sen: ['senal', 'patron', 'llamada', 'respuesta', 'repetir', 'repeti', 'cambio', 'antena', 'frecuencia'],
+    com: ['camino', 'baldosa', 'baldosas', 'giro', 'orbita', 'tramo', 'compas', 'lados'],
+  };
+  const norm = w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  let NAMES = null;   // nombres propios (personajes, planetas, galaxias): se entienden siempre
+  const names = () => NAMES || (NAMES = new Set([...Object.values(SPK).map(v => v[0]), ...WORLDS.map(w => w.name), ...GALAXIES.map(g => g.name)].flatMap(n => n.split(/[^\p{L}]+/u)).filter(Boolean).map(norm)));
+  const hash01 = str => { let h = 0x811c9dc5; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h / 4294967296; };
+  const charGal = id => WORLDS[WI[AFF_CHARS[id].world]].gal;
+  function comprehension(id) {
+    if (!AFF_CHARS[id]) return 1;   // CORA, Lumen y los embajadores tienen sus líneas escritas a mano
+    const tut = WORLDS[WI[AFF_CHARS[id].world]].tutorial;
+    return Math.min(1, AFF_COMP[affTier(affState(id).pts)] + (tut ? TUT_COMP : 0));
+  }
+  function alienWord(w, gal, key) {
+    const set = [...LANG[gal]], n = Math.max(1, Math.min(4, Math.round(w.length / 2.5)));
+    if (gal === 'sen' && hash01(key + 'k') < 0.15) return 'kssh';
+    if (gal === 'com') { const s0 = hash01(key) < 0.5 ? 0 : 1; return Array.from({ length: n }, (_, k) => set[(s0 + k) % 2]).join(''); }
+    return Array.from({ length: n }, (_, k) => set[Math.floor(hash01(key + k) * set.length)]).join('');
+  }
+  // Pasa una línea de un representante por su nivel de comprensión
+  function speak(id, text) {
+    const comp = comprehension(id); if (comp >= 1 || !text) return text;
+    const gal = charGal(id), gl = new Set([...GLOSSARY.all, ...GLOSSARY[gal]]);
+    return text.replace(/\p{L}+/gu, w => {
+      const n = norm(w);
+      if (gl.has(n) || names().has(n) || hash01(n + '|' + id) < comp) return w;
+      return alienWord(w, gal, n + id);
+    });
+  }
   // Bloque de Sintonía en el detalle del representante (menú del planeta)
   function affCardHtml(wi) {
     const id = affCharOfWorld(WORLDS[wi].id); if (!id) return '';
@@ -225,6 +265,7 @@
       <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${affTierText(a)}</span></div>
       ${affBarHtml(a)}
       <div class="aff-next">${next ? `Faltan <b>${Math.ceil(hi - a.pts)}</b> para <b>${next[1]}</b>` : 'Llegaron a Pareja de baile'}</div>
+      <div class="aff-lang">Entendés ${Math.round(comprehension(id) * 100)}% de lo que dice${comprehension(id) < 1 && next ? ` · con ${next[1]}, ${Math.round(Math.min(1, AFF_COMP[k + 1] + (WORLDS[wi].tutorial ? TUT_COMP : 0)) * 100)}%` : ''}</div>
       <div class="aff-like">Le gusta: ${ch.likes.map(t => TASTE[t].label).join(', ')}. No le gusta: ${ch.dislikes.map(t => TASTE[t].label).join(', ')}.</div>
       ${a.reqs.length ? `<div class="aff-reqs"><b>Pedidos</b>${a.reqs.map(q => `<div class="aff-req">${reqText(q)}</div>`).join('')}</div>` : ''}
     </div>`;

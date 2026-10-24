@@ -77,6 +77,26 @@ Los embajadores saben algo de idioma terrestre, pero lo mezclan con el suyo, y C
 - **Eco-7:** ondas y estática (∿ 〰 kssh). Habla como por radio y cierra con "cambio".
 - **Los Gemelos Vaivén:** se turnan sílaba a sílaba (◐ uno, ◑ el otro) y marcan el camino con baldosas (◇).
 
+## Idioma de los representantes y glosario
+Los representantes de planeta hablan el idioma de su galaxia. Cada palabra se reemplaza por glifos (flechas, bloques, ondas u órbitas) salvo que se entienda. Código en `src/d3e_affinity.js` (`speak`, `comprehension`, `GLOSSARY`).
+
+| Nivel de Sintonía | Palabras que se entienden | Operadores de tutorial |
+| --- | --- | --- |
+| Primer contacto | 25% | 55% |
+| Simpatía | 45% | 75% |
+| Confianza | 65% | 95% |
+| Complicidad | 85% | 100% |
+| Pareja de baile | 100% | 100% |
+
+- Cada palabra tiene un umbral fijo por personaje (sale de un hash), así que una palabra entendida sigue entendida al subir de nivel.
+- **Glosario** (siempre se entiende): ritmo, tiempo, combo, perfecto, fiebre, Tierra, terrícola, visitante, hola, gracias, sí, no, amigo/s. Por galaxia:
+  - Vía Pulso: flecha/s, nota/s, riff, estribillo, bombo, drop, swing, pista.
+  - Ensamble: pieza/s, fila/s, encastre, grúa, chatarra, casco.
+  - Señal: señal, patrón, llamada, respuesta, repetir, cambio, antena, frecuencia.
+  - Compás: camino, baldosa/s, giro, órbita, tramo, compás, lados.
+  - Los nombres de personajes, planetas y galaxias también se entienden siempre.
+- CORA, Lumen y los embajadores tienen sus líneas escritas a mano y no pasan por este filtro.
+
 ## Momentos de historia (disparadores en el juego)
 1. **Cinemática de inicio** (primera vez que abrís el juego): pantalla en negro, Lumen y CORA hablan de la misión. Después se abre el mapa de galaxias con Vía Pulso seleccionada y CORA presenta el Cúmulo.
 2. **Llegada a una galaxia** (primera vez): el embajador te recibe y explica su idioma.

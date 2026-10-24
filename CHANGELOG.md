@@ -16,6 +16,11 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 - Al terminar la cinemática, el juego arranca en el mapa de galaxias con Vía Pulso seleccionada, y CORA presenta el Cúmulo, la materia oscura y a Kadenza.
 - Los embajadores hablan en su propio idioma, mezclado con las palabras de la Tierra que van aprendiendo, y CORA traduce lo que falta. Kadenza habla con flechas (↑ → ↓ ←), Tesela con bloques (▙▟), Eco-7 con ondas y estática (∿ kssh) y los Gemelos Vaivén se turnan para terminar las frases (◐ ◑). Los glifos se pintan del color de la galaxia.
 - Diálogos de llegada para Ensamble, Señal y Compás.
+- Los representantes de cada planeta hablan el idioma de su galaxia, y se los entiende más a medida que sube la Sintonía. En Primer contacto se entiende una de cada cuatro palabras; en Simpatía, casi la mitad; en Confianza, dos de cada tres; en Complicidad, casi todo; y en Pareja de baile, todo. Las palabras ya aprendidas no se pierden. Los operadores de los tutoriales arrancan entendiendo más, porque están acostumbrados a los visitantes.
+  - Se aplica a sus diálogos, a la frase de la tarjeta y a sus reacciones durante la partida.
+  - Glosario: las palabras clave del juego (ritmo, combo, flecha, fila, señal, camino, baldosa…) y los nombres propios se entienden siempre.
+  - El detalle del representante muestra cuánto entendés y cuánto vas a entender en el próximo nivel, y tiene un botón **Volver a charlar** para repetir lo que ya te dijo con la comprensión actual.
+  - En la primera charla con poca comprensión, CORA explica cómo funciona.
 
 ### Corregido
 - Código de desarrollador: ahora se ignoran mayúsculas, tildes y espacios al compararlo. Los teclados del celular ponían la primera letra en mayúscula o agregaban un espacio, y el código no se aceptaba. El campo ya no autocorrige ni pone mayúsculas.
