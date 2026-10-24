@@ -22,6 +22,13 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - El detalle del representante muestra cuánto entendés y cuánto vas a entender en el próximo nivel, y tiene un botón **Volver a charlar** para repetir lo que ya te dijo con la comprensión actual.
   - En la primera charla con poca comprensión, CORA explica cómo funciona.
 
+### Cambiado
+- Sintonía más lenta y atada al progreso en el planeta:
+  - **Topes por hitos.** Cada nivel pide un logro en el planeta del representante, y hasta cumplirlo la barra se frena en el tope. Simpatía pide superar una canción; Confianza, todas en Normal; Complicidad, una en Difícil; y Pareja de baile, todas en Difícil o S en tres. En los tutoriales: superarla, A, S y S con Full Combo. La tarjeta muestra el hito y su avance (por ejemplo, 4/6).
+  - **Solo cuenta lo nuevo.** La Sintonía sale de mejorar: primera vez que superás una canción (+2) o una dificultad (+1,5), mejor calificación (+0,5 por letra), primer Full Combo (+1,5) y primera S (+1). Repetir sin mejorar da +0,3, y los gustos solo pesan en partidas con algo nuevo.
+  - **Valores más bajos.** Base +0,5, gustos hasta +1 y disgustos hasta −0,5. Los pedidos dan +6, y cuentan como mucho 2 por visita al planeta: para que cuente otro, hay que salir y volver a entrar.
+  - Lo que ya tenías ganado no se pierde.
+
 ### Corregido
 - Código de desarrollador: ahora se ignoran mayúsculas, tildes y espacios al compararlo. Los teclados del celular ponían la primera letra en mayúscula o agregaban un espacio, y el código no se aceptaba. El campo ya no autocorrige ni pone mayúsculas.
 

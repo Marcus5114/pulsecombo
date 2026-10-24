@@ -253,7 +253,7 @@
   function settle({ gain, grade, fc, notes, rows, mults = [] }) {
     const s = run.song, gal = s.gal, g = GX[gal], key = `${s.id}-${run.di}`;
     const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
-    const before = { ...(S.rec[key] || {}) };
+    const before = { ...(S.rec[key] || {}) }, songWas = diffsOf(s).some(d => recOf(s, d)?.clear);
     const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
     const cleared = !run.failed && !run.vfail;
     const newBest = gain > rec.best && !run.failed;
@@ -274,7 +274,7 @@
     if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmtRate(ecoPerCycle(s) / ecoInterval(s) * 60)} ${g.unit} por minuto`);
     // Desglose para el contador: lo ganado en la canción, cada multiplicador y el total
     const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
-    const aff = affinityOnResult(run, { grade, fc, cleared }); notes.push(...aff.notes); save();
+    const aff = affinityOnResult(run, { grade, fc, cleared, prev: before, songWas }); notes.push(...aff.notes); save();
     const steps = [[`Dificultad ${dec1(run.stars)}★${ml}`, run.mult], ...mults];
     if (mult > 1.001) steps.push(['Multiplicador global', mult]);
     showResult({ grade, base: run.mult ? run.earned / run.mult : run.earned, steps, paid, notes, rows, fc, reqs: aff.done, reqGain: aff.gain });

@@ -625,6 +625,8 @@ body.land .rx-txt { display: none; }
 .rep-say .glyph, .rx-say .glyph { color: var(--acc); font-style: normal; font-weight: 800; }
 .aff-lang { font-size: 0.68rem; }
 .rm-talk { align-self: flex-start; margin-top: 4px; }
+.aff-gate { margin-top: 2px; line-height: 1.35; }
+.aff-gate.on { color: var(--fg); border-left: 2px solid var(--acc); padding-left: 6px; }
 </style>
 </head>
 <body>
@@ -2177,7 +2179,7 @@ body.land .rx-txt { display: none; }
   function settle({ gain, grade, fc, notes, rows, mults = [] }) {
     const s = run.song, gal = s.gal, g = GX[gal], key = `${s.id}-${run.di}`;
     const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
-    const before = { ...(S.rec[key] || {}) };
+    const before = { ...(S.rec[key] || {}) }, songWas = diffsOf(s).some(d => recOf(s, d)?.clear);
     const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
     const cleared = !run.failed && !run.vfail;
     const newBest = gain > rec.best && !run.failed;
@@ -2198,7 +2200,7 @@ body.land .rx-txt { display: none; }
     if (newBest && !s.tut) notes.push(`Nuevo récord: su eco rinde +${fmtRate(ecoPerCycle(s) / ecoInterval(s) * 60)} ${g.unit} por minuto`);
     // Desglose para el contador: lo ganado en la canción, cada multiplicador y el total
     const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
-    const aff = affinityOnResult(run, { grade, fc, cleared }); notes.push(...aff.notes); save();
+    const aff = affinityOnResult(run, { grade, fc, cleared, prev: before, songWas }); notes.push(...aff.notes); save();
     const steps = [[`Dificultad ${dec1(run.stars)}★${ml}`, run.mult], ...mults];
     if (mult > 1.001) steps.push(['Multiplicador global', mult]);
     showResult({ grade, base: run.mult ? run.earned / run.mult : run.earned, steps, paid, notes, rows, fc, reqs: aff.done, reqGain: aff.gain });
@@ -3112,7 +3114,7 @@ body.land .rx-txt { display: none; }
   // Tarjeta del representante al costado del selector de canciones
   function renderRep(wi) {
     const id = repOf(wi), [name, role] = SPK[id];
-    const card = $('repCard'); if (card.dataset.wi !== String(wi)) card.classList.remove('open'); card.dataset.wi = wi;
+    const card = $('repCard'); if (card.dataset.wi !== String(wi)) { card.classList.remove('open'); affNewVisit(wi); } card.dataset.wi = wi;
     const open = card.classList.contains('open');
     card.innerHTML = `<button class="rep-strip" id="repStrip" aria-expanded="${open}" aria-controls="repMore">
         <span class="rep-face">${faceSvg(id)}</span>
@@ -3430,7 +3432,7 @@ body.land .rx-txt { display: none; }
   // Cada plantilla dice en qué modos de juego sirve (modes), si se puede pedir ahora (can), cómo se arma (make),
   // cómo se lee (text) y cuándo se cumple (ok). Las que llevan "count" se completan de a poco, en varias partidas.
   const GR = ['D', 'C', 'B', 'A', 'S'];
-  const REQ_MAX = 3, REQ_GAIN = 12;
+  const REQ_MAX = 3, REQ_GAIN = 6, REQ_PER_VISIT = 2;   // pedidos activos, Sintonía por pedido y pedidos que cuentan por visita al planeta
   const at = q => `${q.songName} (${DIFFS[q.di].name})`;
   const REQ_TEMPLATES = [
     { id: 'grade', modes: ['arrows', 'stack', 'signal', 'path'], make: (s, di) => ({ grade: di === 0 ? 'A' : 'B' }),
@@ -3501,16 +3503,50 @@ body.land .rx-txt { display: none; }
   const affBonus = (id, kind) => 0;            // lugar para bonos por nivel (todavía no hay)
 
   // Al terminar una canción: Sintonía con el personaje del planeta según sus gustos y su pedido
+  // ---------- Topes por hitos ----------
+  // Cada nivel pide un logro en el planeta del representante. Hasta cumplirlo, la Sintonía se frena justo antes del umbral.
+  function affGate(wi, tier) {
+    const w = WORLDS[wi], songs = w.idx.map(i => SONGS[i]), n = songs.length;
+    const cnt = f => songs.filter(f).length, clearAt = (s, d0) => [0, 1, 2, 3].some(d => d >= d0 && recOf(s, d)?.clear);
+    const g = w.tutorial ? [null,
+      { text: `Superá la canción de ${w.name}`, have: cnt(s => clearAt(s, 0)), need: 1 },
+      { text: `Sacá A o más en la canción de ${w.name}`, have: cnt(s => 'AS'.includes(recOf(s, 0)?.grade || '-')), need: 1 },
+      { text: `Sacá S en la canción de ${w.name}`, have: cnt(s => recOf(s, 0)?.grade === 'S'), need: 1 },
+      { text: `Sacá S con Full Combo en ${w.name}`, have: cnt(s => recOf(s, 0)?.grade === 'S' && recOf(s, 0)?.fc), need: 1 },
+    ][tier] : [null,
+      { text: `Superá una canción de ${w.name}`, have: cnt(s => clearAt(s, 0)), need: 1 },
+      { text: `Superá todas las canciones de ${w.name} en Normal`, have: cnt(s => clearAt(s, 1)), need: n },
+      { text: `Superá una canción de ${w.name} en Difícil`, have: cnt(s => clearAt(s, 2)), need: 1 },
+      (() => { const hard = cnt(s => clearAt(s, 2)), sN = cnt(s => [0, 1, 2, 3].some(d => recOf(s, d)?.grade === 'S')), sNeed = Math.min(3, n);
+        return hard >= n || sN >= sNeed ? { text: '', have: 1, need: 1 }
+          : { text: `Superá todas las de ${w.name} en Difícil (${hard}/${n}) o sacá S en ${sNeed} (${sN}/${sNeed})`, have: 0, need: 1, noCount: true }; })(),
+    ][tier];
+    return { ...g, ok: g.have >= g.need };
+  }
+  // Primer nivel bloqueado y hasta dónde puede llegar la Sintonía
+  const affLock = id => { const wi = WI[AFF_CHARS[id].world]; for (let t = 1; t < AFF_TIERS.length; t++) { const g = affGate(wi, t); if (!g.ok) return { tier: t, cap: AFF_TIERS[t][0] - 0.01, gate: g }; } return null; };
+  const gateText = g => g.text + (g.noCount ? '' : ` (${g.have}/${g.need})`);
+  const affCapped = (id, a) => { const l = affLock(id); return l && a.pts >= l.cap - 0.001 ? l : null; };
+  // Cada vez que entrás al menú de un planeta empieza una visita nueva (para el límite de pedidos)
+  function affNewVisit(wi) { const id = affCharOfWorld(WORLDS[wi].id); if (id) affState(id).visit = 0; }
+
   function affinityOnResult(r, res) {
     S.plays = S.plays || {}; S.plays[r.song.id] = (S.plays[r.song.id] || 0) + 1;
     const id = affCharOfWorld(WORLDS[r.song.wi].id); if (!id) return { notes: [], done: [] };
     const ch = AFF_CHARS[id], a = affState(id), st = runStats(r, res), name = SPK[id][0], out = [];
     const before = a.pts, tier0 = affTier(before);
-    // gustos: lo que más le gustó y lo que menos se menciona
+    // Solo cuenta lo nuevo: la Sintonía sale de mejorar en sus canciones. Repetir sin mejorar da muy poco.
+    const prev = res.prev || {}, ok = res.cleared;
+    let nov = 0;
+    if (ok && !res.songWas) nov += 2;                                     // primera vez que superás esta canción
+    else if (ok && !prev.clear) nov += 1.5;                               // primera vez en esta dificultad
+    if (ok && prev.grade && gradeRank(res.grade) > gradeRank(prev.grade)) nov += 0.5 * (gradeRank(res.grade) - gradeRank(prev.grade));   // mejor calificación
+    if (ok && res.fc && !prev.fc) nov += 1.5;                             // primer Full Combo en esta dificultad
+    if (ok && res.grade === 'S' && prev.grade !== 'S') nov += 1;          // primera S en esta dificultad
+    // gustos: suman (o restan) solo en una partida con algo nuevo
     const likes = ch.likes.map(k => [k, TASTE[k].f(st)]), dislikes = ch.dislikes.map(k => [k, TASTE[k].f(st)]);
-    let gain = res.cleared ? 1.5 : 0.5;
-    for (const [, v] of likes) gain += 2.5 * v;
-    for (const [, v] of dislikes) gain -= 1.2 * v;
+    let gain = nov > 0 ? 0.5 + nov : ok ? 0.3 : 0;
+    if (nov > 0) { for (const [, v] of likes) gain += 1 * v; for (const [, v] of dislikes) gain -= 0.5 * v; }
     const best = likes.sort((x, y) => y[1] - x[1])[0], worst = dislikes.sort((x, y) => y[1] - x[1])[0];
     // pedidos: se revisan todos los activos de esta canción (los de progreso cuentan cualquier dificultad)
     fillRequests(id);
@@ -3519,15 +3555,20 @@ body.land .rx-txt { display: none; }
       const t = TPL[q.tpl]; if (!t || q.si !== si) continue;
       if (t.prog) { q.c = Math.min(q.n, (q.c || 0) + 1); if (q.c < q.n) continue; }
       else if (q.di !== r.di || !t.ok(st, q, r)) continue;
+      if ((a.visit || 0) >= REQ_PER_VISIT) { if (!out.some(l => l.includes('esta visita'))) out.push(`${name} ya está conforme por esta visita: salí y volvé a ${WORLDS[r.song.wi].name} para que cuente otro pedido`); if (t.prog) q.c = q.n - 1; continue; }
+      a.visit = (a.visit || 0) + 1;
       done.push({ id, text: reqText(q).replace(/ · \d+\/\d+$/, '') });
       a.reqs.splice(a.reqs.indexOf(q), 1); a.reqDone++; gain += REQ_GAIN;
       for (const h of AFF_HOOKS.requestDone) h(id, q);
     }
     gain = Math.round(gain * 10) / 10;
-    a.pts = Math.max(0, Math.min(100, before + gain));
+    // Tope por hito: la Sintonía no pasa del umbral del nivel bloqueado (lo que ya tenías no se pierde)
+    const lock = affLock(id), cap = lock ? Math.max(lock.cap, Math.min(before, 100)) : 100;
+    a.pts = Math.max(0, Math.min(cap, before + gain));
     const diff = Math.round((a.pts - before) * 10) / 10;
-    const why = diff > 0 && best && best[1] > 0.5 ? ` (le encantó: ${TASTE[best[0]].label})` : worst && worst[1] > 0.3 ? ` (no le gustó: ${TASTE[worst[0]].label})` : '';
-    if (diff || why) out.push(`Sintonía con ${name}: ${diff ? (diff > 0 ? '+' : '') + dec1(diff) : 'sin cambios'}${why}`);
+    const why = nov > 0 && diff > 0 && best && best[1] > 0.5 ? ` (le encantó: ${TASTE[best[0]].label})` : nov > 0 && worst && worst[1] > 0.3 ? ` (no le gustó: ${TASTE[worst[0]].label})` : '';
+    if (lock && gain > 0 && before + gain > cap) out.push(`Sintonía con ${name} en el tope${diff > 0 ? ` (+${dec1(diff)})` : ''}. Para llegar a ${AFF_TIERS[lock.tier][1]}: ${gateText(lock.gate)}`);
+    else if (diff || why) out.push(`Sintonía con ${name}: ${diff ? (diff > 0 ? '+' : '') + dec1(diff) : 'sin cambios'}${why}${nov === 0 && ok && diff > 0 ? ' (repetir sin mejorar suma poco)' : ''}`);
     if (done.length) fillRequests(id);
     const tier1 = affTier(a.pts);
     if (tier1 > tier0) {
@@ -3548,12 +3589,13 @@ body.land .rx-txt { display: none; }
     }).join('');
     return `<div class="aff-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pts}" aria-label="Sintonía: ${AFF_TIERS[k][1]}, ${pts} de 100">${segs}</div>`;
   }
-  const affTierText = a => { const k = affTier(a.pts), next = AFF_TIERS[k + 1]; return next ? `${Math.floor(a.pts) - AFF_TIERS[k][0]}/${next[0] - AFF_TIERS[k][0]}` : 'Máximo'; };
+  const affTierText = (a, id) => { const k = affTier(a.pts), next = AFF_TIERS[k + 1]; if (!next) return 'Máximo'; const span = next[0] - AFF_TIERS[k][0];
+    return id && affCapped(id, a) ? `${span}/${span} · tope` : `${Math.floor(a.pts) - AFF_TIERS[k][0]}/${span}`; };
   // Franja compacta del menú del planeta
   function affStripHtml(wi) {
     const id = affCharOfWorld(WORLDS[wi].id); if (!id) return '';
     const a = affState(id);
-    return `<span class="rs-tier">${AFF_TIERS[affTier(a.pts)][1]}</span>${affBarHtml(a)}<span class="rs-pts">${affTierText(a)}</span>`;
+    return `<span class="rs-tier">${AFF_TIERS[affTier(a.pts)][1]}</span>${affBarHtml(a)}<span class="rs-pts">${affTierText(a, id)}</span>`;
   }
   // Pedidos activos del representante del planeta que se juegan en esta canción
   function affReqsForSong(si) {
@@ -3609,9 +3651,11 @@ body.land .rx-txt { display: none; }
     // Barra por tramos: un segmento por nivel, ancho proporcional a los puntos que pide
     const hi = next ? next[0] : 100;
     return `<div class="aff">
-      <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${affTierText(a)}</span></div>
+      <div class="aff-top"><span class="aff-tier">${AFF_TIERS[k][1]}</span><span class="aff-pts">${affTierText(a, id)}</span></div>
       ${affBarHtml(a)}
-      <div class="aff-next">${next ? `Faltan <b>${Math.ceil(hi - a.pts)}</b> para <b>${next[1]}</b>` : 'Llegaron a Pareja de baile'}</div>
+      <div class="aff-next">${!next ? 'Llegaron a Pareja de baile' : (() => { const lk = affLock(id), cap = affCapped(id, a);
+        const gate = lk ? `<div class="aff-gate${cap ? ' on' : ''}">${cap ? 'Tope alcanzado. ' : ''}${lk.tier > k ? `Para llegar a <b>${AFF_TIERS[lk.tier][1]}</b>` : 'Para seguir subiendo'}: ${gateText(lk.gate)}</div>` : '';
+        return (cap ? '' : `Faltan <b>${Math.ceil(hi - a.pts)}</b> para <b>${next[1]}</b>`) + gate; })()}</div>
       <div class="aff-lang">Entendés ${Math.round(comprehension(id) * 100)}% de lo que dice${comprehension(id) < 1 && next ? ` · con ${next[1]}, ${Math.round(Math.min(1, AFF_COMP[k + 1] + (WORLDS[wi].tutorial ? TUT_COMP : 0)) * 100)}%` : ''}</div>
       <div class="aff-like">Le gusta: ${ch.likes.map(t => TASTE[t].label).join(', ')}. No le gusta: ${ch.dislikes.map(t => TASTE[t].label).join(', ')}.</div>
       ${a.reqs.length ? `<div class="aff-reqs"><b>Pedidos</b>${a.reqs.map(q => `<div class="aff-req">${reqText(q)}</div>`).join('')}</div>` : ''}

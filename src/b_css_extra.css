@@ -383,3 +383,5 @@ body.land .rx-txt { display: none; }
 .rep-say .glyph, .rx-say .glyph { color: var(--acc); font-style: normal; font-weight: 800; }
 .aff-lang { font-size: 0.68rem; }
 .rm-talk { align-self: flex-start; margin-top: 4px; }
+.aff-gate { margin-top: 2px; line-height: 1.35; }
+.aff-gate.on { color: var(--fg); border-left: 2px solid var(--acc); padding-left: 6px; }

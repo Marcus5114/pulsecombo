@@ -134,7 +134,7 @@
   // Tarjeta del representante al costado del selector de canciones
   function renderRep(wi) {
     const id = repOf(wi), [name, role] = SPK[id];
-    const card = $('repCard'); if (card.dataset.wi !== String(wi)) card.classList.remove('open'); card.dataset.wi = wi;
+    const card = $('repCard'); if (card.dataset.wi !== String(wi)) { card.classList.remove('open'); affNewVisit(wi); } card.dataset.wi = wi;
     const open = card.classList.contains('open');
     card.innerHTML = `<button class="rep-strip" id="repStrip" aria-expanded="${open}" aria-controls="repMore">
         <span class="rep-face">${faceSvg(id)}</span>
