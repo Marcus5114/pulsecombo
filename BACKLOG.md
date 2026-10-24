@@ -45,6 +45,15 @@ Notas que hay que **evitar** en vez de tocar. Va como un modificador más de la 
   - `hit()`: en la respuesta, un toque en una ventana bomba explota en vez de contar como golpe al aire.
   - `drawSignal`: flecha tachada en la línea de tiempo.
 
+## Sintonía con los operadores de los tutoriales
+Hoy está desactivada (`AFF_TUTORIALS = false` en `src/d3e_affinity.js`). Bip, el Capataz Grúa, la Operadora Estática y el Relojero tienen una sola canción, en una sola dificultad, que además no da recursos. Los pedidos y los topes por hitos no tienen sentido ahí: se cumplen todos repitiendo la misma canción.
+- **Hay que buscar un sistema propio para ellos.** Algunas ideas para evaluar:
+  - Que su Sintonía suba con el progreso de toda la galaxia (planetas abiertos, acuerdos), como mentores que siguen tu avance.
+  - Pedidos de galaxia en vez de canción: "Superá 3 canciones en Normal en cualquier planeta de Vía Pulso".
+  - Lecciones: cada nivel desbloquea un consejo o una práctica guiada de una mecánica (flechas largas, filas de a cuatro, acordes, medias notas).
+  - Que no tengan Sintonía y funcionen solo como guías, con diálogos que cambian según lo que desbloqueaste.
+- Mientras tanto, hablan idioma terrestre (no pasan por el filtro de comprensión) y no muestran barra ni pedidos.
+
 ## Nuevas galaxias
 
 Cada galaxia nueva sigue el mismo molde que las actuales:

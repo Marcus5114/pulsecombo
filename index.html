@@ -3429,7 +3429,10 @@ body.land .rx-txt { display: none; }
     compadre:   { world: 'com_b',    likes: ['gold', 'fc'],         dislikes: ['easy'] },
     rompeondas: { world: 'com_c',    likes: ['hard', 'combo'],      dislikes: ['sloppy'] },
   };
-  const affCharOfWorld = wid => Object.keys(AFF_CHARS).find(id => AFF_CHARS[id].world === wid);
+  // Sintonía desactivada por ahora con los operadores de los tutoriales: con una sola canción, sus pedidos no tienen sentido (ver BACKLOG)
+  const AFF_TUTORIALS = false;
+  const affOn = id => !!AFF_CHARS[id] && (AFF_TUTORIALS || !WORLDS[WI[AFF_CHARS[id].world]].tutorial);
+  const affCharOfWorld = wid => Object.keys(AFF_CHARS).find(id => AFF_CHARS[id].world === wid && affOn(id));
   const affState = id => { S.aff = S.aff || {}; const a = S.aff[id] = S.aff[id] || { pts: 0, reqs: [], reqDone: 0 }; a.reqs = a.reqs || []; return a; };
 
   // Pedidos: cada personaje tiene hasta 3 activos, sacados de un pool común de plantillas.
@@ -3627,7 +3630,7 @@ body.land .rx-txt { display: none; }
   const hash01 = str => { let h = 0x811c9dc5; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h / 4294967296; };
   const charGal = id => WORLDS[WI[AFF_CHARS[id].world]].gal;
   function comprehension(id) {
-    if (!AFF_CHARS[id]) return 1;   // CORA, Lumen y los embajadores tienen sus líneas escritas a mano
+    if (!affOn(id)) return 1;   // CORA, Lumen, los embajadores y los operadores de tutorial hablan idioma terrestre
     const tut = WORLDS[WI[AFF_CHARS[id].world]].tutorial;
     return Math.min(1, AFF_COMP[affTier(affState(id).pts)] + (tut ? TUT_COMP : 0));
   }

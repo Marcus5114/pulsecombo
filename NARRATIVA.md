@@ -80,13 +80,15 @@ Los embajadores saben algo de idioma terrestre, pero lo mezclan con el suyo, y C
 ## Idioma de los representantes y glosario
 Los representantes de planeta hablan el idioma de su galaxia. Cada palabra se reemplaza por glifos (flechas, bloques, ondas u órbitas) salvo que se entienda. Código en `src/d3e_affinity.js` (`speak`, `comprehension`, `GLOSSARY`).
 
-| Nivel de Sintonía | Palabras que se entienden | Operadores de tutorial |
-| --- | --- | --- |
-| Primer contacto | 25% | 55% |
-| Simpatía | 45% | 75% |
-| Confianza | 65% | 95% |
-| Complicidad | 85% | 100% |
-| Pareja de baile | 100% | 100% |
+| Nivel de Sintonía | Palabras que se entienden |
+| --- | --- |
+| Primer contacto | 25% |
+| Simpatía | 45% |
+| Confianza | 65% |
+| Complicidad | 85% |
+| Pareja de baile | 100% |
+
+Los operadores de los tutoriales no tienen Sintonía por ahora (ver BACKLOG) y hablan idioma terrestre.
 
 - Cada palabra tiene un umbral fijo por personaje (sale de un hash), así que una palabra entendida sigue entendida al subir de nivel.
 - **Glosario** (siempre se entiende): ritmo, tiempo, combo, perfecto, fiebre, Tierra, terrícola, visitante, hola, gracias, sí, no, amigo/s. Por galaxia:
@@ -128,7 +130,7 @@ Código en `src/d3e_affinity.js`. Elegido: un medidor por personaje (1A), gustos
   - Simpatía: superar una canción. Confianza: todas en Normal. Complicidad: una en Difícil. Pareja de baile: todas en Difícil o S en tres.
   - Tutoriales: superarla, A, S, y S con Full Combo.
 - **Gustos** (`TASTE`): combos largos, Full Combo, PERFECTO, no fallar, fiebre, notas extra, dificultad alta, volver a sus canciones, modificadores, moverse a tiempo (Ensamble), filas de a cuatro, decodificar todo (Señal), tramos perfectos y baldosas doradas (Compás). Disgustos: tocar sin nota, fallos, jugar en Fácil.
-- **Personajes** (`AFF_CHARS`): los 18 representantes, cada uno con su planeta, 2 gustos y 1 disgusto.
+- **Personajes** (`AFF_CHARS`): los 18 representantes (los 4 operadores de tutorial están desactivados por ahora con `AFF_TUTORIALS`), cada uno con su planeta, 2 gustos y 1 disgusto.
 - **Pedidos** (`REQ_TEMPLATES`): un pool de 18 plantillas. Las generales sirven en todos los modos: calificación mínima, sacar S, Full Combo, combo, cantidad de PERFECTO, precisión, no tocar sin nota, jugar con un modificador y volver a una canción 3 veces. También hay plantillas propias de cada modo: fiebre, notas extra y flechas largas (Vía Pulso); filas y filas de a cuatro, racha de ritmo (Ensamble); decodificar todo (Señal); tramos perfectos y baldosas doradas (Compás). Cada personaje tiene **3 pedidos activos** a la vez (cuentan como mucho 2 por visita), elegidos según su planeta, las dificultades abiertas y las mejoras compradas. Al cumplir uno se repone otro, y en la pantalla de resultado aparece una tarjeta animada con su retrato y el sello de ¡CUMPLIDO! (`REQ_MAX`, `REQ_GAIN`).
 
 ### Puntos de extensión
