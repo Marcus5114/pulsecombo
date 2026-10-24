@@ -355,14 +355,15 @@
   const genreWorldsOpen = gal => [...openWorlds(gal)].filter(wi => !WORLDS[wi].tutorial).length;
 
   // ---------- Materia oscura ----------
-  // Hitos: primera vez que superás una dificultad (+1, tutorial +2), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
+  // Hitos: primera vez que superás una dificultad (+1; los tutoriales no dan), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
   const darkMult = () => 1 + 0.25 * L('g_dark');
   // Condensador: convierte la moneda de una galaxia en 1 de materia oscura. Cada condensación cuesta 6% más.
   const COND_GROWTH = 1.06;
   const condCost = gal => Math.ceil(GX[gal].cond * COND_GROWTH ** (S.cond[gal] || 0));
   function milestoneMO(s, before, after) {
     let mo = 0;
-    if (after.clear && !before.clear) mo += s.tut ? 2 : 1;
+    if (s.tut) return 0;   // los tutoriales no dan materia oscura
+    if (after.clear && !before.clear) mo += 1;
     if (after.grade === 'S' && before.grade !== 'S') mo += 1;
     if (after.fc && !before.fc) mo += 1;
     return mo;
@@ -378,6 +379,7 @@
   const ecoEff = () => 0.10 + 0.05 * L('g_eco_eff');
   const ecoInterval = s => songDur(s) * 20 / (1 + 0.25 * L('g_eco_speed'));
   const ecoBest = s => {
+    if (s.tut) return 0;   // los tutoriales no generan ecos
     const bs = [0, 1, 2, 3].map(d => recOf(s, d)?.best || 0);
     return L('g_eco_all') ? bs.reduce((a, b) => a + b, 0) : Math.max(...bs);
   };

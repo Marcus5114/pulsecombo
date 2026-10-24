@@ -1149,14 +1149,15 @@ body.land .rx-txt { display: none; }
   const genreWorldsOpen = gal => [...openWorlds(gal)].filter(wi => !WORLDS[wi].tutorial).length;
 
   // ---------- Materia oscura ----------
-  // Hitos: primera vez que superás una dificultad (+1, tutorial +2), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
+  // Hitos: primera vez que superás una dificultad (+1; los tutoriales no dan), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
   const darkMult = () => 1 + 0.25 * L('g_dark');
   // Condensador: convierte la moneda de una galaxia en 1 de materia oscura. Cada condensación cuesta 6% más.
   const COND_GROWTH = 1.06;
   const condCost = gal => Math.ceil(GX[gal].cond * COND_GROWTH ** (S.cond[gal] || 0));
   function milestoneMO(s, before, after) {
     let mo = 0;
-    if (after.clear && !before.clear) mo += s.tut ? 2 : 1;
+    if (s.tut) return 0;   // los tutoriales no dan materia oscura
+    if (after.clear && !before.clear) mo += 1;
     if (after.grade === 'S' && before.grade !== 'S') mo += 1;
     if (after.fc && !before.fc) mo += 1;
     return mo;
@@ -1172,6 +1173,7 @@ body.land .rx-txt { display: none; }
   const ecoEff = () => 0.10 + 0.05 * L('g_eco_eff');
   const ecoInterval = s => songDur(s) * 20 / (1 + 0.25 * L('g_eco_speed'));
   const ecoBest = s => {
+    if (s.tut) return 0;   // los tutoriales no generan ecos
     const bs = [0, 1, 2, 3].map(d => recOf(s, d)?.best || 0);
     return L('g_eco_all') ? bs.reduce((a, b) => a + b, 0) : Math.max(...bs);
   };
@@ -2163,7 +2165,7 @@ body.land .rx-txt { display: none; }
     else if (run.failed) { gain *= 0.5; mults.push([run.mode === 'signal' ? 'Señal perdida' : run.mode === 'path' ? 'Te saliste del camino' : 'Aguante agotado', 0.5]); }
     if (fc && run.mode === 'arrows') {
       if (L('c_fc')) { const b = 0.25 * L('c_fc'); gain *= 1 + b; mults.push(['Bonus Full Combo', 1 + b]); }
-      else notes.push('Full Combo sin bonus: desbloquealo en la rama Combo');
+      else if (!run.song.tut) notes.push('Full Combo sin bonus: desbloquealo en la rama Combo');
     }
     const ch = run.ch;
     const rows = [['Perfecto', c.perfect], ['Genial', c.great], ['Bien', c.good], ['Fallo', c.miss], ['Combo máx.', run.maxCombo], ['Precisión', Math.round(acc) + '%']];
@@ -2178,6 +2180,8 @@ body.land .rx-txt { display: none; }
   // Cierre común a todas las galaxias: récord, moneda (con multiplicador global), materia oscura y desbloqueos
   function settle({ gain, grade, fc, notes, rows, mults = [] }) {
     const s = run.song, gal = s.gal, g = GX[gal], key = `${s.id}-${run.di}`;
+    // Los tutoriales son para aprender: no dan moneda, ni materia oscura, ni eco
+    if (s.tut) { gain = 0; run.earned = 0; mults = []; notes.unshift(`Los tutoriales no dan ${g.unit} ni materia oscura: son para aprender a jugar`); }
     const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
     const before = { ...(S.rec[key] || {}) }, songWas = diffsOf(s).some(d => recOf(s, d)?.clear);
     const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
@@ -2190,7 +2194,7 @@ body.land .rx-txt { display: none; }
     const mult = galMult(gal), paid = gain * mult;
     S[g.cur] += paid; S.tot[gal] += paid;
     const newWorlds = [...openWorlds(gal)].filter(wi => !openBefore.has(wi));
-    const mo = (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult();
+    const mo = s.tut ? 0 : (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult();   // el planeta que abre un tutorial tampoco da materia oscura
     S.mo += mo;
     save();
     if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
@@ -2201,8 +2205,8 @@ body.land .rx-txt { display: none; }
     // Desglose para el contador: lo ganado en la canción, cada multiplicador y el total
     const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
     const aff = affinityOnResult(run, { grade, fc, cleared, prev: before, songWas }); notes.push(...aff.notes); save();
-    const steps = [[`Dificultad ${dec1(run.stars)}★${ml}`, run.mult], ...mults];
-    if (mult > 1.001) steps.push(['Multiplicador global', mult]);
+    const steps = s.tut ? [] : [[`Dificultad ${dec1(run.stars)}★${ml}`, run.mult], ...mults];
+    if (mult > 1.001 && !s.tut) steps.push(['Multiplicador global', mult]);
     showResult({ grade, base: run.mult ? run.earned / run.mult : run.earned, steps, paid, notes, rows, fc, reqs: aff.done, reqGain: aff.gain });
   }
   // Pantalla de resultado: el contador sube con lo ganado, después aplica cada multiplicador, muestra el total y al final la calificación.
@@ -2502,7 +2506,7 @@ body.land .rx-txt { display: none; }
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
     ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
-    ctx.fillText(fmt(run.earned), 10, 22);
+    ctx.fillText(run.song.tut ? 'Práctica' : fmt(run.earned), 10, 22);
     drawRunLabel(U);
     if (fever) {
       ctx.textAlign = 'center'; ctx.fillStyle = `rgb(${XC()})`; ctx.font = F(800, U * 0.034);
@@ -2623,7 +2627,7 @@ body.land .rx-txt { display: none; }
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
     ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
-    ctx.fillText(fmt(run.earned), 10, 22);
+    ctx.fillText(run.song.tut ? 'Práctica' : fmt(run.earned), 10, 22);
     drawRunLabel(U);
   }
   function wrapText(msg, x, y, maxW, lh) {

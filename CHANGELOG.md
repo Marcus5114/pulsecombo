@@ -28,6 +28,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - **Solo cuenta lo nuevo.** La Sintonía sale de mejorar: primera vez que superás una canción (+2) o una dificultad (+1,5), mejor calificación (+0,5 por letra), primer Full Combo (+1,5) y primera S (+1). Repetir sin mejorar da +0,3, y los gustos solo pesan en partidas con algo nuevo.
   - **Valores más bajos.** Base +0,5, gustos hasta +1 y disgustos hasta −0,5. Los pedidos dan +6, y cuentan como mucho 2 por visita al planeta: para que cuente otro, hay que salir y volver a entrar.
   - Lo que ya tenías ganado no se pierde.
+- Los tutoriales ya no dan moneda, materia oscura ni ecos. Sirven para aprender, no para repetirlos y juntar recursos. Durante la partida el contador dice "Práctica", y el resultado explica por qué no suma. El planeta que se abre al completar el tutorial tampoco da materia oscura. En total, los hitos dan unos 24 de materia oscura menos.
 
 ### Corregido
 - Código de desarrollador: ahora se ignoran mayúsculas, tildes y espacios al compararlo. Los teclados del celular ponían la primera letra en mayúscula o agregaban un espacio, y el código no se aceptaba. El campo ya no autocorrige ni pone mayúsculas.

@@ -11,7 +11,7 @@
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
     ctx.fillStyle = run.life > 25 ? GX[run.song.gal].color : '#8a8a90'; ctx.fillRect(10, 10, (W - 20) * run.life / 100, 6);
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
-    ctx.fillText(fmt(run.earned), 10, 22);
+    ctx.fillText(run.song.tut ? 'Práctica' : fmt(run.earned), 10, 22);
     drawRunLabel(U);
   }
   function wrapText(msg, x, y, maxW, lh) {

@@ -237,7 +237,7 @@
     else if (run.failed) { gain *= 0.5; mults.push([run.mode === 'signal' ? 'Señal perdida' : run.mode === 'path' ? 'Te saliste del camino' : 'Aguante agotado', 0.5]); }
     if (fc && run.mode === 'arrows') {
       if (L('c_fc')) { const b = 0.25 * L('c_fc'); gain *= 1 + b; mults.push(['Bonus Full Combo', 1 + b]); }
-      else notes.push('Full Combo sin bonus: desbloquealo en la rama Combo');
+      else if (!run.song.tut) notes.push('Full Combo sin bonus: desbloquealo en la rama Combo');
     }
     const ch = run.ch;
     const rows = [['Perfecto', c.perfect], ['Genial', c.great], ['Bien', c.good], ['Fallo', c.miss], ['Combo máx.', run.maxCombo], ['Precisión', Math.round(acc) + '%']];
@@ -252,6 +252,8 @@
   // Cierre común a todas las galaxias: récord, moneda (con multiplicador global), materia oscura y desbloqueos
   function settle({ gain, grade, fc, notes, rows, mults = [] }) {
     const s = run.song, gal = s.gal, g = GX[gal], key = `${s.id}-${run.di}`;
+    // Los tutoriales son para aprender: no dan moneda, ni materia oscura, ni eco
+    if (s.tut) { gain = 0; run.earned = 0; mults = []; notes.unshift(`Los tutoriales no dan ${g.unit} ni materia oscura: son para aprender a jugar`); }
     const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
     const before = { ...(S.rec[key] || {}) }, songWas = diffsOf(s).some(d => recOf(s, d)?.clear);
     const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
@@ -264,7 +266,7 @@
     const mult = galMult(gal), paid = gain * mult;
     S[g.cur] += paid; S.tot[gal] += paid;
     const newWorlds = [...openWorlds(gal)].filter(wi => !openBefore.has(wi));
-    const mo = (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult();
+    const mo = s.tut ? 0 : (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult();   // el planeta que abre un tutorial tampoco da materia oscura
     S.mo += mo;
     save();
     if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
@@ -275,8 +277,8 @@
     // Desglose para el contador: lo ganado en la canción, cada multiplicador y el total
     const ml = run.ch.mods.length ? ` (${run.ch.mods.map(id => MODS[id].label).join(', ')})` : '';
     const aff = affinityOnResult(run, { grade, fc, cleared, prev: before, songWas }); notes.push(...aff.notes); save();
-    const steps = [[`Dificultad ${dec1(run.stars)}★${ml}`, run.mult], ...mults];
-    if (mult > 1.001) steps.push(['Multiplicador global', mult]);
+    const steps = s.tut ? [] : [[`Dificultad ${dec1(run.stars)}★${ml}`, run.mult], ...mults];
+    if (mult > 1.001 && !s.tut) steps.push(['Multiplicador global', mult]);
     showResult({ grade, base: run.mult ? run.earned / run.mult : run.earned, steps, paid, notes, rows, fc, reqs: aff.done, reqGain: aff.gain });
   }
   // Pantalla de resultado: el contador sube con lo ganado, después aplica cada multiplicador, muestra el total y al final la calificación.
