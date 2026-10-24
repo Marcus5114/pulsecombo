@@ -9,6 +9,17 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
+## Sin publicar — próxima versión: v0.4.2
+
+### Agregado
+- Cinemática de inicio: la primera vez que se abre el juego, pantalla en negro con una conversación entre Lumen y CORA sobre la misión de El Metrónomo. Se avanza con clic, Espacio o Enter, y se puede saltar.
+- Al terminar la cinemática, el juego arranca en el mapa de galaxias con Vía Pulso seleccionada, y CORA presenta el Cúmulo, la materia oscura y a Kadenza.
+- Los embajadores hablan en su propio idioma, mezclado con las palabras de la Tierra que van aprendiendo, y CORA traduce lo que falta. Kadenza habla con flechas (↑ → ↓ ←), Tesela con bloques (▙▟), Eco-7 con ondas y estática (∿ kssh) y los Gemelos Vaivén se turnan para terminar las frases (◐ ◑). Los glifos se pintan del color de la galaxia.
+- Diálogos de llegada para Ensamble, Señal y Compás.
+
+### Corregido
+- Código de desarrollador: ahora se ignoran mayúsculas, tildes y espacios al compararlo. Los teclados del celular ponían la primera letra en mayúscula o agregaban un espacio, y el código no se aceptaba. El campo ya no autocorrige ni pone mayúsculas.
+
 ## v0.4.1
 
 ### Cambiado

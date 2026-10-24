@@ -178,24 +178,61 @@
 
   // Textos. Lumen no tiene género marcado: nadie le habla con adjetivos en masculino o femenino.
   const STORY = {
+    // Cinemática de inicio: pantalla en negro, a bordo de El Metrónomo
     prologue: [
-      ['cora', 'Despertá, Lumen. Llegamos a Vía Pulso. Dormiste tres años luz, que no es una unidad de tiempo, pero me gusta cómo suena.'],
-      ['lumen', '¿Ya llegamos? ¿Y ahora qué hacemos?'],
-      ['cora', 'Lo de siempre: hacer amigos. Acá nadie habla con palabras. Hablan con ritmo.'],
-      ['cora', 'Cada galaxia tiene su propio idioma. Si querés que te escuchen, vas a tener que aprender a tocarlo.'],
+      ['cora', 'Lumen. Lumen. Despertá. Signos vitales: aceptables. Humor: por verse.'],
+      ['lumen', '¿CORA? ¿Cuánto dormí?'],
+      ['cora', 'Tres años luz. Ya sé que no es una unidad de tiempo, pero me gusta cómo suena.'],
+      ['cora', 'Llegamos al Cúmulo Rítmico. Cuatro galaxias, cuatro pueblos, y ninguno habla con palabras.'],
+      ['lumen', '¿Y cómo hablan?'],
+      ['cora', 'Con ritmo. Flechas, piezas que encastran, señales de radio, caminos. Cada galaxia tiene su propio idioma.'],
+      ['cora', 'La misión de El Metrónomo: aprender esos idiomas y firmar un acuerdo con cada embajador.'],
+      ['lumen', '¿Y si no nos entienden?'],
+      ['cora', 'Por eso estás acá. Yo traduzco, vos tocás. Ellos deciden si somos amigos o ruido.'],
+      ['lumen', 'Sin presión.'],
+      ['cora', 'Ninguna. Solo el futuro de las relaciones intergalácticas. Encendiendo el mapa.'],
     ],
+    // Mapa de galaxias, justo después de la cinemática
+    gal_intro: [
+      ['cora', 'Este es el Cúmulo. Las galaxias apagadas todavía no confían en nosotros.'],
+      ['cora', 'La más cercana es Vía Pulso. Ahí se habla con flechas: cada dirección es una palabra y cada combo, una frase.'],
+      ['cora', 'Para abrir las demás vamos a necesitar materia oscura. Se gana con hitos: superar canciones, sacar S, hacer Full Combo.'],
+      ['cora', 'Su embajadora es Kadenza. Sabe algo de idioma terrestre, pero no mucho. Yo traduzco lo que falte.'],
+      ['cora', 'Cuando quieras, tocá Ir al mapa. Yo ya cargué combustible. Mentira, la nave funciona con ritmo.'],
+    ],
+    // Los embajadores hablan en su idioma, mezclado con las palabras de la Tierra que van aprendiendo
     arrive_pulso: [
-      ['kadenza', 'Una nave pequeña, con un corazón que late fuera de tiempo. Te damos la bienvenida a Vía Pulso, visitante de la Tierra.'],
-      ['kadenza', 'Soy Kadenza. Aquí cada flecha es una palabra, y cada combo, una frase.'],
-      ['kadenza', 'Comenzá por la Estación. Bip te enseñará a no tropezar con las palabras.'],
+      ['kadenza', '↑ ↗ → … ¿Tierra? ↓ ↓ ← Tierra. ↑ Bienvenida ↑, visitante, → Vía Pulso →.'],
+      ['cora', 'Traduzco: te da la bienvenida. Las flechas hacia arriba son cortesía. Creo.'],
+      ['kadenza', '→ Yo ← Kadenza. ↑ Flecha = palabra ↑. → → → Combo = frase.'],
+      ['kadenza', '↓ Estación ↓ … Bip enseña. ← → ← → No tropezar.'],
+      ['cora', 'Quiere que empecemos por la Estación. Y que no tropieces. Eso último lo agregué yo.'],
+    ],
+    arrive_ens: [
+      ['tesela', '▙▟ ▀█ … ▛▜ Hola ▙. ▄▄▄▄ Fila completa = sí ▄▄▄▄. ▚▞ Astillero ▚▞ bienvenida.'],
+      ['cora', 'Una fila completa es un sí. Un hueco es un "tenemos que hablar".'],
+      ['tesela', '▟ Moverse ▙ a tiempo. ▚▞▚▞ Fuera de tiempo = no confío. ▄▄ Muelle primero ▄▄.'],
+      ['cora', 'Empezamos por el Muelle. El Capataz Grúa nos espera con un silbato.'],
+    ],
+    arrive_sen: [
+      ['eco7', '∿∿∿ kssh… ∿ ¿me copia? ∿∿ Aquí Eco-7. Repita: ∿ bienvenida ∿.'],
+      ['cora', 'Quiere que repitas. En Señal, repetir es la forma de saludar.'],
+      ['eco7', 'kssh 〰 Escuche ∿ después repita 〰. ∿∿ Repetir mal = grosero ∿∿. Antena primero. Cambio. kssh.'],
+      ['cora', 'Primero la Antena. Y decí "cambio" al final, les encanta.'],
+    ],
+    arrive_com: [
+      ['vaiven', '◐ Bienve… ◑ …nida. ◐ Somos ◑ dos. ◇◇ Un camino ◇ ◐ una con… ◑ …versación.'],
+      ['cora', 'Se terminan las frases entre ellos. Cada baldosa del camino es un turno de la charla.'],
+      ['vaiven', '◑ Contá ◐ los lados. ◇ ◇ ◐ Tocá al ◑ llegar. ◐ El Relojero ◑ enseña.'],
+      ['cora', 'Primero el Péndulo. El Relojero es muy puntual. Obvio.'],
     ],
     meet_base: [
       ['bip', 'BIP. Operador Bip, a su servicio. Las flechas suben, usted toca. Sencillo. Bip.'],
       ['bip', 'Tasa de éxito de visitantes anteriores: 12 %. Usted será diferente. Probablemente. Bip.'],
     ],
     tut_pulso: [
-      ['kadenza', 'Tus flechas ya no tropiezan. Te escuchamos.'],
-      ['kadenza', 'Magma te espera. Brasa es… ruidoso. Tené paciencia.'],
+      ['kadenza', '↑ ↑ ↑ Bien. Tus flechas ← no tropiezan →. Te escuchamos.'],
+      ['kadenza', '↘ Magma ↘ te espera. Brasa es… ↑ ↑ ↑ ↑ ruidoso. ← Paciencia →.'],
       ['cora', 'Traducción: aprobaste el examen de ingreso.'],
     ],
     meet_rock: [
@@ -228,8 +265,8 @@
     done_edm: [['neutron', 'Te regalo mi mejor drop. Literal: se me cayó el casco. Quedátelo.']],
     done_jazz: [['smokey', 'Guardá esta nota azul. Algún día vas a necesitar un silencio que suene bien.']],
     treaty_pulso: [
-      ['kadenza', 'Tus manos ya señalan como las nuestras. Vía Pulso firma el acuerdo con vos.'],
-      ['kadenza', 'Llevá nuestra luz a las otras galaxias. Y cuando llegue la Sinfonía… tocá con nosotros.'],
+      ['kadenza', '↑ → ↓ ← Tus manos señalan como las nuestras. ↑ ↑ Acuerdo ↑ ↑ con vos.'],
+      ['kadenza', 'Llevá nuestra luz → → → otras galaxias. Y en la Sinfonía… ↑ tocá con nosotros ↑.'],
       ['cora', 'Primer acuerdo firmado. Quedan tres galaxias y mi paciencia infinita.'],
     ],
   };
@@ -238,7 +275,7 @@
   const allSongsCleared = wi => WORLDS[wi].idx.every(i => [0, 1, 2, 3].some(d => recOf(SONGS[i], d)?.clear));
   function storyBeats(v) {
     const out = [], gal = S.galaxy;
-    out.push(['prologue', true]);
+    out.push(['gal_intro', v === 'gal' && !tutDone('pulso')]);
     out.push([`arrive_${gal}`, v === 'map' || v === 'menu']);
     out.push([`tut_${gal}`, tutDone(gal)]);
     for (const [wi, w] of WORLDS.entries()) {
@@ -255,10 +292,11 @@
     if (S.story) return;
     S.story = {};
     if (!Object.keys(S.rec || {}).length) return;
+    S.story.prologue = true;   // partidas guardadas de antes de la cinemática: no se repite
     for (const g of GALAXIES) {
       if (!S.galOpen[g.id]) continue;
       const keep = S.galaxy; S.galaxy = g.id;
-      for (const [id, ok] of storyBeats('map')) if (ok && id !== 'prologue' && id !== `arrive_${keep}`) S.story[id] = true;   // la bienvenida del embajador de donde estás se muestra igual
+      for (const [id, ok] of storyBeats('map')) if (ok && id !== `arrive_${keep}`) S.story[id] = true;   // la bienvenida del embajador de donde estás se muestra igual
       for (const w of WORLDS) if (w.gal === g.id && worldOpen(WORLDS.indexOf(w)) && clearedIn(WORLDS.indexOf(w))) S.story[`meet_${w.id}`] = true;
       S.galaxy = keep;
     }
@@ -270,6 +308,7 @@
   function storyCheck(v) {
     storyInit();
     if (dlgOpen() || run && !run.over) return;
+    if (!S.story.prologue) { S.story.prologue = true; save(); playIntro(); return; }
     for (const [id, ok] of storyBeats(v)) {
       if (!ok || S.story[id]) continue;
       S.story[id] = true; save();
@@ -277,9 +316,20 @@
     }
     if (dlgQueue.length) dlgNext();
   }
+  // Cinemática de inicio: el mismo cuadro de diálogo, a pantalla completa en negro. Al terminar abre el mapa de galaxias.
+  function playIntro() {
+    $('dlg').classList.add('cine');
+    dlgQueue.push(...STORY.prologue, () => { $('dlg').classList.remove('cine'); galSel = 'pulso'; setView('gal'); });
+    dlgNext();
+  }
+  // Glifos de los idiomas alienígenas (flechas, bloques, ondas, órbitas): se pintan del color de la galaxia
+  const GLYPHS = /([←↑→↓↖↗↘↙]+|[▀▄█▙▚▛▜▝▞▟▖▗▘]+|[∿〰]+|[◐◑◇]+|kssh)/g;
+  const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const dlgPaint = t => { $('dlgText').innerHTML = esc(t).replace(GLYPHS, '<span class="glyph">$1</span>'); };
   function dlgNext() {
     clearInterval(dlgTimer);
     dlgLine = dlgQueue.shift();
+    while (typeof dlgLine === 'function') { $('dlg').hidden = true; dlgLine(); if (dlgOpen()) return; dlgLine = dlgQueue.shift(); }
     if (!dlgLine) { $('dlg').hidden = true; return; }
     const [who, text] = dlgLine, [name, role] = SPK[who];
     $('dlg').hidden = false;
@@ -287,18 +337,19 @@
     $('dlgName').innerHTML = `${name} <span>${role}</span>`;
     dlgShown = 0; $('dlgText').textContent = '';
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { dlgShown = text.length; $('dlgText').textContent = text; return; }
+    if (reduce) { dlgShown = text.length; dlgPaint(text); return; }
     dlgTimer = setInterval(() => {
-      dlgShown = Math.min(text.length, dlgShown + 1); $('dlgText').textContent = text.slice(0, dlgShown);
+      dlgShown = Math.min(text.length, dlgShown + 1); dlgPaint(text.slice(0, dlgShown));
       if (dlgShown >= text.length) clearInterval(dlgTimer);
     }, 28);
   }
   function dlgAdvance() {
     if (!dlgLine) return;
-    if (dlgShown < dlgLine[1].length) { clearInterval(dlgTimer); dlgShown = dlgLine[1].length; $('dlgText').textContent = dlgLine[1]; return; }
+    if (dlgShown < dlgLine[1].length) { clearInterval(dlgTimer); dlgShown = dlgLine[1].length; dlgPaint(dlgLine[1]); return; }
     dlgNext();
   }
-  function dlgSkip() { dlgQueue = []; dlgNext(); }
+  // Saltar descarta las líneas pero ejecuta lo que estaba programado al final (por ejemplo, abrir el mapa tras la cinemática)
+  function dlgSkip() { dlgQueue = dlgQueue.filter(x => typeof x === 'function'); dlgLine = null; dlgNext(); }
   $('dlg').addEventListener('click', e => { if (e.target.id === 'dlgSkip') { dlgSkip(); return; } dlgAdvance(); });
   window.addEventListener('keydown', e => {
     if (!dlgOpen()) return;

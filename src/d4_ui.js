@@ -23,7 +23,7 @@
       : g.mode === 'path' ? 'Cualquier tecla: <kbd>Espacio</kbd>, flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa'
       : 'Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa';
     renderUI(true);
-    if (v === 'map' || v === 'menu') storyCheck(v);
+    if (v === 'map' || v === 'menu' || v === 'gal') storyCheck(v);
   }
   function travel(gal) {
     S.galaxy = gal; S.world = WORLDS.findIndex(w => w.gal === gal && w.tutorial); S.sel = WORLDS[S.world].idx[0]; S.diff = 0;
@@ -539,6 +539,10 @@
 
   // Código de desarrollador: abre todas las galaxias y da moneda suficiente para comprar todas las mejoras con tope
   // (se compara un hash para que el código no quede escrito en el archivo)
+  // El código se normaliza antes de comparar: sin espacios, sin mayúsculas y sin tildes
+  // (los teclados del celular suelen poner la primera letra en mayúscula o agregar un espacio al final)
+  const devNorm = str => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').toLowerCase();
+  const DEV_HASHES = ['1ac84bc7'];
   const devHash = str => { let h = 0x811c9dc5; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };
   function devUnlock() {
     for (const g of GALAXIES) S.galOpen[g.id] = true;
@@ -553,13 +557,13 @@
   const devBox = $('devBox');
   devBox.addEventListener('click', e => {
     if (e.target.id === 'devOpen') {
-      devBox.innerHTML = '<form class="dev" id="devForm"><input id="devCode" type="password" autocomplete="off" placeholder="Código" aria-label="Código de desarrollador"><button class="link" type="submit">Canjear</button><button class="link" type="button" id="devCancel">Cancelar</button></form>';
+      devBox.innerHTML = '<form class="dev" id="devForm"><input id="devCode" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Código" aria-label="Código de desarrollador"><button class="link" type="submit">Canjear</button><button class="link" type="button" id="devCancel">Cancelar</button></form>';
       $('devCode').focus();
     } else if (e.target.id === 'devCancel') devBox.innerHTML = '<button class="link" id="devOpen">Código</button>';
   });
   devBox.addEventListener('submit', e => {
     e.preventDefault();
-    const ok = devHash($('devCode').value.trim()) === '1ac84bc7';
+    const raw = $('devCode').value, ok = [raw.trim(), devNorm(raw)].some(v => DEV_HASHES.includes(devHash(v)));
     if (ok) { devUnlock(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
     else { $('devCode').value = ''; $('devCode').placeholder = 'Código incorrecto'; }
   });
@@ -587,7 +591,7 @@
   function boot() {
     applyLand();
     if (offlineNote) { $('noticeText').textContent = offlineNote; $('notice').hidden = false; }
-    setView('map'); requestAnimationFrame(frame);
+    storyInit(); setView(S.story.prologue ? 'map' : 'gal'); requestAnimationFrame(frame);
   }
   document.fonts?.ready?.then(() => { resize(); if (view === 'tree') drawLines(); });
   window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot();

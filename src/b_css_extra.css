@@ -366,3 +366,16 @@ body.land .rx-txt { display: none; }
 @keyframes confetti { 0% { opacity: 1; transform: rotate(var(--a)) translateX(0) rotate(0); } 100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)) rotate(var(--r)); } }
 @media (max-width: 520px) { .rq-stamp { position: static; transform: rotate(-8deg); align-self: flex-start; } .r-req { flex-wrap: wrap; } .r-req.on .rq-stamp { animation: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .r-req, .r-req.on { animation: none; opacity: 1; transform: none; } .r-req .rq-stamp { opacity: 1; transform: translateY(-50%) rotate(-12deg); animation: none !important; } .r-req .cf { display: none; } }
+
+/* Glifos de los idiomas de los embajadores */
+.dlg-text .glyph { color: var(--acc); font-weight: 800; letter-spacing: 0.04em; }
+/* Cinemática de inicio: pantalla en negro */
+.cine-tag { display: none; }
+.dlg.cine { background: #000; align-items: center; flex-direction: column; justify-content: center; gap: 28px; animation: cinein 0.8s ease-out; }
+@keyframes cinein { from { opacity: 0; } }
+.dlg.cine .cine-tag { display: block; font-size: 0.68rem; letter-spacing: 0.3em; text-transform: uppercase; color: #6b6b72; }
+.dlg.cine .dlg-card { background: transparent; border: 0; box-shadow: none; flex-direction: column; align-items: center; text-align: center; max-width: 620px; animation: none; }
+.dlg.cine .dlg-face { width: 72px; height: 72px; }
+.dlg.cine .dlg-text { font-size: 1.15rem; min-height: 4.5em; }
+.dlg.cine .dlg-name span { display: none; }
+@media (prefers-reduced-motion: reduce) { .dlg.cine { animation: none; } }

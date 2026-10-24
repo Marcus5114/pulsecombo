@@ -70,8 +70,15 @@ Sos una exploradora o un explorador de la Tierra a bordo de **El Metrónomo**, u
 | Arrabal | Tango electrónico | **El Compadre** | Sombrero fedora, pañuelo al cuello, chaleco, bandoneón con luces de neón. |
 | Vértigo | Drum and bass | **Rompeondas** | Capucha, máscara, zapatillas con alas, deja estelas de velocidad. |
 
+## Idiomas de los embajadores
+Los embajadores saben algo de idioma terrestre, pero lo mezclan con el suyo, y CORA traduce lo que falta:
+- **Kadenza:** flechas direccionales (↑ ↗ → ↓ ←). Arriba es cortesía, varias flechas seguidas son énfasis.
+- **Tesela:** bloques que encastran (▙▟ ▄▄▄▄). Una fila completa es un "sí".
+- **Eco-7:** ondas y estática (∿ 〰 kssh). Habla como por radio y cierra con "cambio".
+- **Los Gemelos Vaivén:** se turnan sílaba a sílaba (◐ uno, ◑ el otro) y marcan el camino con baldosas (◇).
+
 ## Momentos de historia (disparadores en el juego)
-1. **Prólogo** (primera vez que abrís el juego): CORA te despierta al llegar a Vía Pulso. Tres o cuatro líneas.
+1. **Cinemática de inicio** (primera vez que abrís el juego): pantalla en negro, Lumen y CORA hablan de la misión. Después se abre el mapa de galaxias con Vía Pulso seleccionada y CORA presenta el Cúmulo.
 2. **Llegada a una galaxia** (primera vez): el embajador te recibe y explica su idioma.
 3. **Primera visita a un planeta:** el representante se presenta con una línea de su personalidad.
 4. **Tutorial superado:** el embajador te acepta como interlocutor.
