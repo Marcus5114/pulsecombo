@@ -32,6 +32,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - En el mapa, los dos planetas intercambian lugar. Prisma tiene ahora las canciones más fáciles y Magma un poco más de dificultad.
   - Los diálogos se ajustaron: Kadenza te manda a Prisma, y CORA cuenta que Lumi habló bien de vos ante Magma y Nebulosa.
   - Las partidas guardadas no pierden nada: un planeta donde ya superaste canciones sigue abierto.
+- **Magma suena a metal.** Las guitarras pasan por distorsión, con recorte suave y realce de medios como un parlante de amplificador. Los acordes de quinta van en galope, al estilo thrash. Las progresiones son todas menores, con giros frigios (bII) y de menor armónica (V mayor). La melodía suena con más ganancia y vibrato, y doblada una octava abajo. Las notas de acierto quedan en la misma tonalidad menor. Las flechas y las estrellas de cada canción no cambian.
 - **Canciones nuevas de Magma**, más metaleras: Trueno de Basalto, Autopista al Cráter, Jinetes de Lava, Maestro del Fuego, Bestia de Obsidiana y Cabalgata Final. Mantienen los tempos y los récords.
 - Reiniciar el progreso (con el botón o con el código) también borra la historia y la Sintonía, vuelve a mostrar la cinemática de inicio y arranca en el mapa de galaxias.
 

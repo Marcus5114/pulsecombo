@@ -38,6 +38,11 @@
     lsax:   { type: 'sawtooth', cut: 1500, vol: 0.032, att: 0.04, dec: 0.3, sus: 0.75, rel: 0.12, q: 2 },
     lbell:  { type: 'sine', cut: 6000, vol: 0.045, att: 0.004, dec: 0.3, sus: 0.3, rel: 0.25, oct: 0.3 },
     lfuzz:  { type: 'square', cut: 1900, vol: 0.028, att: 0.004, dec: 0.15, sus: 0.8, rel: 0.06, det: 14 },
+    // guitarras con distorsión (dist: ganancia antes del recorte; cab: filtro de "parlante")
+    ldist:  { type: 'sawtooth', cut: 3200, vol: 0.022, att: 0.004, dec: 0.2, sus: 0.85, rel: 0.08, det: 10, dist: 8, cab: true },
+    lmetal: { type: 'sawtooth', cut: 3600, vol: 0.02, att: 0.003, dec: 0.25, sus: 0.9, rel: 0.1, det: 16, dist: 18, cab: true, vib: 5 },
+    gdist:  { type: 'sawtooth', cut: 2600, vol: 0.016, att: 0.003, dec: 0.12, sus: 0.7, rel: 0.05, det: 12, dist: 10, cab: true },
+    gheavy: { type: 'sawtooth', cut: 2200, vol: 0.016, att: 0.002, dec: 0.1, sus: 0.6, rel: 0.04, det: 18, dist: 22, cab: true },
   };
 
   // Sonidos de batería por letra
@@ -67,14 +72,17 @@
       compV: [[{ t: 'chord', p: 'x---------------', tim: 'pad' }]], compC: [[{ t: 'chord', p: 'x---x---x---x---', tim: 'ep' }]],
       lead: ['ltri', 'lbell'], cells: ['x---x---x---x---', 'x---x---x-------', 'x-x-x---x---x---', 'x---x-x-x-------'], ends: ['x---x---x-------', 'x-------x-------'],
     },
+    // Magma suena a metal (v0.4.3): progresiones menores (con bII frigio y V de menor armónica), acordes de quinta
+    // con mucha distorsión en galope y la melodía doblada una octava abajo
     rock: {
-      progs: ['mix|I bVII IV I', 'maj|I V vi IV', 'min|i bVI bIII bVII', 'min|i bVII bVI bVII', 'mix|I IV bVII IV', 'maj|I IV V IV'],
+      progs: ['min|i bVI bVII i', 'min|i bVII bVI bVII', 'min|i bIII bVII bVI', 'min|i iv bVI V', 'min|i bII i bVII', 'min|i bVI bIII bVII'],
       v: [{ k: 'X.......x.x.....', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.' }, { k: 'X.....x...x.....', s: '....x.......x..o', h: 'x.x.x.x.x.x.x.x.' }, { k: 'X.......X.......', s: '....x.......x...', h: 'xoxoxoxoxoxoxoxo' }],
       c: [{ k: 'X...x...X...x...', s: '....X.......X...', o: 'x.x.x.x.x.x.x.x.' }, { k: 'X.x.....X.x.x...', s: '....X.......X...', r: 'x.x.x.x.x.x.x.x.' }],
       fill: 'tom', bass: ['R.R.R.R.R.R.R.R.', 'R-.RR-.RR-.RR-5-', 'R.R.R.R.O.O.5.5.'], btim: { cut: 1400, vol: 0.12 },
-      compV: [[{ t: 'power', p: 'x-------x-------' }], [{ t: 'power', p: 'x--x--x-x--x--x-' }], [{ t: 'power', p: 'x---------------' }]],
-      compC: [[{ t: 'power', p: 'x-.x-.x-x-.x-.x-' }], [{ t: 'power', p: 'x---x---x---x---' }]],
-      lead: ['lfuzz', 'lsq'], cells: ['x-x-x-x-x---x---', 'x---x-x-x---x-x-', 'x-x---x-x-x-x---', '..x-x-x-x---x---'], ends: ['x---x---x-------', 'x-------x-------', 'x-x-x---x-------'],
+      compV: [[{ t: 'power', p: 'x.xx.xx.xx.xx.xx' }], [{ t: 'power', p: 'x-.x-.x-x.xx.xx.' }]],
+      compC: [[{ t: 'power', p: 'x.xx.xx.xx.xx.xx' }], [{ t: 'power', p: 'x-.x-.x-x.xx.xx.' }]],
+      pguit: 'gheavy', harm: -12,
+      lead: ['lmetal'], cells: ['x-x-x-x-x---x---', 'x---x-x-x---x-x-', 'x-x---x-x-x-x---', '..x-x-x-x---x---'], ends: ['x---x---x-------', 'x-------x-------', 'x-x-x---x-------'],
     },
     pop: {
       progs: ['maj|I V vi IV', 'maj|vi IV I V', 'maj|I vi IV V', 'maj|IV I V vi', 'maj|I iii IV V', 'maj|I V IV V'],
@@ -209,10 +217,20 @@
     }
     return mBus;
   }
+  // Distorsión: curva de recorte suave (tanh) cacheada por ganancia
+  const DIST = {};
+  const distCurve = k => DIST[k] || (DIST[k] = Float32Array.from({ length: 1024 }, (_, i) => { const x = i / 511.5 - 1; return Math.tanh(k * x) / Math.tanh(k); }));
   function voice(at, midi, dur, T, echo) {
     const out = musicBus(); if (!out) return;
     const f = ac.createBiquadFilter(), g = ac.createGain();
     f.type = 'lowpass'; f.frequency.value = T.cut; f.Q.value = T.q || 0.7;
+    let inp = f;   // donde entran los osciladores
+    if (T.dist) {   // osciladores → recorte → (parlante: realce de medios y corte de agudos) → filtro
+      const sh = ac.createWaveShaper(); sh.curve = distCurve(T.dist); sh.oversample = '2x';
+      if (T.cab) { const pk = ac.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 1400; pk.Q.value = 0.9; pk.gain.value = 5; sh.connect(pk).connect(f); }
+      else sh.connect(f);
+      inp = sh;
+    }
     const end = at + Math.max(dur, T.att + 0.02), dEnd = Math.min(end, at + T.att + T.dec), sus = Math.max(0.0002, T.vol * T.sus);
     g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(T.vol, at + T.att);
     g.gain.exponentialRampToValueAtTime(sus, Math.max(dEnd, at + T.att + 0.005));
@@ -224,7 +242,11 @@
     const hz = mtof(midi);
     const osc = (type, fr, cents, v) => {
       const o = ac.createOscillator(); o.type = type; o.frequency.value = fr; o.detune.value = cents;
-      if (v === 1) o.connect(f); else { const gg = ac.createGain(); gg.gain.value = v; o.connect(gg).connect(f); }
+      if (v === 1) o.connect(inp); else { const gg = ac.createGain(); gg.gain.value = v; o.connect(gg).connect(inp); }
+      if (T.vib && dur > 0.25) {   // vibrato de guitarra en notas largas
+        const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = T.vib; lg.gain.value = 0; lg.gain.setValueAtTime(0, at + 0.15); lg.gain.linearRampToValueAtTime(18, at + Math.min(dur, 0.6));
+        lfo.connect(lg).connect(o.detune); lfo.start(at); lfo.stop(end + T.rel + 0.05);
+      }
       o.start(at); o.stop(end + T.rel + 0.05);
     };
     if (T.det) { osc(T.type, hz, -T.det, 0.7); osc(T.type, hz, T.det, 0.7); } else osc(T.type, hz, 0, 1);
@@ -290,6 +312,13 @@
   const secAt = (M, bar) => { const blk = Math.floor(bar / 8); return blk % 2 ? 'B' : blk % 4 === 2 && M.bridge ? 'C' : 'A'; };
   const fitBass = (M, r) => { let m = M.key + r; while (m >= 46) m -= 12; while (m < 34) m += 12; return m; };
   const voicing = (M, c) => QUAL[c.q].map(t => { let m = M.key + c.r + t; while (m >= 67) m -= 12; while (m < 55) m += 12; return m; }).sort((a, b) => a - b);
+  // Segunda voz de la melodía: una tercera (o la distancia pedida) dentro de la escala de la pieza
+  function harmUp(M, semi, kind) {
+    if (kind !== 3) return kind;
+    const sc = M.minor ? SCALE.min : SCALE.maj, n = ((semi % 12) + 12) % 12;
+    let k = sc.findIndex(x => x >= n); if (k < 0) k = 0;
+    const up = sc[(k + 2) % 7] + (k + 2 >= 7 ? 12 : 0); return up - sc[k];
+  }
   function musicStart(st) { if (musicBus()) mDelay.delayTime.value = Math.min(1.4, st * 3); }
 
   // Toca el paso i (semicorchea) de la pieza. total: largo de la canción en pasos · signal: sin melodía ni arpegios
@@ -327,7 +356,7 @@
     for (const L of S.layers) {
       const on = L.on[p]; if (!on) continue;
       const [n, idx] = on, dur = st * n * 0.95;
-      if (L.t === 'power') power(at, fitBass(M, c.r) + 12, dur);
+      if (L.t === 'power') { if (M.G.pguit) { const r = fitBass(M, c.r) + 12; for (const m of [r, r + 7, r + 12]) voice(at, m, dur, TIMB[M.G.pguit]); } else power(at, fitBass(M, c.r) + 12, dur); }
       else if (L.t === 'chord') for (const m of voicing(M, c)) voice(at, m, dur, TIMB[L.tim]);
       else if (!signal) {   // arpegio
         const v = voicing(M, c), up = [...v, ...v.map(x => x + 12)], seq = L.down ? up.concat(up.slice(1, -1).reverse()) : up;
@@ -337,6 +366,9 @@
     // Melodía (entra en el compás 2)
     if (!signal && bar >= 2) {
       const n = S.mel.get((bar % 8) * 16 + p);
-      if (n) voice(at, M.leadBase + n.semi, st * n.len * 0.95, M.ltim, M.echo);
+      if (n) {
+        voice(at, M.leadBase + n.semi, st * n.len * 0.95, M.ltim, M.echo);
+        if (M.G.harm) voice(at, M.leadBase + n.semi + harmUp(M, n.semi, M.G.harm), st * n.len * 0.95, M.ltim, 0);   // segunda guitarra
+      }
     }
   }
