@@ -253,7 +253,7 @@
   function settle({ gain, grade, fc, notes, rows, mults = [] }) {
     const s = run.song, gal = s.gal, g = GX[gal], key = `${s.id}-${run.di}`;
     // Los tutoriales son para aprender: no dan moneda, ni materia oscura, ni eco
-    if (s.tut) { gain = 0; run.earned = 0; mults = []; notes.unshift(`Los tutoriales no dan ${g.unit} ni materia oscura: son para aprender a jugar`); }
+    if (s.tut) { gain = 0; run.earned = 0; mults = []; notes.unshift(`Los tutoriales no dan ${g.unit} ni {mo}: son para aprender a jugar`); }
     const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
     const before = { ...(S.rec[key] || {}) }, songWas = diffsOf(s).some(d => recOf(s, d)?.clear);
     const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
@@ -269,7 +269,7 @@
     const mo = s.tut ? 0 : (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult() * MO_RATE;   // el planeta que abre un tutorial tampoco da materia oscura
     S.mo += mo;
     save();
-    if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
+    if (mo > 0) notes.push(`+${dec(mo)} de {mo}`);
     if (newWorlds.length) notes.push(`Se abrió la ruta a ${newWorlds.map(wi => WORLDS[wi].name).join(' y ')}${gal === 'pulso' ? '. Aguante puede subir un nivel más' : ''}`);
     if (run.vfail) notes.push('Sin caída: el aguante se habría vaciado, así que no cuenta como superada');
     if (cleared && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
@@ -293,9 +293,9 @@
     const gradeEl = $('rGrade'), gainEl = $('rGain'), lbl = $('rGainLbl');
     gradeEl.textContent = grade; gradeEl.classList.remove('on');
     gainEl.classList.remove('pop'); gainEl.textContent = '+0';
-    lbl.textContent = `${g.curName} en la canción`;
+    lbl.innerHTML = cur(`${g.unit} en la canción`);
     $('rCalc').innerHTML = `<div class="r-mults">${steps.map(([label, m]) => `<div class="rv"><b>x${dec(m)}</b> ${label}</div>`).join('')}</div>`
-      + `<div class="r-notes rv">${notes.map(l => `<div>${l}</div>`).join('')}</div>`;
+      + `<div class="r-notes rv">${notes.map(l => `<div>${cur(l)}</div>`).join('')}</div>`;
     $('rRows').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     // Pedidos cumplidos: tarjeta con el retrato, sello de CUMPLIDO y papelitos del color de la galaxia
     $('rReqs').innerHTML = reqs.map(q => `<div class="r-req"><div class="rq-face pf">${faceSvg(q.id)}</div>
@@ -326,7 +326,7 @@
       }
       if (!alive()) return;
       await wait(250);
-      lbl.textContent = `Total · ${g.curName} ${s.gal === 'ens' ? 'ganadas' : 'ganados'}`;
+      lbl.innerHTML = cur(`Total · ${g.unit} ${s.gal === 'ens' ? 'ganadas' : 'ganados'}`);
       gainEl.textContent = '+' + fmt(paid); gainEl.classList.add('pop');
       await wait(450); if (!alive()) return;
       gradeEl.classList.add('on');

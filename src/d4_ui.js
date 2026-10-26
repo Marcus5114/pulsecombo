@@ -48,13 +48,14 @@
     $('galSvg').innerHTML = GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('galaxies').innerHTML = GALAXIES.map(g => {
       const open = !!S.galOpen[g.id], here = S.galaxy === g.id;
-      const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : !galRecsOk(g.id) ? `${recFor(g.id).length}/${recNeed(g.id)} recomendaciones` : `${g.cost} de materia oscura`;
-      return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%;--g-acc:${g.color}" aria-label="${g.name}, ${status}">
+      const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : !galRecsOk(g.id) ? `${recFor(g.id).length}/${recNeed(g.id)} recomendaciones` : `${g.cost} de {mo}`;
+      return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%;--g-acc:${g.color}" aria-label="${g.name}, ${curPlain(status)}">
         <span class="gxw"><span class="gx" data-g="${g.id}"></span></span>
         ${here ? HERE_MARK : ''}${galSel === g.id ? SEL_MARK : ''}
         <span class="pgn">${g.modeName}</span><span class="pn">${g.name}</span><span class="pp">${status}</span>
       </button>`;
     }).join('');
+    $('galaxies').innerHTML = cur($('galaxies').innerHTML);
     renderGalInfo();
     requestAnimationFrame(() => galPan.center(...pos[S.galaxy]));
   }
@@ -64,8 +65,8 @@
     const btn = here ? '<button class="play-btn" id="galGo">Ir al mapa</button>'
       : open ? '<button class="play-btn" id="galGo">Viajar</button>'
       : !galRecsOk(g.id) ? `<button class="play-btn" disabled>Faltan recomendaciones (${recFor(g.id).length}/${recNeed(g.id)})</button>`
-      : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de materia oscura</button>`
-      : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
+      : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de {mo}</button>`
+      : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de {mo}</button>`;
     $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
     const amb = AMB[g.id], [ambName, ambRole] = SPK[amb];
     const recHtml = open ? '' : (() => {
@@ -76,7 +77,8 @@
         <div class="gi-reclist">${cands.map(id => `<span class="gi-rec${got.includes(id) ? ' ok' : ''}" title="${AFF_TIERS[affTier(affState(id).pts)][1]}"><span class="pf">${faceSvg(id)}</span>${SPK[id][0]}</span>`).join('')}</div></div>`;
     })();
     $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}${recHtml}<p>${g.desc}</p>
-      <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
+      <div class="gi-stats"><span>${g.unit}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
+    $('galInfo').innerHTML = cur($('galInfo').innerHTML);
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
   $('galInfo').addEventListener('click', e => {
@@ -182,7 +184,7 @@
     ['Cómo se juzga', 'Cada toque se compara con el tiempo de la música: <b>PERFECTO</b> (±45 ms) vale una nota entera, <b>GENIAL</b> (±90 ms) 70% y <b>BIEN</b> (±135 ms) 40%. Las mejoras de margen agrandan esas ventanas.'],
     ['Estrellas y multiplicador', 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras y modificadores incluidos. Cada estrella por encima de 1 suma x0,5 a lo que ganás.'],
     ['Calificación', 'Depende solo de la precisión: S desde 95%, A desde 88%, B desde 78%, C desde 65%. Tocar donde no hay nota baja la precisión.'],
-    ['Qué ganás', 'La moneda de la galaxia, para su árbol. La primera vez que superás una dificultad, sacás S o hacés Full Combo, ganás materia oscura. Tu mejor resultado queda como eco y sigue rindiendo solo. Los tutoriales no dan recursos.'],
+    ['Qué ganás', 'La moneda de la galaxia, para su árbol. La primera vez que superás una dificultad, sacás S o hacés Full Combo, ganás {mo}. Tu mejor resultado queda como eco y sigue rindiendo solo. Los tutoriales no dan recursos.'],
   ];
   const RULES = {
     arrows: [['Objetivo', 'Tocá cada flecha justo cuando llega a los receptores de arriba.'],
@@ -256,11 +258,12 @@
       }
       return h + '</div>';
     }).join('');
+    $('songs').innerHTML = cur($('songs').innerHTML);
     const c = getChart(S.sel, S.diff);
     $('playBtn').textContent = `Jugar “${SONGS[S.sel].name}” · ${DIFFS[S.diff].name} ${dec1(c.stars)}★`;
     $('keycfg').hidden = !(mode === 'arrows' && S.diff === 3);
-    $('rulesBox').innerHTML = [...RULES[mode], ...RULES_COMMON].map(([t, d]) => `<section><h3>${t}</h3><p>${d}</p></section>`).join('')
-      + `<section><h3>Dificultad elegida</h3><p>${diffInfo(SONGS[S.sel], S.diff)}</p></section>`;
+    $('rulesBox').innerHTML = cur([...RULES[mode], ...RULES_COMMON].map(([t, d]) => `<section><h3>${t}</h3><p>${d}</p></section>`).join('')
+      + `<section><h3>Dificultad elegida</h3><p>${diffInfo(SONGS[S.sel], S.diff)}</p></section>`);
     const nMods = activeMods(SONGS[S.sel]).length;
     $('modCount').hidden = !nMods; $('modCount').textContent = nMods;
     for (const side of ['L', 'R']) {
@@ -284,13 +287,22 @@
   }
   // Tarjetas laterales del menú: Reglas (izquierda), Mecánicas y Modificadores (derecha)
   const CARD_TITLE = { rules: 'Reglas', mech: 'Mecánicas', mods: 'Modificadores' };
+  // Reglas es un cajón lateral (tiene mucho texto); Mecánicas y Modificadores, tarjetas flotantes junto a su botón.
+  // En el celular, las tres suben como hoja desde abajo.
   function sideCard(name) {
-    const card = $('sideCard'), on = !!name;
-    card.classList.toggle('open', on); $('sideBack').classList.toggle('open', on);
+    const card = $('sideCard'), on = !!name, pop = on && name !== 'rules';
+    card.classList.toggle('open', on); $('sideBack').classList.toggle('open', on); $('sideBack').classList.toggle('pop', pop);
     document.querySelectorAll('.side-btn').forEach(b => b.setAttribute('aria-expanded', String(b.dataset.card === name)));
+    card.style.left = card.style.top = '';
     if (!on) return;
-    card.dataset.side = name === 'rules' ? 'l' : 'r'; $('scTitle').textContent = CARD_TITLE[name];
+    card.dataset.side = name === 'rules' ? 'l' : 'pop'; $('scTitle').textContent = CARD_TITLE[name];
     card.querySelectorAll('.sc-body').forEach(b => { b.hidden = b.dataset.card !== name; });
+    if (pop && innerWidth > 640) {
+      const r = document.querySelector(`.side-btn[data-card="${name}"]`).getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight, m = 12;
+      const x = Math.max(m, Math.min(r.left, innerWidth - w - m));
+      let y = r.bottom + 8; if (y + h > innerHeight - m) y = Math.max(m, r.top - h - 8);
+      card.style.left = x + 'px'; card.style.top = y + 'px';
+    }
     $('scClose').focus();
   }
   document.querySelectorAll('.side-btn').forEach(b => b.addEventListener('click', () => sideCard($('sideCard').classList.contains('open') && $('sideCard').querySelector(`.sc-body[data-card="${b.dataset.card}"]`).hidden === false ? null : b.dataset.card)));
@@ -336,7 +348,7 @@
     $('coreGrid').innerHTML = T.nodes.filter(n => n.br === 'core').map(nodeBtn).join('');
     $('branches').className = 'branches' + (T.branches.length === 2 ? ' two' : '');
     $('branches').innerHTML = T.branches.map(b => `<div class="branch" data-br="${b.id}">
-        <div><h3>${b.name}</h3><p>${b.tag}</p></div>
+        <div><h3>${b.name}</h3><p>${cur(b.tag)}</p></div>
         <div class="bgrid">${T.nodes.filter(n => n.br === b.id).map(nodeBtn).join('')}</div>
       </div>`).join('');
   }
@@ -414,14 +426,15 @@
     $('treeSvg').innerHTML = out;
   }
   if (window.ResizeObserver) new ResizeObserver(() => { if (view === 'tree') drawLines(); }).observe(tree);
-  const walletUnit = tid => tid === 'global' ? 'de materia oscura' : GX[tid].unit;
+  const walletUnit = tid => tid === 'global' ? 'de {mo}' : GX[tid].unit;
   function renderDetail() {
     const n = N[selNode]; if (!n) return;
     const lv = L(n.id), isMax = maxed(n), T = TREES[n.tree];
     $('dBr').textContent = `${BR_NAME[n.br]}${n.isCore ? '' : ' · ' + (n.max ? `nivel ${lv}/${n.max}` : `nivel ${lv}`)}`;
     $('dName').textContent = n.name;
-    $('dDesc').textContent = n.desc;
+    $('dDesc').innerHTML = cur(n.desc);
     $('dFx').innerHTML = n.isCore ? '' : `<div><span>Ahora</span>${TOGGLES[n.id] && lv && isOff(n.id) ? 'Apagada en canciones' : n.fx(lv)}</div>` + (isMax ? '' : `<div><span>Siguiente</span>${n.fx(lv + 1)}</div>`);
+    $('dFx').innerHTML = cur($('dFx').innerHTML);
     const reqs = (n.req || []).filter(([id]) => !CORE_IDS.has(id));
     $('dReq').innerHTML = reqs.length ? 'Requiere: ' + reqs.map(([id, r]) => {
       const ok = L(id) >= r;
@@ -440,7 +453,7 @@
     if (isMax) { btn.disabled = true; btn.textContent = 'Al máximo'; }
     else if (!reqMet(n)) { btn.disabled = true; btn.textContent = 'Bloqueado'; }
     else if (capped(n)) { btn.disabled = true; btn.textContent = 'Abrí otro planeta'; }
-    else { const c = nodeCost(n, lv); btn.disabled = S[T.wallet] < c; btn.textContent = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)}${n.tree === 'global' ? ' MO' : ''}`; }
+    else { const c = nodeCost(n, lv); btn.disabled = S[T.wallet] < c; btn.innerHTML = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)} ${curIcon(n.tree === 'global' ? 'mo' : GX[n.tree].cur)}`; }
   }
   // Modificadores de la galaxia: chips que se encienden y muestran cuántas estrellas suman o restan
   function renderMods(gal) {
@@ -479,8 +492,9 @@
     const box = $('condBox'); if (treeId === 'global') { box.hidden = true; return; }
     const g = GX[treeId], c = condCost(treeId), n = S.cond[treeId] || 0, ok = S[g.cur] >= c;
     box.hidden = false;
-    box.innerHTML = `<div><b>Condensador</b><span>Convertí ${g.unit} en materia oscura. Cada condensación cuesta 6% más${n ? ` · llevás ${n}` : ''}.</span></div>
-      <button class="play-btn" id="condBtn" ${ok ? '' : 'disabled'}>+1 materia oscura · ${fmt(c)} ${g.unit}</button>`;
+    box.innerHTML = `<div><b>Condensador</b><span>Convertí ${g.unit} en {mo}. Cada condensación cuesta 6% más${n ? ` · llevás ${n}` : ''}.</span></div>
+      <button class="play-btn" id="condBtn" ${ok ? '' : 'disabled'}>+1 {mo} · ${fmt(c)} ${g.unit}</button>`;
+    box.innerHTML = cur(box.innerHTML);
   }
   $('condBox').addEventListener('click', e => {
     if (e.target.id !== 'condBtn' || treeId === 'global') return;
@@ -491,7 +505,7 @@
   function renderRespec(confirming) {
     renderCond();
     const spent = spentOnTree(treeId), back = Math.floor(spent * REFUND), u = walletUnit(treeId);
-    $('spentInfo').textContent = `${TREES[treeId].title} · invertido: ${fmt(spent)} ${u}`;
+    $('spentInfo').innerHTML = cur(`${TREES[treeId].title} · invertido: ${fmt(spent)} ${u}`);
     $('respecBox').innerHTML = !spent ? ''
       : confirming
         ? `<span>Recuperás ${fmt(back)} de ${fmt(spent)} (40%). ¿Seguro?</span><button class="play-btn" id="respecYes">Sí, reiniciar</button><button class="ghost-btn" id="respecNo">Cancelar</button>`
@@ -518,11 +532,11 @@
   function renderUI(force) {
     const now = performance.now(); if (!force && now - lastUI < 250) return; lastUI = now;
     const g = GX[S.galaxy], rate = ecoRate(g.id);
-    $('curName').textContent = g.curName;
+    $('curName').innerHTML = cur(g.unit);
     $('pts').textContent = fmt(S[g.cur]);
-    $('rate').textContent = view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos';
-    $('moLine').innerHTML = `Materia oscura: <b>${Math.floor(S.mo)}</b>`;
-    $('tot').textContent = `Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`;
+    $('rate').innerHTML = cur(view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos');
+    $('moLine').innerHTML = cur(`{mo}: <b>${Math.floor(S.mo)}</b>`);
+    $('tot').innerHTML = cur(`Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`);
     const nb = TREES[S.galaxy].nodes.filter(canBuy).length, ng = TREES.global.nodes.filter(canBuy).length;
     $('badge').hidden = !nb; $('badge').textContent = nb;
     $('badgeG').hidden = !ng; $('badgeG').textContent = ng;
@@ -651,7 +665,7 @@
   }
   function boot() {
     applyLand();
-    if (offlineNote) { $('noticeText').textContent = offlineNote; $('notice').hidden = false; }
+    if (offlineNote) { $('noticeText').innerHTML = cur(offlineNote); $('notice').hidden = false; }
     storyInit(); setView(S.story.prologue ? 'map' : 'gal'); requestAnimationFrame(frame);
   }
   document.fonts?.ready?.then(() => { resize(); if (view === 'tree') drawLines(); });

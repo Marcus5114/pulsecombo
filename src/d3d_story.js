@@ -108,26 +108,98 @@
   const AMB = { pulso: 'kadenza', ens: 'tesela', sen: 'eco7', com: 'vaiven' };
   const faceSvg = id => `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="49" class="bg"/>${FACE[id]}</svg>`;
 
-  // Frases de cada representante: al entrar (idle) y como reacción en la partida
+  // Frases de cada representante: al entrar (idle) y como reacción en la partida (cinco por juicio, se eligen al azar sin repetir la anterior)
   const QUIPS = {
-    bip:        { idle: 'Protocolo listo. Bip.', perfect: 'Exacto. Bip.', great: 'Aceptable. Bip.', good: 'Dentro del margen.', miss: 'Error 404. Bip.', fever: '¡SOBRECARGA! Bip.' },
-    brasa:      { idle: '¡¿Listos para el riff?!', perfect: '¡ROCK AND ROLL!', great: '¡Eso, eso!', good: '¡Más fuerte!', miss: '¡Se cortó una cuerda!', fever: '¡QUE ARDA TODO!' },
-    lumi:       { idle: '¿Cantamos? ♥', perfect: '¡Perfecto! ♥♥', great: '¡Brillante!', good: 'Casi, casi…', miss: 'Ups, desafinamos', fever: '¡Todos juntos! ♥' },
-    duque:      { idle: 'La pista es tuya.', perfect: 'Divino.', great: 'Con estilo.', good: 'Le falta brillo…', miss: 'Ay, se rayó el disco', fever: '¡Fiebre de sábado!' },
-    neutron:    { idle: '¿LISTOS PARA EL DROP?', perfect: '¡DROP!', great: '¡ARRIBA ESAS MANOS!', good: 'Subí el volumen', miss: '¿SE CORTÓ EL AUDIO?', fever: '¡¡BASS BOOST!!' },
-    smokey:     { idle: 'Sin apuro, gato.', perfect: 'Swing puro.', great: 'Groovy.', good: 'Más suelto…', miss: 'Nota azul… muy azul', fever: '¡Improvisá!' },
-    grua:       { idle: '¡Casco puesto!', perfect: '¡Encastre perfecto!', great: 'Bien soldado.', good: 'Revisá el nivel', miss: '¡Pieza suelta!', fever: '¡Turno doble!' },
-    remache:    { idle: 'Sentí el groove.', perfect: '¡Funky!', great: 'Ahí está el bajo', good: 'Más cadera…', miss: 'Se zafó un tornillo', fever: '¡A bailar!' },
-    yunque:     { idle: 'Martillo listo.', perfect: 'Golpe exacto.', great: 'Acero firme.', good: 'Le falta temple', miss: 'Chispa perdida', fever: '¡Fundición total!' },
-    vector:     { idle: 'Ruta: 1986.', perfect: 'Neón perfecto.', great: 'Radical.', good: 'Rebobiná un poco', miss: 'Se trabó el casete', fever: '¡Velocidad de escape!' },
-    estatica:   { idle: 'Sintonizando…', perfect: 'Señal clara.', great: 'Buena recepción', good: 'Hay interferencia', miss: 'Se perdió la señal', fever: '¡Frecuencia máxima!' },
-    bruma:      { idle: 'Respirá…', perfect: 'Armonía.', great: 'Fluye…', good: 'Casi en calma', miss: 'Una ola rompió', fever: 'Todo resuena…' },
-    nubi:       { idle: 'Estudiemos un rato.', perfect: 'Chill total.', great: 'Buen beat.', good: 'Se enfrió el té', miss: 'Se despertó el gato', fever: '¡Modo concentración!' },
-    morse:      { idle: '·— ·—· ·—·', perfect: 'Código correcto.', great: 'Transmitido.', good: 'Ruido en la línea', miss: 'Paquete perdido', fever: '¡Sobrecarga eléctrica!' },
-    relojero:   { idle: 'Tic… tac…', perfect: 'Como un reloj.', great: 'Bien templado.', good: 'Un segundo tarde', miss: 'Se atrasó…', fever: '¡Tiempo de oro!' },
-    garua:      { idle: 'Devagar, devagar…', perfect: 'Que lindo.', great: 'Suave…', good: 'Más saudade', miss: 'Ay, llovió', fever: '¡Carnaval!' },
-    compadre:   { idle: 'Che, ¿bailamos?', perfect: '¡Qué firulete!', great: 'Con garra.', good: 'Más arrastre', miss: 'Me pisaste', fever: '¡Milonga brava!' },
-    rompeondas: { idle: 'Ajustate el casco.', perfect: '¡Velocidad pura!', great: 'Rompiendo.', good: 'Más rápido', miss: 'Te pasé', fever: '¡Hiperdrive!' },
+    bip: { idle: "Protocolo listo. Bip.", fever: "¡SOBRECARGA! Bip.",
+      perfect: ['Exacto. Bip.', 'Precisión: 100 %. Bip.', 'Registrado como ejemplar.', 'Bip bip. Bip.', 'Calibración perfecta.'],
+      great: ['Aceptable. Bip.', 'Dentro de parámetros.', 'Correcto. Casi exacto.', 'Rendimiento: satisfactorio.', 'Bip. Muy bien.'],
+      good: ['Dentro del margen.', 'Margen de error: tolerable.', 'Recalibrando…', 'Sugerencia: escuchar el bombo.', 'Bip… mejorable.'],
+      miss: ['Error 404. Bip.', 'Excepción no controlada.', 'Reiniciando… no, sigue.', 'Bip. Eso no estaba en el manual.', 'Falla registrada. Sin culpa.'] },
+    brasa: { idle: "¡¿Listos para el riff?!", fever: "¡QUE ARDA TODO!",
+      perfect: ['¡ROCK AND ROLL!', '¡ESO ES METAL!', '¡Solo de guitarra!', '¡Hasta el fondo del volcán!', '¡Encore, encore!'],
+      great: ['¡Eso, eso!', '¡Así se pega!', '¡Puro distorsión!', '¡Bien ahí, rocker!', '¡Sube la lava!'],
+      good: ['¡Más fuerte!', '¡No te oigo!', '¡Pegale con ganas!', '¡Le falta fuego!', '¡Más volumen, más!'],
+      miss: ['¡Se cortó una cuerda!', '¡Feedback!', '¡Se apagó el ampli!', '¡Uy, desafinó!', '¡Seguí, que el show sigue!'] },
+    lumi: { idle: "¿Cantamos? ♥", fever: "¡Todos juntos! ♥",
+      perfect: ['¡Perfecto! ♥♥', '¡Sos una estrella!', '¡Nota alta! ♪', '¡Quiero un autógrafo!', '¡Brillás como prisma!'],
+      great: ['¡Brillante!', '¡Qué lindo! ♥', '¡Así me gusta!', '¡Al ritmo del estribillo!', '¡Casi de póster!'],
+      good: ['Casi, casi…', '¡Vos podés! ♥', 'Un poquito antes…', '¡Más sonrisa!', 'Ensayemos otra vez'],
+      miss: ['Ups, desafinamos', '¡Ay, se cayó el micro!', 'No pasa nada ♥', 'Eso no va al video', '¡Retomamos en el coro!'] },
+    duque: { idle: "La pista es tuya.", fever: "¡Fiebre de sábado!",
+      perfect: ['Divino.', 'Sublime, querida estrella.', 'Brillás más que mi peinado.', 'Eso merece aplausos.', 'Exquisito.'],
+      great: ['Con estilo.', 'Muy elegante.', 'Ese paso tiene clase.', 'La bola de espejos aprueba.', 'Glamoroso.'],
+      good: ['Le falta brillo…', 'Más lentejuela, por favor.', 'Un poco de swing en la cadera.', 'Casi a la moda.', 'Mmm, retocá ese paso.'],
+      miss: ['Ay, se rayó el disco', 'Tropezaste con la plataforma', 'Qué escándalo…', 'Fingí que fue a propósito', 'La pista perdona. Yo, casi.'] },
+    neutron: { idle: "¿LISTOS PARA EL DROP?", fever: "¡¡BASS BOOST!!",
+      perfect: ['¡DROP!', '¡ESO ESTÁ EN LA PLAYLIST!', '¡FRECUENCIA PERFECTA!', '¡LA PISTA EXPLOTA!', '¡MAX VOLUMEN!'],
+      great: ['¡ARRIBA ESAS MANOS!', '¡SUBE, SUBE!', '¡BUEN BUILD-UP!', '¡ESO SUENA GORDO!', '¡SIGAN SALTANDO!'],
+      good: ['Subí el volumen', '¡MÁS ENERGÍA!', 'EL BPM NO ESPERA', '¡CASI EN EL BEAT!', '¡SINCRONIZÁ!'],
+      miss: ['¿SE CORTÓ EL AUDIO?', '¡ERROR EN LA CONSOLA!', '¡SE ME CAYÓ EL CASCO!', '¡SILENCIO INCÓMODO!', '¡REMIX DE EMERGENCIA!'] },
+    smokey: { idle: "Sin apuro, gato.", fever: "¡Improvisá!",
+      perfect: ['Swing puro.', 'Eso es jazz.', 'Perfecto en el dos y el cuatro.', 'Me sacaste el sombrero.', 'Fino, fino.'],
+      great: ['Groovy.', 'Lindo fraseo.', 'Así se camina.', 'Tiene sabor.', 'Me gusta ese tono.'],
+      good: ['Más suelto…', 'Relajá la muñeca.', 'Respirá con la frase.', 'Casi en el pocket.', 'Un pelito tarde, gato.'],
+      miss: ['Nota azul… muy azul', 'Bueno, eso fue free jazz', 'Ups, contratiempo', 'Hacé como que fue intencional', 'El silencio también cuenta'] },
+    grua: { idle: "¡Casco puesto!", fever: "¡Turno doble!",
+      perfect: ['¡Encastre perfecto!', '¡Obra de arte!', '¡Así se construye!', '¡Ni un milímetro de luz!', '¡Aprobado por inspección!'],
+      great: ['Bien soldado.', 'Firme.', 'Buen trabajo, operario.', 'Así se apila.', 'Seguimos en horario.'],
+      good: ['Revisá el nivel', 'Un poco torcido…', 'Ajustá esa grúa', 'Ojo con el ritmo', 'Casi a plomo'],
+      miss: ['¡Pieza suelta!', '¡Cuidado abajo!', '¡Pare la obra!', 'Eso va a reclamo', '¡Silbato! Otra vez'] },
+    remache: { idle: "Sentí el groove.", fever: "¡A bailar!",
+      perfect: ['¡Funky!', '¡Qué groove!', '¡Eso tiene onda!', '¡Bajo y batería, hermano!', '¡Clavado en el uno!'],
+      great: ['Ahí está el bajo', 'Buena onda', 'Se mueve, se mueve', 'Así encastra el funk', 'Me gusta ese paso'],
+      good: ['Más cadera…', 'Aflojá un poco', 'Seguí el bajo', 'Casi en el bolsillo', 'Soltá los hombros'],
+      miss: ['Se zafó un tornillo', 'Uh, se trabó la tuerca', 'Eso no tiene groove', 'Chatarra a la chatarra', 'Respirá y volvemos'] },
+    yunque: { idle: "Martillo listo.", fever: "¡Fundición total!",
+      perfect: ['Golpe exacto.', 'Forja perfecta.', 'Acero de primera.', 'Templado al punto.', 'Sin una grieta.'],
+      great: ['Acero firme.', 'Buen golpe.', 'Sólido.', 'Bien forjado.', 'Resistente.'],
+      good: ['Le falta temple', 'Pegale más fuerte', 'Calentá el metal', 'Casi en el yunque', 'Medio torcido'],
+      miss: ['Chispa perdida', 'Se partió la pieza', 'Martillazo en el dedo', 'A refundir', 'Mal temple'] },
+    vector: { idle: "Ruta: 1986.", fever: "¡Velocidad de escape!",
+      perfect: ['Neón perfecto.', 'Totalmente radical.', 'Récord en la arcade.', 'Brillo de atardecer digital.', 'Wow. Wow.'],
+      great: ['Radical.', 'Tubular.', 'Bien sintetizado.', 'Ochentoso.', 'Cromado.'],
+      good: ['Rebobiná un poco', 'Casi en la grilla', 'Ajustá el tracking', 'Más reverb', 'Un poco desfasado'],
+      miss: ['Se trabó el casete', 'Game over… no, sigue', 'Pixel muerto', 'Se cortó la luz del neón', 'Error de VHS'] },
+    estatica: { idle: "Sintonizando…", fever: "¡Frecuencia máxima!",
+      perfect: ['Señal clara.', 'Recepción perfecta.', 'Cinco por cinco.', 'Fuerte y claro.', 'Sin una interferencia.'],
+      great: ['Buena recepción', 'Se escucha bien', 'Copiado', 'En frecuencia', 'Clara, casi'],
+      good: ['Hay interferencia', 'Movete un poco la antena', 'Leve estática', 'Recepción baja', 'Repetí, por favor'],
+      miss: ['Se perdió la señal', 'Ksssh… nada', 'Fuera de frecuencia', 'Llamada caída', 'Sin cobertura'] },
+    bruma: { idle: "Respirá…", fever: "Todo resuena…",
+      perfect: ['Armonía.', 'Calma perfecta.', 'Como una ola tranquila.', 'Eso flotó.', 'Resonancia pura.'],
+      great: ['Fluye…', 'Suave…', 'Bien llevado.', 'En calma.', 'Lindo eco.'],
+      good: ['Casi en calma', 'Respirá más lento', 'Un poquito de prisa', 'Dejate llevar', 'La ola llega sola'],
+      miss: ['Una ola rompió', 'Ruido en la niebla', 'Se disipó…', 'Volvé a respirar', 'El silencio te espera'] },
+    nubi: { idle: "Estudiemos un rato.", fever: "¡Modo concentración!",
+      perfect: ['Chill total.', 'Beat perfecto.', 'Así se estudia.', 'El gato ronronea.', '10 de 10.'],
+      great: ['Buen beat.', 'Tranqui y bien.', 'Me gusta.', 'Va bien la tarde.', 'Vibes.'],
+      good: ['Se enfrió el té', 'Medio dormido…', 'Un sorbo de té y seguimos', 'Casi', 'Concentración…'],
+      miss: ['Se despertó el gato', 'Se volcó el té', 'Uh, se rayó el vinilo', 'Pausa… no, sigue', 'Mmm, otra vuelta'] },
+    morse: { idle: "·— ·—· ·—·", fever: "¡Sobrecarga eléctrica!",
+      perfect: ['Código correcto.', '·—·—· PERFECTO.', 'Transmisión impecable.', 'Paquete íntegro.', 'Bits en su lugar.'],
+      great: ['Transmitido.', 'Recibido.', 'Señal estable.', 'Acuse de recibo.', 'Datos válidos.'],
+      good: ['Ruido en la línea', 'Bit corrupto', 'Reintentando…', 'Latencia detectada', 'Checksum dudoso'],
+      miss: ['Paquete perdido', 'Conexión reiniciada', '—·—· ERROR —·—·', 'Timeout', 'Señal fuera de banda'] },
+    relojero: { idle: "Tic… tac…", fever: "¡Tiempo de oro!",
+      perfect: ['Como un reloj.', 'Precisión suiza.', 'Ni un segundo de más.', 'Exacto al tic.', 'Engranaje perfecto.'],
+      great: ['Bien templado.', 'Buen pulso.', 'Casi exacto.', 'Marcha bien.', 'Correcto.'],
+      good: ['Un segundo tarde', 'Dele cuerda', 'Ajuste el péndulo', 'Se adelantó un poco', 'Más paciencia'],
+      miss: ['Se atrasó…', 'Se trabó el engranaje', 'Hay que darle cuerda', 'Tic… ¿y el tac?', 'Desfasado'] },
+    garua: { idle: "Devagar, devagar…", fever: "¡Carnaval!",
+      perfect: ['Que lindo.', 'Que maravilha.', 'Suave como la arena.', 'Así se toca bossa.', 'Me hiciste suspirar.'],
+      great: ['Suave…', 'Bonito.', 'Con calma.', 'Linda brisa.', 'Bien.'],
+      good: ['Más saudade', 'Sin apuro…', 'Dejate llevar', 'Un poquito más suave', 'Casi, casi'],
+      miss: ['Ay, llovió', 'Se mojó la guitarra', 'Se cortó la brisa', 'No pasa nada, amor', 'Seguimos en la orilla'] },
+    compadre: { idle: "Che, ¿bailamos?", fever: "¡Milonga brava!",
+      perfect: ['¡Qué firulete!', '¡Eso es tango, viejo!', '¡Ocho perfecto!', '¡De película!', '¡Bandoneón de oro!'],
+      great: ['Con garra.', 'Bien plantado.', 'Así se marca.', 'Linda caminada.', 'Con arrabal.'],
+      good: ['Más arrastre', 'Abrazá la música', 'Pisá firme', 'Medio tímido, pibe', 'Casi en el compás'],
+      miss: ['Me pisaste', 'Se cortó el fuelle', 'Se te fue la pareja', 'Eso fue un tropezón', 'Volvé a la ronda'] },
+    rompeondas: { idle: "Ajustate el casco.", fever: "¡Hiperdrive!",
+      perfect: ['¡Velocidad pura!', '¡Rompiste la barrera!', '¡Más rápido que el sonido!', '¡Eso fue un rayo!', '¡Imparable!'],
+      great: ['Rompiendo.', '¡Vamos!', 'Buen ritmo.', 'Sigue, sigue.', '¡Rápido!'],
+      good: ['Más rápido', 'No frenes', '¡Acelerá!', 'Casi lo agarrás', 'Seguime'],
+      miss: ['Te pasé', '¡Derrapaste!', 'Wipeout', '¡Volvé al carril!', 'Uf, quedaste atrás'] },
   };
   const repOf = wi => REP[WORLDS[wi].id] || 'cora';
 
@@ -170,13 +242,19 @@
     el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, QUIPS[rxId]?.idle || ''));
     el.querySelector('.rx-name').textContent = SPK[rxId][0];
   }
+  // Elige una reacción al azar entre las cinco, sin repetir la última
+  let lastQuip = '';
+  function quipFor(id, kind) {
+    const q = QUIPS[id]?.[kind]; if (!Array.isArray(q)) return q || '';
+    const pool = q.filter(x => x !== lastQuip); lastQuip = pool[Math.floor(Math.random() * pool.length)] || q[0]; return lastQuip;
+  }
   function reactTo(j) {
     const kind = j === 'fever' ? 'fever' : REACT[j]; if (!kind || !rxId) return;
     const el = $('reactor'), now = performance.now();
     el.classList.remove('r-perfect', 'r-great', 'r-good', 'r-miss', 'r-fever'); void el.offsetWidth; el.classList.add('r-' + kind);
     // la frase cambia como mucho una vez por segundo, salvo fallo o fiebre, que siempre se dicen
-    if (kind !== rxKind && (now - rxSayAt > 1000 || kind === 'miss' || kind === 'fever')) {
-      rxSayAt = now; rxKind = kind; el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, QUIPS[rxId]?.[kind] || ''));
+    if ((kind !== rxKind && (now - rxSayAt > 1000 || kind === 'miss' || kind === 'fever')) || now - rxSayAt > 1800) {   // con racha del mismo juicio, cambia de frase cada ~2 s
+      rxSayAt = now; rxKind = kind; el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, quipFor(rxId, kind)));
     }
   }
 
@@ -200,7 +278,7 @@
     gal_intro: [
       ['cora', 'Este es el Cúmulo. Las galaxias apagadas todavía no confían en nosotros.'],
       ['cora', 'La más cercana es Vía Pulso. Ahí se habla con flechas: cada dirección es una palabra y cada combo, una frase.'],
-      ['cora', 'Para abrir las demás vamos a necesitar materia oscura. Se gana con hitos: superar canciones, sacar S, hacer Full Combo.'],
+      ['cora', 'Para abrir las demás vamos a necesitar {mo}. Se gana con hitos: superar canciones, sacar S, hacer Full Combo.'],
       ['cora', 'Su embajadora es Kadenza. Sabe algo de idioma terrestre, pero no mucho. Yo traduzco lo que falte.'],
       ['cora', 'Cuando quieras, tocá Ir al mapa. Yo ya cargué combustible. Mentira, la nave funciona con ritmo.'],
     ],
@@ -286,7 +364,7 @@
     // Embajadores: cuando reunís las recomendaciones para la galaxia vecina
     ref_pulso_ens: [
       ['kadenza', '↑ ↑ Te recomiendan ↑ ↑. → → Ensamble → espera. Tesela… ▙▟? ← Construye ←.'],
-      ['cora', 'Kadenza ya le avisó a Tesela. Con la materia oscura suficiente, Ensamble se abre en el mapa de galaxias.'],
+      ['cora', 'Kadenza ya le avisó a Tesela. Con la {mo} suficiente, Ensamble se abre en el mapa de galaxias.'],
     ],
     ref_pulso_sen: [
       ['kadenza', '↗ ↗ Muchas voces ↑ hablan de vos. ↘ Señal ↘ escucha. Eco-7… ∿ repite ∿.'],
@@ -384,7 +462,7 @@
   const GLYPHS = /([←↑→↓↖↗↘↙]+|[▀▄█▙▚▛▜▝▞▟▖▗▘]+|[∿〰]+|[◐◑◇]+|kssh)/g;
   const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const paintGlyphs = t => esc(t).replace(GLYPHS, '<span class="glyph">$1</span>');
-  const dlgPaint = t => { $('dlgText').innerHTML = paintGlyphs(t); };
+  const dlgPaint = t => { $('dlgText').innerHTML = cur(paintGlyphs(t.replace(/\{[a-z]*$/, ''))); };   // fichas de moneda con ícono (sin mostrar una ficha a medio escribir)
   function dlgNext() {
     clearInterval(dlgTimer);
     dlgLine = dlgQueue.shift();

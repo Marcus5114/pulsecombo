@@ -10,19 +10,25 @@
     while (n >= 1000 && i < u.length - 1) { n /= 1000; i++; }
     return n.toFixed(n < 100 ? 1 : 0).replace('.', ',') + u[i];
   };
+  // Monedas: siempre con mayúscula y su ícono. En los textos se escriben como fichas {pts}, {piezas}, {datos}, {giros}, {mo}
+  const CUR_NAME = { pts: 'Pulsos', piezas: 'Piezas', datos: 'Datos', giros: 'Giros', mo: 'Materia Oscura' };
+  const curIcon = k => `<i class="ci" data-c="${k}" aria-hidden="true"></i>`;
+  const curTag = k => `<span class="cur" data-c="${k}">${CUR_NAME[k]}${curIcon(k)}</span>`;
+  const curPlain = t => String(t).replace(/\{(pts|piezas|datos|giros|mo)\}/g, (_, k) => CUR_NAME[k]);   // para atributos (aria-label, title)
+  const cur = t => String(t).replace(/\{(pts|piezas|datos|giros|mo)\}/g, (_, k) => curTag(k));
   const fmtRate = r => r < 10 ? dec1(r) : fmt(r);
   const fmtTime = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return h ? `${h} h ${m} min` : `${m}:${String(ss).padStart(2, '0')}`; };
 
   // ---------- Galaxias ----------
   // Cada galaxia cambia la forma de jugar (mode), tiene su moneda (cur = campo en el estado) y su árbol.
   const GALAXIES = [
-    { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: 'pulsos', cost: 0, need: 4, cond: 30000, color: '#5cd0e6',
+    { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: '{pts}', cost: 0, need: 4, cond: 30000, color: '#5cd0e6',
       desc: 'Flechas que suben hasta los receptores al ritmo de cada género. Cinco planetas, cinco estilos.' },
-    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', recs: 2, cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2, cond: 800, color: '#ff8c5a',
-      desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar piezas.' },
-    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', recs: 3, cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
-      desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
-    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', recs: 3, cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
+    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', recs: 2, cur: 'piezas', curName: 'Piezas', unit: '{piezas}', cost: 5, need: 2, cond: 800, color: '#ff8c5a',
+      desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar {piezas}.' },
+    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', recs: 3, cur: 'datos', curName: 'Datos', unit: '{datos}', cost: 5, need: 2, cond: 800, color: '#b892ff',
+      desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da {datos}.' },
+    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', recs: 3, cur: 'giros', curName: 'Giros', unit: '{giros}', cost: 8, need: 2, cond: 800, color: '#f2c14e',
       desc: 'Dos planetas unidos sobre un panal de baldosas. El que gira recorre una órbita hexagonal, un lado por corchea: contá los lados hasta la próxima baldosa y tocá al llegar.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
@@ -141,29 +147,29 @@
       ],
       nodes: [
         { id: 'core', br: 'core', name: 'Núcleo', max: 1, desc: 'El punto de partida. De acá salen las mejoras generales y las tres ramas.', fx: () => 'Activo' },
-        { id: 'base', br: 'core', parent: 'core', name: 'Pulso base', cost: [10, 1.8], desc: 'Cada flecha que acertás vale más pulsos.', fx: lv => `${1 + lv} pulsos por flecha` },
+        { id: 'base', br: 'core', parent: 'core', name: 'Pulso base', cost: [10, 1.8], desc: 'Cada flecha que acertás vale más {pts}.', fx: lv => `${1 + lv} {pts} por flecha` },
         { id: 'win',  br: 'core', parent: 'core', name: 'Ventana', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing de todos los juicios.', fx: lv => `+${10 * lv}% de margen` },
         { id: 'life', br: 'core', parent: 'core', name: 'Aguante', max: 5, cap: () => genreWorldsOpen('pulso'), cost: [180, 7.3], desc: 'Los fallos vacían menos la barra de aguante. Se puede mejorar un nivel por cada planeta que tengas abierto en Vía Pulso.', fx: lv => `Un fallo resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'x_root', br: 'x', pos: [2, 1], root: true, name: 'Contratiempos', max: 1, cost: [100, 1], req: [['core', 1]], desc: 'Aparecen notas extra de color entre los tiempos. Son opcionales: si las dejás pasar no perdés combo ni aguante.', fx: lv => lv ? 'Notas extra activas' : 'Sin notas extra' },
-        { id: 'x_val',  br: 'x', pos: [1, 2], name: 'Brillo', max: 5, cost: [280, 6.6], req: [['x_root', 1]], desc: 'Las notas extra valen más pulsos.', fx: lv => `Valen ${50 + 25 * lv}% de una flecha` },
+        { id: 'x_val',  br: 'x', pos: [1, 2], name: 'Brillo', max: 5, cost: [280, 6.6], req: [['x_root', 1]], desc: 'Las notas extra valen más {pts}.', fx: lv => `Valen ${50 + 25 * lv}% de una flecha` },
         { id: 'x_dens', br: 'x', pos: [3, 2], name: 'Densidad', max: 4, cost: [360, 7.3], req: [['x_root', 1]], desc: 'Aparecen más notas extra en cada canción.', fx: lv => `${100 + 25 * lv}% de notas extra` },
         { id: 'x_combo', br: 'x', pos: [1, 3], name: 'Encadenar', max: 1, cost: [250, 1], req: [['x_val', 1]], desc: 'Las notas extra que tocás suman al combo.', fx: lv => lv ? 'Suman combo' : 'No suman combo' },
         { id: 'x_semi', br: 'x', pos: [3, 3], name: 'Semicorcheas', max: 1, cost: [300, 1], req: [['x_dens', 2]], desc: 'Aparecen notas extra más rápidas, en semicorcheas. En Difícil y Doble forman escaleras de notas extra.', fx: lv => lv ? 'Activas' : 'Inactivas' },
         { id: 'x_life', br: 'x', pos: [1, 4], name: 'Respiro', max: 3, cost: [480, 8], req: [['x_combo', 1]], desc: 'Cada nota extra que tocás recupera aguante.', fx: lv => lv ? `+${dec(1.5 * lv)} de aguante por nota` : 'Sin recuperación' },
-        { id: 'x_gold', br: 'x', pos: [2, 5], parent: 'x_semi', name: 'Fiebre', max: 3, cost: [2400, 11.5], req: [['x_semi', 1]], desc: 'Tocar 8 notas extra seguidas activa la fiebre: todos los pulsos valen el doble por unos segundos.', fx: lv => lv ? `x2 durante ${3 + 2 * lv} s` : 'Sin fiebre' },
-        { id: 'c_root', br: 'c', pos: [2, 1], root: true, name: 'Contador de combo', max: 1, cost: [80, 1], req: [['core', 1]], desc: 'El combo empieza a multiplicar tus pulsos. Llegar a 10 de combo te da el Rango I (x1,5).', fx: lv => lv ? 'Rango I: 10 de combo → x1,5' : 'El combo no multiplica' },
+        { id: 'x_gold', br: 'x', pos: [2, 5], parent: 'x_semi', name: 'Fiebre', max: 3, cost: [2400, 11.5], req: [['x_semi', 1]], desc: 'Tocar 8 notas extra seguidas activa la fiebre: todos los {pts} valen el doble por unos segundos.', fx: lv => lv ? `x2 durante ${3 + 2 * lv} s` : 'Sin fiebre' },
+        { id: 'c_root', br: 'c', pos: [2, 1], root: true, name: 'Contador de combo', max: 1, cost: [80, 1], req: [['core', 1]], desc: 'El combo empieza a multiplicar tus {pts}. Llegar a 10 de combo te da el Rango I (x1,5).', fx: lv => lv ? 'Rango I: 10 de combo → x1,5' : 'El combo no multiplica' },
         { id: 'c_rank', br: 'c', pos: [1, 2], name: 'Rangos', max: 5, cost: [480, 8.7], req: [['c_root', 1]], desc: 'Desbloquea rangos de combo más altos. Cada rango sube el multiplicador.', fx: lv => { const r = RANKS[lv]; return `Hasta Rango ${ROMAN[lv]}: ${r[0]} → x${dec(r[1])}`; } },
-        { id: 'c_fc',   br: 'c', pos: [3, 2], name: 'Bonus Full Combo', max: 5, cost: [400, 7.3], req: [['c_root', 1]], desc: 'Premio por terminar una canción sin fallar ninguna flecha obligatoria. Las notas extra no cuentan.', fx: lv => lv ? `+${25 * lv}% de pulsos` : 'Sin bonus' },
+        { id: 'c_fc',   br: 'c', pos: [3, 2], name: 'Bonus Full Combo', max: 5, cost: [400, 7.3], req: [['c_root', 1]], desc: 'Premio por terminar una canción sin fallar ninguna flecha obligatoria. Las notas extra no cuentan.', fx: lv => lv ? `+${25 * lv}% de {pts}` : 'Sin bonus' },
         { id: 'c_shield', br: 'c', pos: [1, 3], name: 'Escudo', max: 3, cost: [800, 10.8], req: [['c_rank', 1]], desc: 'Algunos fallos por canción no cortan el combo.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por canción` : 'Sin escudo' },
-        { id: 'c_perf', br: 'c', pos: [3, 3], name: 'Golpe perfecto', max: 3, cost: [600, 8], req: [['c_fc', 1]], desc: 'Los PERFECTO dan más pulsos.', fx: lv => `+${20 * lv}% por PERFECTO` },
+        { id: 'c_perf', br: 'c', pos: [3, 3], name: 'Golpe perfecto', max: 3, cost: [600, 8], req: [['c_fc', 1]], desc: 'Los PERFECTO dan más {pts}.', fx: lv => `+${20 * lv}% por PERFECTO` },
         { id: 'c_mem',  br: 'c', pos: [1, 4], name: 'Memoria', max: 2, cost: [1200, 11.5], req: [['c_shield', 1]], desc: 'Cuando se corta el combo, conservás una parte.', fx: lv => lv ? `Conservás ${25 * lv}%` : 'Vuelve a cero' },
         { id: 'c_asc',  br: 'c', pos: [2, 5], parent: 'c_mem', name: 'Ascenso', max: 2, cost: [2000, 13.6], req: [['c_mem', 1], ['c_rank', 3]], desc: 'Los rangos piden menos combo para alcanzarse.', fx: lv => `${20 * lv}% menos combo por rango` },
-        { id: 'l_root', br: 'l', pos: [2, 1], root: true, name: 'Pulsaciones largas', max: 1, cost: [120, 1], req: [['core', 1]], desc: 'Aparecen flechas largas: tocá la cabeza y mantené apretado. Cada tick sostenido suma pulsos. Si soltás antes de tiempo, se corta el combo. En Difícil aparecen largas dobles.', fx: lv => lv ? 'Flechas largas activas' : 'Sin flechas largas' },
+        { id: 'l_root', br: 'l', pos: [2, 1], root: true, name: 'Pulsaciones largas', max: 1, cost: [120, 1], req: [['core', 1]], desc: 'Aparecen flechas largas: tocá la cabeza y mantené apretado. Cada tick sostenido suma {pts}. Si soltás antes de tiempo, se corta el combo. En Difícil aparecen largas dobles.', fx: lv => lv ? 'Flechas largas activas' : 'Sin flechas largas' },
         { id: 'l_tick', br: 'l', pos: [1, 2], name: 'Vibrato', max: 5, cost: [320, 6.6], req: [['l_root', 1]], desc: 'Cada tick sostenido vale más.', fx: lv => `${30 + 15 * lv}% de una flecha por tick` },
         { id: 'l_freq', br: 'l', pos: [3, 2], name: 'Sostenido', max: 3, cost: [440, 8], req: [['l_root', 1]], desc: 'Aparecen más flechas largas.', fx: lv => `${100 + 35 * lv}% de flechas largas` },
         { id: 'l_grip', br: 'l', pos: [1, 3], name: 'Agarre', max: 3, cost: [640, 9.4], req: [['l_tick', 1]], desc: 'Podés soltar un instante y volver a apretar sin perder la flecha larga.', fx: lv => lv ? `Margen de ${dec(0.1 * lv)} s` : 'Sin margen' },
         { id: 'l_len',  br: 'l', pos: [3, 3], name: 'Notas eternas', max: 2, cost: [880, 10.8], req: [['l_freq', 1]], desc: 'Las flechas largas duran más tiempos y dan más ticks.', fx: lv => `Duran ${2 + lv} tiempos` },
-        { id: 'l_end',  br: 'l', pos: [1, 4], name: 'Remate', max: 3, cost: [800, 9.4], req: [['l_grip', 1]], desc: 'Completar una flecha larga da un bonus de pulsos.', fx: lv => lv ? `+${2 * lv} flechas de valor` : 'Sin bonus' },
+        { id: 'l_end',  br: 'l', pos: [1, 4], name: 'Remate', max: 3, cost: [800, 9.4], req: [['l_grip', 1]], desc: 'Completar una flecha larga da un bonus de {pts}.', fx: lv => lv ? `+${2 * lv} flechas de valor` : 'Sin bonus' },
         { id: 'l_cross', br: 'l', pos: [3, 4], parent: 'l_len', name: 'Combo sostenido', max: 1, cost: [450, 1], req: [['l_len', 1], ['c_root', 1]], desc: 'Cada tick sostenido suma +1 al combo. Necesita el Contador de combo de la rama Combo.', fx: lv => lv ? 'Los ticks suman combo' : 'Los ticks no suman combo' },
       ],
     },
@@ -175,7 +181,7 @@
       ],
       nodes: [
         { id: 'e_core', br: 'core', name: 'Grúa', max: 1, desc: 'La grúa principal del astillero. De acá salen todas las mejoras de Ensamble.', fx: () => 'Activa' },
-        { id: 'e_base', br: 'core', parent: 'e_core', name: 'Prensa', cost: [10, 1.8], desc: 'Cada fila completa y cada pieza encastrada valen más piezas.', fx: lv => `Base ${1 + lv} por fila` },
+        { id: 'e_base', br: 'core', parent: 'e_core', name: 'Prensa', cost: [10, 1.8], desc: 'Cada fila completa y cada pieza encastrada valen más {piezas}.', fx: lv => `Base ${1 + lv} por fila` },
         { id: 'e_win',  br: 'core', parent: 'e_core', name: 'Estabilizador', max: 5, cost: [160, 7.3], desc: 'Agranda el margen para que un movimiento cuente como a tiempo.', fx: lv => `+${10 * lv}% de margen` },
         { id: 'e_life', br: 'core', parent: 'e_core', name: 'Casco', max: 5, cost: [180, 7.3], desc: 'Moverse fuera de tiempo daña menos la integridad del casco.', fx: lv => `Un error resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'e_d_prev', br: 'ed', pos: [2, 1], root: true, name: 'Planos', max: 3, cost: [240, 8], req: [['e_core', 1]], desc: 'Ves más piezas siguientes en el panel lateral.', fx: lv => `Ves ${1 + lv} ${lv ? 'piezas' : 'pieza'}` },
@@ -191,18 +197,18 @@
       title: 'Mejoras de Señal', wallet: 'datos',
       branches: [
         { id: 'sm', name: 'Memoria', tag: 'Ayudas para recordar el patrón y premios por decodificarlo entero.' },
-        { id: 'st', name: 'Transmisión', tag: 'Más datos por señal y tolerancia a errores.' },
+        { id: 'st', name: 'Transmisión', tag: 'Más {datos} por señal y tolerancia a errores.' },
       ],
       nodes: [
         { id: 's_core', br: 'core', name: 'Antena', max: 1, desc: 'La antena receptora. De acá salen todas las mejoras de Señal.', fx: () => 'Activa' },
-        { id: 's_base', br: 'core', parent: 's_core', name: 'Potencia', cost: [10, 1.8], desc: 'Cada nota que repetís bien vale más datos.', fx: lv => `${1 + lv} datos por nota` },
+        { id: 's_base', br: 'core', parent: 's_core', name: 'Potencia', cost: [10, 1.8], desc: 'Cada nota que repetís bien vale más {datos}.', fx: lv => `${1 + lv} {datos} por nota` },
         { id: 's_win',  br: 'core', parent: 's_core', name: 'Sintonía', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing al repetir.', fx: lv => `+${10 * lv}% de margen` },
         { id: 's_life', br: 'core', parent: 's_core', name: 'Redundancia', max: 5, cost: [180, 7.3], desc: 'Los fallos vacían menos la barra de señal.', fx: lv => `Un fallo resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 's_m_root', br: 'sm', pos: [2, 1], root: true, name: 'Marcas de ritmo', max: 1, cost: [60, 1], req: [['s_core', 1]], desc: 'En la respuesta, la línea de tiempo muestra los puntos de cuándo tocar, en cualquier dificultad.', fx: lv => lv ? 'Puntos visibles' : 'Puntos solo en Fácil' },
         { id: 's_m_arrows', br: 'sm', pos: [2, 2], name: 'Eco visual', max: 1, cost: [160, 1], req: [['s_m_root', 1]], desc: 'Sobre cada punto de la respuesta aparece qué flecha va. Con Al revés o Memoria diferida no se muestra.', fx: lv => lv ? 'Flechas sobre los puntos' : 'Solo puntos' },
         { id: 's_m_dec', br: 'sm', pos: [1, 2], name: 'Decodificador', max: 5, cost: [280, 6.6], req: [['s_m_root', 1]], desc: 'Repetir un patrón entero da un bonus más grande.', fx: lv => `Bonus de ${100 + 40 * lv}% por patrón` },
         { id: 's_m_streak', br: 'sm', pos: [3, 2], name: 'Racha de señal', max: 4, cost: [480, 8.7], req: [['s_m_root', 1]], desc: 'Cada patrón decodificado seguido suma +10% a todo lo que ganás, hasta un tope.', fx: lv => lv ? `Hasta +${50 * lv}%` : 'Sin racha' },
-        { id: 's_t_gain', br: 'st', pos: [2, 1], root: true, name: 'Amplificador de datos', max: 5, cost: [320, 6.6], req: [['s_core', 1]], desc: 'Todos los datos que ganás en una canción valen más.', fx: lv => `+${25 * lv}% de datos` },
+        { id: 's_t_gain', br: 'st', pos: [2, 1], root: true, name: 'Amplificador de Datos', max: 5, cost: [320, 6.6], req: [['s_core', 1]], desc: 'Todos los {datos} que ganás en una canción valen más.', fx: lv => `+${25 * lv}% de {datos}` },
         { id: 's_t_fix', br: 'st', pos: [1, 2], name: 'Corrección de errores', max: 2, cost: [800, 11.5], req: [['s_t_gain', 1]], desc: 'Un patrón cuenta como decodificado aunque falles alguna nota.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por patrón` : 'Sin tolerancia' },
         { id: 's_t_metro', br: 'st', pos: [3, 2], name: 'Metrónomo de respuesta', max: 1, cost: [90, 1], req: [['s_t_gain', 1]], desc: 'Durante la respuesta suena un clic en cada corchea para guiarte.', fx: lv => lv ? 'Clic activo' : 'Sin clic' },
       ],
@@ -215,12 +221,12 @@
       ],
       nodes: [
         { id: 'p_core', br: 'core', name: 'Eje', max: 1, desc: 'El eje que une a los dos planetas. De acá salen todas las mejoras de Compás.', fx: () => 'Activo' },
-        { id: 'p_base', br: 'core', parent: 'p_core', name: 'Impulso', cost: [10, 1.8], desc: 'Cada baldosa que tocás a tiempo vale más giros.', fx: lv => `${1 + lv} giros por baldosa` },
+        { id: 'p_base', br: 'core', parent: 'p_core', name: 'Impulso', cost: [10, 1.8], desc: 'Cada baldosa que tocás a tiempo vale más {giros}.', fx: lv => `${1 + lv} {giros} por baldosa` },
         { id: 'p_win',  br: 'core', parent: 'p_core', name: 'Precisión', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing al tocar cada baldosa.', fx: lv => `+${10 * lv}% de margen` },
         { id: 'p_life', br: 'core', parent: 'p_core', name: 'Órbita estable', max: 5, cost: [180, 7.3], desc: 'Salirte del camino vacía menos la barra de equilibrio.', fx: lv => `Un fallo resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'p_r_root', br: 'pr', pos: [2, 1], root: true, name: 'Racha', max: 1, cost: [80, 1], req: [['p_core', 1]], desc: 'Cada 16 baldosas seguidas sin fallar suben el multiplicador de racha en +0,25, hasta x1,5.', fx: lv => lv ? 'Racha hasta x1,5' : 'La racha no multiplica' },
         { id: 'p_r_rank', br: 'pr', pos: [1, 2], name: 'Inercia', max: 4, cost: [560, 8.7], req: [['p_r_root', 1]], desc: 'Sube el tope del multiplicador de racha.', fx: lv => `Racha hasta x${dec(1.5 + 0.5 * lv)}` },
-        { id: 'p_r_perf', br: 'pr', pos: [3, 2], name: 'Centro exacto', max: 3, cost: [480, 8], req: [['p_r_root', 1]], desc: 'Los PERFECTO dan más giros.', fx: lv => `+${20 * lv}% por PERFECTO` },
+        { id: 'p_r_perf', br: 'pr', pos: [3, 2], name: 'Centro exacto', max: 3, cost: [480, 8], req: [['p_r_root', 1]], desc: 'Los PERFECTO dan más {giros}.', fx: lv => `+${20 * lv}% por PERFECTO` },
         { id: 'p_r_safe', br: 'pr', pos: [2, 3], name: 'Red de seguridad', max: 3, cost: [800, 10.8], req: [['p_r_rank', 1]], desc: 'Algunos fallos por canción no cortan la racha.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por canción` : 'Sin red' },
         { id: 'p_c_root', br: 'pc', pos: [2, 1], root: true, name: 'Tramo perfecto', max: 1, cost: [100, 1], req: [['p_core', 1]], desc: 'Cada tramo de 8 compases sin fallar da un bonus del 25% de lo que ganaste en ese tramo.', fx: lv => lv ? 'Bonus de 25% por tramo' : 'Sin bonus' },
         { id: 'p_c_sec', br: 'pc', pos: [1, 2], name: 'Tramo brillante', max: 4, cost: [400, 8.7], req: [['p_c_root', 1]], desc: 'Los tramos perfectos dan un bonus más grande.', fx: lv => `Bonus de ${25 + 25 * lv}% por tramo` },
@@ -236,14 +242,14 @@
         { id: 'gm', name: 'Desafíos', tag: 'Modificadores que cambian cómo se juega una canción y suben o bajan sus estrellas.' },
       ],
       nodes: [
-        { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con materia oscura.', fx: () => 'Activo' },
+        { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con {mo}.', fx: () => 'Activo' },
         { id: 'g_res', br: 'core', parent: 'g_core', name: 'Resonancia', max: 10, cost: [3, 1.35], desc: 'Todas las monedas de todas las galaxias valen más.', fx: lv => `+${10 * lv}% en todo` },
         { id: 'g_tune', br: 'core', parent: 'g_core', name: 'Afinación cósmica', max: 3, cost: [4, 2], desc: 'Agranda el margen de timing en todas las galaxias.', fx: lv => `+${5 * lv}% de margen` },
-        { id: 'g_dark', br: 'core', parent: 'g_core', name: 'Cosecha oscura', max: 4, cost: [4, 1.8], desc: 'Los hitos dan más materia oscura.', fx: lv => `+${25 * lv}% de materia oscura` },
-        { id: 'g_amp_pulso', br: 'ga', pos: [2, 1], root: true, name: 'Amplificador Pulso', max: 8, cost: [2, 1.35], req: [['g_core', 1]], desc: 'Más pulsos en Vía Pulso.', fx: lv => `+${25 * lv}% pulsos` },
-        { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más piezas en Ensamble.', fx: lv => `+${25 * lv}% piezas` },
-        { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más datos en Señal.', fx: lv => `+${25 * lv}% datos` },
-        { id: 'g_amp_com', br: 'ga', pos: [2, 2], name: 'Amplificador Compás', max: 8, cost: [4, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más giros en Compás.', fx: lv => `+${25 * lv}% giros` },
+        { id: 'g_dark', br: 'core', parent: 'g_core', name: 'Cosecha oscura', max: 4, cost: [4, 1.8], desc: 'Los hitos dan más {mo}.', fx: lv => `+${25 * lv}% de {mo}` },
+        { id: 'g_amp_pulso', br: 'ga', pos: [2, 1], root: true, name: 'Amplificador Pulso', max: 8, cost: [2, 1.35], req: [['g_core', 1]], desc: 'Más {pts} en Vía Pulso.', fx: lv => `+${25 * lv}% {pts}` },
+        { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más {piezas} en Ensamble.', fx: lv => `+${25 * lv}% {piezas}` },
+        { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más {datos} en Señal.', fx: lv => `+${25 * lv}% {datos}` },
+        { id: 'g_amp_com', br: 'ga', pos: [2, 2], name: 'Amplificador Compás', max: 8, cost: [4, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más {giros} en Compás.', fx: lv => `+${25 * lv}% {giros}` },
         { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3], ['g_amp_com', 3]], desc: 'Con todas las galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
         { id: 'g_mods', br: 'gm', pos: [2, 1], root: true, name: 'Modificadores', max: 1, cost: [3, 1], req: [['g_core', 1]], desc: 'Abre los modificadores en el menú de cada canción. Cada uno se habilita al superar Difícil en un planeta de su galaxia.', fx: lv => lv ? 'Modificadores abiertos' : 'Cerrados' },
         { id: 'g_mod_amp', br: 'gm', pos: [2, 2], name: 'Maestría', max: 4, cost: [5, 1.6], req: [['g_mods', 1]], desc: 'Los modificadores que suben la dificultad suman más estrellas. No cambia los que restan.', fx: lv => `Suman ${100 + 25 * lv}% de lo normal` },

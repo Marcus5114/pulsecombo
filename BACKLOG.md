@@ -45,6 +45,26 @@ Notas que hay que **evitar** en vez de tocar. Va como un modificador más de la 
   - `hit()`: en la respuesta, un toque en una ventana bomba explota en vez de contar como golpe al aire.
   - `drawSignal`: flecha tachada en la línea de tiempo.
 
+## Vía Pulso: mejora activable "Cámara lenta"
+Una mejora del árbol de Vía Pulso que, al apretar una tecla, ralentiza el tiempo durante unos segundos. La música y las flechas van más despacio y se vuelve más fácil leer un tramo denso.
+- **Dónde va:** nodo nuevo en la rama Combo (o una rama nueva, *Tiempo*), con 3 niveles:
+  - Duración: 3, 4 y 5 segundos.
+  - Velocidad: x0,7 en el nivel 1 y x0,6 en el nivel 3.
+  - Usos: 1 por canción en el nivel 1 y 2 en el nivel 3, o un enfriamiento de 20 segundos.
+- **Tecla:** `Shift` o `Espacio`, que en Vía Pulso no se usan para tocar. En el celular, un botón en la pantalla de juego. En Doble no se puede usar, o pide una tecla aparte.
+- **Balance para pensar:**
+  - Opción A: mientras está activa, lo que ganás vale la mitad.
+  - Opción B: el combo no sube.
+  - Opción C: baja las estrellas de la canción si se usa (como Sin caída).
+  - Sin alguna de estas penalidades, conviene usarla siempre en los tramos difíciles.
+- **Visual:** el fondo se tiñe, las flechas dejan estela y aparece una barra con el tiempo restante. El representante reacciona.
+- **Cómo implementarlo:**
+  - Hoy el tiempo de juego sale del reloj del audio (`gameT()`). Hace falta un reloj de juego "deformable": `gameT` acumula `dt × escala` en lugar de leer directo el reloj.
+  - La música sintetizada se agenda por adelantado (`audioStep`). Hay que achicar la ventana de agenda mientras dura el efecto, o reagendar los pasos con el nuevo tempo, y bajar el `playbackRate` o el tempo de los osciladores.
+  - Las ventanas de juicio se miden en tiempo de juego, así que no cambian.
+  - Los ecos y los récords siguen igual.
+  - Habría que evaluar después si tiene sentido para Ensamble, Señal o Compás.
+
 ## Sintonía con los operadores de los tutoriales
 Hoy está desactivada (`AFF_TUTORIALS = false` en `src/d3e_affinity.js`). Bip, el Capataz Grúa, la Operadora Estática y el Relojero tienen una sola canción, en una sola dificultad, que además no da recursos. Los pedidos y los topes por hitos no tienen sentido ahí: se cumplen todos repitiendo la misma canción.
 - **Hay que buscar un sistema propio para ellos.** Algunas ideas para evaluar:

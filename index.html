@@ -673,6 +673,22 @@ body.land .rx-txt { display: none; }
   @keyframes scu { from { transform: translateY(100%); } }
 }
 @media (prefers-reduced-motion: reduce) { .side-card { animation: none !important; } }
+
+/* ---------- Monedas: nombre con mayúscula y su ícono ---------- */
+.cur { white-space: nowrap; }
+.ci { display: inline-block; width: 0.95em; height: 0.95em; margin-left: 0.22em; vertical-align: -0.13em; background: currentColor; -webkit-mask: var(--ci) center / contain no-repeat; mask: var(--ci) center / contain no-repeat; flex: none; }
+.ci[data-c="pts"] { --ci: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M1 9h3l2.2-6 3.4 10 2.2-6H15' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/></svg>"); background: #5cd0e6; }
+.ci[data-c="piezas"] { --ci: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='1' y='3' width='4.3' height='4.3' rx='.6'/><rect x='5.85' y='3' width='4.3' height='4.3' rx='.6'/><rect x='10.7' y='3' width='4.3' height='4.3' rx='.6'/><rect x='5.85' y='7.85' width='4.3' height='4.3' rx='.6'/></svg>"); background: #ff8c5a; }
+.ci[data-c="datos"] { --ci: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='3.2' cy='12.8' r='2'/><path d='M3 7.6a5.4 5.4 0 0 1 5.4 5.4M3 2.4A10.6 10.6 0 0 1 13.6 13' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'/></svg>"); background: #b892ff; }
+.ci[data-c="giros"] { --ci: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='4.6' cy='8' r='3.2'/><circle cx='11.4' cy='8' r='2.6' fill='none' stroke='black' stroke-width='1.6'/><path d='M7.8 8h1' stroke='black' stroke-width='1.4'/></svg>"); background: #f2c14e; }
+.ci[data-c="mo"] { --ci: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='4.2'/><ellipse cx='8' cy='8' rx='7.2' ry='2.4' transform='rotate(-22 8 8)' fill='none' stroke='black' stroke-width='1.3'/></svg>"); background: #a594f9; }
+
+/* Tarjetas: el cajón de Reglas se desplaza; Mecánicas y Modificadores flotan junto a su botón */
+.side-card > * { flex-shrink: 0; }
+.side-back.pop { background: transparent; }
+.side-card[data-side="pop"] { bottom: auto; width: 340px; max-height: min(70vh, 520px); border: 1px solid var(--line); border-radius: 12px; animation: scp 0.15s ease-out; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); }
+@keyframes scp { from { opacity: 0; transform: translateY(-6px); } }
+@media (max-width: 640px) { .side-card[data-side="pop"] { width: auto; max-height: 80vh; top: auto; bottom: 0; border-radius: 14px 14px 0 0; animation: scu 0.22s ease-out; } }
 </style>
 </head>
 <body>
@@ -682,7 +698,7 @@ body.land .rx-txt { display: none; }
     <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
-    <h2 id="curName">Pulsos</h2>
+    <h2 id="curName"></h2>
     <span class="big" id="pts">0</span>
     <span class="rate" id="rate"></span>
     <span class="mo" id="moLine"></span>
@@ -708,7 +724,7 @@ body.land .rx-txt { display: none; }
       </div></div>
     </div>
     <div class="gal-info" id="galInfo"></div>
-    <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La materia oscura se gana con hitos en cualquier galaxia y sirve para abrir galaxias nuevas y comprar el árbol global. Para abrir una galaxia también necesitás recomendaciones: los representantes de las galaxias vecinas te recomiendan cuando llegan a Confianza.</p>
+    <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La <span class="cur" data-c="mo">Materia Oscura<i class="ci" data-c="mo" aria-hidden="true"></i></span> se gana con hitos en cualquier galaxia y sirve para abrir galaxias nuevas y comprar el árbol global. Para abrir una galaxia también necesitás recomendaciones: los representantes de las galaxias vecinas te recomiendan cuando llegan a Confianza.</p>
   </section>
 
   <section class="view" id="vMap">
@@ -862,19 +878,25 @@ body.land .rx-txt { display: none; }
     while (n >= 1000 && i < u.length - 1) { n /= 1000; i++; }
     return n.toFixed(n < 100 ? 1 : 0).replace('.', ',') + u[i];
   };
+  // Monedas: siempre con mayúscula y su ícono. En los textos se escriben como fichas {pts}, {piezas}, {datos}, {giros}, {mo}
+  const CUR_NAME = { pts: 'Pulsos', piezas: 'Piezas', datos: 'Datos', giros: 'Giros', mo: 'Materia Oscura' };
+  const curIcon = k => `<i class="ci" data-c="${k}" aria-hidden="true"></i>`;
+  const curTag = k => `<span class="cur" data-c="${k}">${CUR_NAME[k]}${curIcon(k)}</span>`;
+  const curPlain = t => String(t).replace(/\{(pts|piezas|datos|giros|mo)\}/g, (_, k) => CUR_NAME[k]);   // para atributos (aria-label, title)
+  const cur = t => String(t).replace(/\{(pts|piezas|datos|giros|mo)\}/g, (_, k) => curTag(k));
   const fmtRate = r => r < 10 ? dec1(r) : fmt(r);
   const fmtTime = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return h ? `${h} h ${m} min` : `${m}:${String(ss).padStart(2, '0')}`; };
 
   // ---------- Galaxias ----------
   // Cada galaxia cambia la forma de jugar (mode), tiene su moneda (cur = campo en el estado) y su árbol.
   const GALAXIES = [
-    { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: 'pulsos', cost: 0, need: 4, cond: 30000, color: '#5cd0e6',
+    { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: '{pts}', cost: 0, need: 4, cond: 30000, color: '#5cd0e6',
       desc: 'Flechas que suben hasta los receptores al ritmo de cada género. Cinco planetas, cinco estilos.' },
-    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', recs: 2, cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2, cond: 800, color: '#ff8c5a',
-      desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar piezas.' },
-    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', recs: 3, cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
-      desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
-    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', recs: 3, cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
+    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', recs: 2, cur: 'piezas', curName: 'Piezas', unit: '{piezas}', cost: 5, need: 2, cond: 800, color: '#ff8c5a',
+      desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar {piezas}.' },
+    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', recs: 3, cur: 'datos', curName: 'Datos', unit: '{datos}', cost: 5, need: 2, cond: 800, color: '#b892ff',
+      desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da {datos}.' },
+    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', recs: 3, cur: 'giros', curName: 'Giros', unit: '{giros}', cost: 8, need: 2, cond: 800, color: '#f2c14e',
       desc: 'Dos planetas unidos sobre un panal de baldosas. El que gira recorre una órbita hexagonal, un lado por corchea: contá los lados hasta la próxima baldosa y tocá al llegar.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
@@ -993,29 +1015,29 @@ body.land .rx-txt { display: none; }
       ],
       nodes: [
         { id: 'core', br: 'core', name: 'Núcleo', max: 1, desc: 'El punto de partida. De acá salen las mejoras generales y las tres ramas.', fx: () => 'Activo' },
-        { id: 'base', br: 'core', parent: 'core', name: 'Pulso base', cost: [10, 1.8], desc: 'Cada flecha que acertás vale más pulsos.', fx: lv => `${1 + lv} pulsos por flecha` },
+        { id: 'base', br: 'core', parent: 'core', name: 'Pulso base', cost: [10, 1.8], desc: 'Cada flecha que acertás vale más {pts}.', fx: lv => `${1 + lv} {pts} por flecha` },
         { id: 'win',  br: 'core', parent: 'core', name: 'Ventana', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing de todos los juicios.', fx: lv => `+${10 * lv}% de margen` },
         { id: 'life', br: 'core', parent: 'core', name: 'Aguante', max: 5, cap: () => genreWorldsOpen('pulso'), cost: [180, 7.3], desc: 'Los fallos vacían menos la barra de aguante. Se puede mejorar un nivel por cada planeta que tengas abierto en Vía Pulso.', fx: lv => `Un fallo resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'x_root', br: 'x', pos: [2, 1], root: true, name: 'Contratiempos', max: 1, cost: [100, 1], req: [['core', 1]], desc: 'Aparecen notas extra de color entre los tiempos. Son opcionales: si las dejás pasar no perdés combo ni aguante.', fx: lv => lv ? 'Notas extra activas' : 'Sin notas extra' },
-        { id: 'x_val',  br: 'x', pos: [1, 2], name: 'Brillo', max: 5, cost: [280, 6.6], req: [['x_root', 1]], desc: 'Las notas extra valen más pulsos.', fx: lv => `Valen ${50 + 25 * lv}% de una flecha` },
+        { id: 'x_val',  br: 'x', pos: [1, 2], name: 'Brillo', max: 5, cost: [280, 6.6], req: [['x_root', 1]], desc: 'Las notas extra valen más {pts}.', fx: lv => `Valen ${50 + 25 * lv}% de una flecha` },
         { id: 'x_dens', br: 'x', pos: [3, 2], name: 'Densidad', max: 4, cost: [360, 7.3], req: [['x_root', 1]], desc: 'Aparecen más notas extra en cada canción.', fx: lv => `${100 + 25 * lv}% de notas extra` },
         { id: 'x_combo', br: 'x', pos: [1, 3], name: 'Encadenar', max: 1, cost: [250, 1], req: [['x_val', 1]], desc: 'Las notas extra que tocás suman al combo.', fx: lv => lv ? 'Suman combo' : 'No suman combo' },
         { id: 'x_semi', br: 'x', pos: [3, 3], name: 'Semicorcheas', max: 1, cost: [300, 1], req: [['x_dens', 2]], desc: 'Aparecen notas extra más rápidas, en semicorcheas. En Difícil y Doble forman escaleras de notas extra.', fx: lv => lv ? 'Activas' : 'Inactivas' },
         { id: 'x_life', br: 'x', pos: [1, 4], name: 'Respiro', max: 3, cost: [480, 8], req: [['x_combo', 1]], desc: 'Cada nota extra que tocás recupera aguante.', fx: lv => lv ? `+${dec(1.5 * lv)} de aguante por nota` : 'Sin recuperación' },
-        { id: 'x_gold', br: 'x', pos: [2, 5], parent: 'x_semi', name: 'Fiebre', max: 3, cost: [2400, 11.5], req: [['x_semi', 1]], desc: 'Tocar 8 notas extra seguidas activa la fiebre: todos los pulsos valen el doble por unos segundos.', fx: lv => lv ? `x2 durante ${3 + 2 * lv} s` : 'Sin fiebre' },
-        { id: 'c_root', br: 'c', pos: [2, 1], root: true, name: 'Contador de combo', max: 1, cost: [80, 1], req: [['core', 1]], desc: 'El combo empieza a multiplicar tus pulsos. Llegar a 10 de combo te da el Rango I (x1,5).', fx: lv => lv ? 'Rango I: 10 de combo → x1,5' : 'El combo no multiplica' },
+        { id: 'x_gold', br: 'x', pos: [2, 5], parent: 'x_semi', name: 'Fiebre', max: 3, cost: [2400, 11.5], req: [['x_semi', 1]], desc: 'Tocar 8 notas extra seguidas activa la fiebre: todos los {pts} valen el doble por unos segundos.', fx: lv => lv ? `x2 durante ${3 + 2 * lv} s` : 'Sin fiebre' },
+        { id: 'c_root', br: 'c', pos: [2, 1], root: true, name: 'Contador de combo', max: 1, cost: [80, 1], req: [['core', 1]], desc: 'El combo empieza a multiplicar tus {pts}. Llegar a 10 de combo te da el Rango I (x1,5).', fx: lv => lv ? 'Rango I: 10 de combo → x1,5' : 'El combo no multiplica' },
         { id: 'c_rank', br: 'c', pos: [1, 2], name: 'Rangos', max: 5, cost: [480, 8.7], req: [['c_root', 1]], desc: 'Desbloquea rangos de combo más altos. Cada rango sube el multiplicador.', fx: lv => { const r = RANKS[lv]; return `Hasta Rango ${ROMAN[lv]}: ${r[0]} → x${dec(r[1])}`; } },
-        { id: 'c_fc',   br: 'c', pos: [3, 2], name: 'Bonus Full Combo', max: 5, cost: [400, 7.3], req: [['c_root', 1]], desc: 'Premio por terminar una canción sin fallar ninguna flecha obligatoria. Las notas extra no cuentan.', fx: lv => lv ? `+${25 * lv}% de pulsos` : 'Sin bonus' },
+        { id: 'c_fc',   br: 'c', pos: [3, 2], name: 'Bonus Full Combo', max: 5, cost: [400, 7.3], req: [['c_root', 1]], desc: 'Premio por terminar una canción sin fallar ninguna flecha obligatoria. Las notas extra no cuentan.', fx: lv => lv ? `+${25 * lv}% de {pts}` : 'Sin bonus' },
         { id: 'c_shield', br: 'c', pos: [1, 3], name: 'Escudo', max: 3, cost: [800, 10.8], req: [['c_rank', 1]], desc: 'Algunos fallos por canción no cortan el combo.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por canción` : 'Sin escudo' },
-        { id: 'c_perf', br: 'c', pos: [3, 3], name: 'Golpe perfecto', max: 3, cost: [600, 8], req: [['c_fc', 1]], desc: 'Los PERFECTO dan más pulsos.', fx: lv => `+${20 * lv}% por PERFECTO` },
+        { id: 'c_perf', br: 'c', pos: [3, 3], name: 'Golpe perfecto', max: 3, cost: [600, 8], req: [['c_fc', 1]], desc: 'Los PERFECTO dan más {pts}.', fx: lv => `+${20 * lv}% por PERFECTO` },
         { id: 'c_mem',  br: 'c', pos: [1, 4], name: 'Memoria', max: 2, cost: [1200, 11.5], req: [['c_shield', 1]], desc: 'Cuando se corta el combo, conservás una parte.', fx: lv => lv ? `Conservás ${25 * lv}%` : 'Vuelve a cero' },
         { id: 'c_asc',  br: 'c', pos: [2, 5], parent: 'c_mem', name: 'Ascenso', max: 2, cost: [2000, 13.6], req: [['c_mem', 1], ['c_rank', 3]], desc: 'Los rangos piden menos combo para alcanzarse.', fx: lv => `${20 * lv}% menos combo por rango` },
-        { id: 'l_root', br: 'l', pos: [2, 1], root: true, name: 'Pulsaciones largas', max: 1, cost: [120, 1], req: [['core', 1]], desc: 'Aparecen flechas largas: tocá la cabeza y mantené apretado. Cada tick sostenido suma pulsos. Si soltás antes de tiempo, se corta el combo. En Difícil aparecen largas dobles.', fx: lv => lv ? 'Flechas largas activas' : 'Sin flechas largas' },
+        { id: 'l_root', br: 'l', pos: [2, 1], root: true, name: 'Pulsaciones largas', max: 1, cost: [120, 1], req: [['core', 1]], desc: 'Aparecen flechas largas: tocá la cabeza y mantené apretado. Cada tick sostenido suma {pts}. Si soltás antes de tiempo, se corta el combo. En Difícil aparecen largas dobles.', fx: lv => lv ? 'Flechas largas activas' : 'Sin flechas largas' },
         { id: 'l_tick', br: 'l', pos: [1, 2], name: 'Vibrato', max: 5, cost: [320, 6.6], req: [['l_root', 1]], desc: 'Cada tick sostenido vale más.', fx: lv => `${30 + 15 * lv}% de una flecha por tick` },
         { id: 'l_freq', br: 'l', pos: [3, 2], name: 'Sostenido', max: 3, cost: [440, 8], req: [['l_root', 1]], desc: 'Aparecen más flechas largas.', fx: lv => `${100 + 35 * lv}% de flechas largas` },
         { id: 'l_grip', br: 'l', pos: [1, 3], name: 'Agarre', max: 3, cost: [640, 9.4], req: [['l_tick', 1]], desc: 'Podés soltar un instante y volver a apretar sin perder la flecha larga.', fx: lv => lv ? `Margen de ${dec(0.1 * lv)} s` : 'Sin margen' },
         { id: 'l_len',  br: 'l', pos: [3, 3], name: 'Notas eternas', max: 2, cost: [880, 10.8], req: [['l_freq', 1]], desc: 'Las flechas largas duran más tiempos y dan más ticks.', fx: lv => `Duran ${2 + lv} tiempos` },
-        { id: 'l_end',  br: 'l', pos: [1, 4], name: 'Remate', max: 3, cost: [800, 9.4], req: [['l_grip', 1]], desc: 'Completar una flecha larga da un bonus de pulsos.', fx: lv => lv ? `+${2 * lv} flechas de valor` : 'Sin bonus' },
+        { id: 'l_end',  br: 'l', pos: [1, 4], name: 'Remate', max: 3, cost: [800, 9.4], req: [['l_grip', 1]], desc: 'Completar una flecha larga da un bonus de {pts}.', fx: lv => lv ? `+${2 * lv} flechas de valor` : 'Sin bonus' },
         { id: 'l_cross', br: 'l', pos: [3, 4], parent: 'l_len', name: 'Combo sostenido', max: 1, cost: [450, 1], req: [['l_len', 1], ['c_root', 1]], desc: 'Cada tick sostenido suma +1 al combo. Necesita el Contador de combo de la rama Combo.', fx: lv => lv ? 'Los ticks suman combo' : 'Los ticks no suman combo' },
       ],
     },
@@ -1027,7 +1049,7 @@ body.land .rx-txt { display: none; }
       ],
       nodes: [
         { id: 'e_core', br: 'core', name: 'Grúa', max: 1, desc: 'La grúa principal del astillero. De acá salen todas las mejoras de Ensamble.', fx: () => 'Activa' },
-        { id: 'e_base', br: 'core', parent: 'e_core', name: 'Prensa', cost: [10, 1.8], desc: 'Cada fila completa y cada pieza encastrada valen más piezas.', fx: lv => `Base ${1 + lv} por fila` },
+        { id: 'e_base', br: 'core', parent: 'e_core', name: 'Prensa', cost: [10, 1.8], desc: 'Cada fila completa y cada pieza encastrada valen más {piezas}.', fx: lv => `Base ${1 + lv} por fila` },
         { id: 'e_win',  br: 'core', parent: 'e_core', name: 'Estabilizador', max: 5, cost: [160, 7.3], desc: 'Agranda el margen para que un movimiento cuente como a tiempo.', fx: lv => `+${10 * lv}% de margen` },
         { id: 'e_life', br: 'core', parent: 'e_core', name: 'Casco', max: 5, cost: [180, 7.3], desc: 'Moverse fuera de tiempo daña menos la integridad del casco.', fx: lv => `Un error resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'e_d_prev', br: 'ed', pos: [2, 1], root: true, name: 'Planos', max: 3, cost: [240, 8], req: [['e_core', 1]], desc: 'Ves más piezas siguientes en el panel lateral.', fx: lv => `Ves ${1 + lv} ${lv ? 'piezas' : 'pieza'}` },
@@ -1043,18 +1065,18 @@ body.land .rx-txt { display: none; }
       title: 'Mejoras de Señal', wallet: 'datos',
       branches: [
         { id: 'sm', name: 'Memoria', tag: 'Ayudas para recordar el patrón y premios por decodificarlo entero.' },
-        { id: 'st', name: 'Transmisión', tag: 'Más datos por señal y tolerancia a errores.' },
+        { id: 'st', name: 'Transmisión', tag: 'Más {datos} por señal y tolerancia a errores.' },
       ],
       nodes: [
         { id: 's_core', br: 'core', name: 'Antena', max: 1, desc: 'La antena receptora. De acá salen todas las mejoras de Señal.', fx: () => 'Activa' },
-        { id: 's_base', br: 'core', parent: 's_core', name: 'Potencia', cost: [10, 1.8], desc: 'Cada nota que repetís bien vale más datos.', fx: lv => `${1 + lv} datos por nota` },
+        { id: 's_base', br: 'core', parent: 's_core', name: 'Potencia', cost: [10, 1.8], desc: 'Cada nota que repetís bien vale más {datos}.', fx: lv => `${1 + lv} {datos} por nota` },
         { id: 's_win',  br: 'core', parent: 's_core', name: 'Sintonía', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing al repetir.', fx: lv => `+${10 * lv}% de margen` },
         { id: 's_life', br: 'core', parent: 's_core', name: 'Redundancia', max: 5, cost: [180, 7.3], desc: 'Los fallos vacían menos la barra de señal.', fx: lv => `Un fallo resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 's_m_root', br: 'sm', pos: [2, 1], root: true, name: 'Marcas de ritmo', max: 1, cost: [60, 1], req: [['s_core', 1]], desc: 'En la respuesta, la línea de tiempo muestra los puntos de cuándo tocar, en cualquier dificultad.', fx: lv => lv ? 'Puntos visibles' : 'Puntos solo en Fácil' },
         { id: 's_m_arrows', br: 'sm', pos: [2, 2], name: 'Eco visual', max: 1, cost: [160, 1], req: [['s_m_root', 1]], desc: 'Sobre cada punto de la respuesta aparece qué flecha va. Con Al revés o Memoria diferida no se muestra.', fx: lv => lv ? 'Flechas sobre los puntos' : 'Solo puntos' },
         { id: 's_m_dec', br: 'sm', pos: [1, 2], name: 'Decodificador', max: 5, cost: [280, 6.6], req: [['s_m_root', 1]], desc: 'Repetir un patrón entero da un bonus más grande.', fx: lv => `Bonus de ${100 + 40 * lv}% por patrón` },
         { id: 's_m_streak', br: 'sm', pos: [3, 2], name: 'Racha de señal', max: 4, cost: [480, 8.7], req: [['s_m_root', 1]], desc: 'Cada patrón decodificado seguido suma +10% a todo lo que ganás, hasta un tope.', fx: lv => lv ? `Hasta +${50 * lv}%` : 'Sin racha' },
-        { id: 's_t_gain', br: 'st', pos: [2, 1], root: true, name: 'Amplificador de datos', max: 5, cost: [320, 6.6], req: [['s_core', 1]], desc: 'Todos los datos que ganás en una canción valen más.', fx: lv => `+${25 * lv}% de datos` },
+        { id: 's_t_gain', br: 'st', pos: [2, 1], root: true, name: 'Amplificador de Datos', max: 5, cost: [320, 6.6], req: [['s_core', 1]], desc: 'Todos los {datos} que ganás en una canción valen más.', fx: lv => `+${25 * lv}% de {datos}` },
         { id: 's_t_fix', br: 'st', pos: [1, 2], name: 'Corrección de errores', max: 2, cost: [800, 11.5], req: [['s_t_gain', 1]], desc: 'Un patrón cuenta como decodificado aunque falles alguna nota.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por patrón` : 'Sin tolerancia' },
         { id: 's_t_metro', br: 'st', pos: [3, 2], name: 'Metrónomo de respuesta', max: 1, cost: [90, 1], req: [['s_t_gain', 1]], desc: 'Durante la respuesta suena un clic en cada corchea para guiarte.', fx: lv => lv ? 'Clic activo' : 'Sin clic' },
       ],
@@ -1067,12 +1089,12 @@ body.land .rx-txt { display: none; }
       ],
       nodes: [
         { id: 'p_core', br: 'core', name: 'Eje', max: 1, desc: 'El eje que une a los dos planetas. De acá salen todas las mejoras de Compás.', fx: () => 'Activo' },
-        { id: 'p_base', br: 'core', parent: 'p_core', name: 'Impulso', cost: [10, 1.8], desc: 'Cada baldosa que tocás a tiempo vale más giros.', fx: lv => `${1 + lv} giros por baldosa` },
+        { id: 'p_base', br: 'core', parent: 'p_core', name: 'Impulso', cost: [10, 1.8], desc: 'Cada baldosa que tocás a tiempo vale más {giros}.', fx: lv => `${1 + lv} {giros} por baldosa` },
         { id: 'p_win',  br: 'core', parent: 'p_core', name: 'Precisión', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing al tocar cada baldosa.', fx: lv => `+${10 * lv}% de margen` },
         { id: 'p_life', br: 'core', parent: 'p_core', name: 'Órbita estable', max: 5, cost: [180, 7.3], desc: 'Salirte del camino vacía menos la barra de equilibrio.', fx: lv => `Un fallo resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'p_r_root', br: 'pr', pos: [2, 1], root: true, name: 'Racha', max: 1, cost: [80, 1], req: [['p_core', 1]], desc: 'Cada 16 baldosas seguidas sin fallar suben el multiplicador de racha en +0,25, hasta x1,5.', fx: lv => lv ? 'Racha hasta x1,5' : 'La racha no multiplica' },
         { id: 'p_r_rank', br: 'pr', pos: [1, 2], name: 'Inercia', max: 4, cost: [560, 8.7], req: [['p_r_root', 1]], desc: 'Sube el tope del multiplicador de racha.', fx: lv => `Racha hasta x${dec(1.5 + 0.5 * lv)}` },
-        { id: 'p_r_perf', br: 'pr', pos: [3, 2], name: 'Centro exacto', max: 3, cost: [480, 8], req: [['p_r_root', 1]], desc: 'Los PERFECTO dan más giros.', fx: lv => `+${20 * lv}% por PERFECTO` },
+        { id: 'p_r_perf', br: 'pr', pos: [3, 2], name: 'Centro exacto', max: 3, cost: [480, 8], req: [['p_r_root', 1]], desc: 'Los PERFECTO dan más {giros}.', fx: lv => `+${20 * lv}% por PERFECTO` },
         { id: 'p_r_safe', br: 'pr', pos: [2, 3], name: 'Red de seguridad', max: 3, cost: [800, 10.8], req: [['p_r_rank', 1]], desc: 'Algunos fallos por canción no cortan la racha.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por canción` : 'Sin red' },
         { id: 'p_c_root', br: 'pc', pos: [2, 1], root: true, name: 'Tramo perfecto', max: 1, cost: [100, 1], req: [['p_core', 1]], desc: 'Cada tramo de 8 compases sin fallar da un bonus del 25% de lo que ganaste en ese tramo.', fx: lv => lv ? 'Bonus de 25% por tramo' : 'Sin bonus' },
         { id: 'p_c_sec', br: 'pc', pos: [1, 2], name: 'Tramo brillante', max: 4, cost: [400, 8.7], req: [['p_c_root', 1]], desc: 'Los tramos perfectos dan un bonus más grande.', fx: lv => `Bonus de ${25 + 25 * lv}% por tramo` },
@@ -1088,14 +1110,14 @@ body.land .rx-txt { display: none; }
         { id: 'gm', name: 'Desafíos', tag: 'Modificadores que cambian cómo se juega una canción y suben o bajan sus estrellas.' },
       ],
       nodes: [
-        { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con materia oscura.', fx: () => 'Activo' },
+        { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con {mo}.', fx: () => 'Activo' },
         { id: 'g_res', br: 'core', parent: 'g_core', name: 'Resonancia', max: 10, cost: [3, 1.35], desc: 'Todas las monedas de todas las galaxias valen más.', fx: lv => `+${10 * lv}% en todo` },
         { id: 'g_tune', br: 'core', parent: 'g_core', name: 'Afinación cósmica', max: 3, cost: [4, 2], desc: 'Agranda el margen de timing en todas las galaxias.', fx: lv => `+${5 * lv}% de margen` },
-        { id: 'g_dark', br: 'core', parent: 'g_core', name: 'Cosecha oscura', max: 4, cost: [4, 1.8], desc: 'Los hitos dan más materia oscura.', fx: lv => `+${25 * lv}% de materia oscura` },
-        { id: 'g_amp_pulso', br: 'ga', pos: [2, 1], root: true, name: 'Amplificador Pulso', max: 8, cost: [2, 1.35], req: [['g_core', 1]], desc: 'Más pulsos en Vía Pulso.', fx: lv => `+${25 * lv}% pulsos` },
-        { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más piezas en Ensamble.', fx: lv => `+${25 * lv}% piezas` },
-        { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más datos en Señal.', fx: lv => `+${25 * lv}% datos` },
-        { id: 'g_amp_com', br: 'ga', pos: [2, 2], name: 'Amplificador Compás', max: 8, cost: [4, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más giros en Compás.', fx: lv => `+${25 * lv}% giros` },
+        { id: 'g_dark', br: 'core', parent: 'g_core', name: 'Cosecha oscura', max: 4, cost: [4, 1.8], desc: 'Los hitos dan más {mo}.', fx: lv => `+${25 * lv}% de {mo}` },
+        { id: 'g_amp_pulso', br: 'ga', pos: [2, 1], root: true, name: 'Amplificador Pulso', max: 8, cost: [2, 1.35], req: [['g_core', 1]], desc: 'Más {pts} en Vía Pulso.', fx: lv => `+${25 * lv}% {pts}` },
+        { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más {piezas} en Ensamble.', fx: lv => `+${25 * lv}% {piezas}` },
+        { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más {datos} en Señal.', fx: lv => `+${25 * lv}% {datos}` },
+        { id: 'g_amp_com', br: 'ga', pos: [2, 2], name: 'Amplificador Compás', max: 8, cost: [4, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más {giros} en Compás.', fx: lv => `+${25 * lv}% {giros}` },
         { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3], ['g_amp_com', 3]], desc: 'Con todas las galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
         { id: 'g_mods', br: 'gm', pos: [2, 1], root: true, name: 'Modificadores', max: 1, cost: [3, 1], req: [['g_core', 1]], desc: 'Abre los modificadores en el menú de cada canción. Cada uno se habilita al superar Difícil en un planeta de su galaxia.', fx: lv => lv ? 'Modificadores abiertos' : 'Cerrados' },
         { id: 'g_mod_amp', br: 'gm', pos: [2, 2], name: 'Maestría', max: 4, cost: [5, 1.6], req: [['g_mods', 1]], desc: 'Los modificadores que suben la dificultad suman más estrellas. No cambia los que restan.', fx: lv => `Suman ${100 + 25 * lv}% de lo normal` },
@@ -2243,7 +2265,7 @@ body.land .rx-txt { display: none; }
   function settle({ gain, grade, fc, notes, rows, mults = [] }) {
     const s = run.song, gal = s.gal, g = GX[gal], key = `${s.id}-${run.di}`;
     // Los tutoriales son para aprender: no dan moneda, ni materia oscura, ni eco
-    if (s.tut) { gain = 0; run.earned = 0; mults = []; notes.unshift(`Los tutoriales no dan ${g.unit} ni materia oscura: son para aprender a jugar`); }
+    if (s.tut) { gain = 0; run.earned = 0; mults = []; notes.unshift(`Los tutoriales no dan ${g.unit} ni {mo}: son para aprender a jugar`); }
     const nextWasOpen = diffOpen(s, run.di + 1), openBefore = openWorlds(gal);
     const before = { ...(S.rec[key] || {}) }, songWas = diffsOf(s).some(d => recOf(s, d)?.clear);
     const rec = S.rec[key] || { best: 0, grade: null, clear: false, fc: false };
@@ -2259,7 +2281,7 @@ body.land .rx-txt { display: none; }
     const mo = s.tut ? 0 : (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult() * MO_RATE;   // el planeta que abre un tutorial tampoco da materia oscura
     S.mo += mo;
     save();
-    if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
+    if (mo > 0) notes.push(`+${dec(mo)} de {mo}`);
     if (newWorlds.length) notes.push(`Se abrió la ruta a ${newWorlds.map(wi => WORLDS[wi].name).join(' y ')}${gal === 'pulso' ? '. Aguante puede subir un nivel más' : ''}`);
     if (run.vfail) notes.push('Sin caída: el aguante se habría vaciado, así que no cuenta como superada');
     if (cleared && !s.tut && run.di < diffsOf(s).length - 1 && !nextWasOpen) notes.push(`Desbloqueaste ${DIFFS[run.di + 1].name} en esta canción`);
@@ -2283,9 +2305,9 @@ body.land .rx-txt { display: none; }
     const gradeEl = $('rGrade'), gainEl = $('rGain'), lbl = $('rGainLbl');
     gradeEl.textContent = grade; gradeEl.classList.remove('on');
     gainEl.classList.remove('pop'); gainEl.textContent = '+0';
-    lbl.textContent = `${g.curName} en la canción`;
+    lbl.innerHTML = cur(`${g.unit} en la canción`);
     $('rCalc').innerHTML = `<div class="r-mults">${steps.map(([label, m]) => `<div class="rv"><b>x${dec(m)}</b> ${label}</div>`).join('')}</div>`
-      + `<div class="r-notes rv">${notes.map(l => `<div>${l}</div>`).join('')}</div>`;
+      + `<div class="r-notes rv">${notes.map(l => `<div>${cur(l)}</div>`).join('')}</div>`;
     $('rRows').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     // Pedidos cumplidos: tarjeta con el retrato, sello de CUMPLIDO y papelitos del color de la galaxia
     $('rReqs').innerHTML = reqs.map(q => `<div class="r-req"><div class="rq-face pf">${faceSvg(q.id)}</div>
@@ -2316,7 +2338,7 @@ body.land .rx-txt { display: none; }
       }
       if (!alive()) return;
       await wait(250);
-      lbl.textContent = `Total · ${g.curName} ${s.gal === 'ens' ? 'ganadas' : 'ganados'}`;
+      lbl.innerHTML = cur(`Total · ${g.unit} ${s.gal === 'ens' ? 'ganadas' : 'ganados'}`);
       gainEl.textContent = '+' + fmt(paid); gainEl.classList.add('pop');
       await wait(450); if (!alive()) return;
       gradeEl.classList.add('on');
@@ -3154,26 +3176,98 @@ body.land .rx-txt { display: none; }
   const AMB = { pulso: 'kadenza', ens: 'tesela', sen: 'eco7', com: 'vaiven' };
   const faceSvg = id => `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="49" class="bg"/>${FACE[id]}</svg>`;
 
-  // Frases de cada representante: al entrar (idle) y como reacción en la partida
+  // Frases de cada representante: al entrar (idle) y como reacción en la partida (cinco por juicio, se eligen al azar sin repetir la anterior)
   const QUIPS = {
-    bip:        { idle: 'Protocolo listo. Bip.', perfect: 'Exacto. Bip.', great: 'Aceptable. Bip.', good: 'Dentro del margen.', miss: 'Error 404. Bip.', fever: '¡SOBRECARGA! Bip.' },
-    brasa:      { idle: '¡¿Listos para el riff?!', perfect: '¡ROCK AND ROLL!', great: '¡Eso, eso!', good: '¡Más fuerte!', miss: '¡Se cortó una cuerda!', fever: '¡QUE ARDA TODO!' },
-    lumi:       { idle: '¿Cantamos? ♥', perfect: '¡Perfecto! ♥♥', great: '¡Brillante!', good: 'Casi, casi…', miss: 'Ups, desafinamos', fever: '¡Todos juntos! ♥' },
-    duque:      { idle: 'La pista es tuya.', perfect: 'Divino.', great: 'Con estilo.', good: 'Le falta brillo…', miss: 'Ay, se rayó el disco', fever: '¡Fiebre de sábado!' },
-    neutron:    { idle: '¿LISTOS PARA EL DROP?', perfect: '¡DROP!', great: '¡ARRIBA ESAS MANOS!', good: 'Subí el volumen', miss: '¿SE CORTÓ EL AUDIO?', fever: '¡¡BASS BOOST!!' },
-    smokey:     { idle: 'Sin apuro, gato.', perfect: 'Swing puro.', great: 'Groovy.', good: 'Más suelto…', miss: 'Nota azul… muy azul', fever: '¡Improvisá!' },
-    grua:       { idle: '¡Casco puesto!', perfect: '¡Encastre perfecto!', great: 'Bien soldado.', good: 'Revisá el nivel', miss: '¡Pieza suelta!', fever: '¡Turno doble!' },
-    remache:    { idle: 'Sentí el groove.', perfect: '¡Funky!', great: 'Ahí está el bajo', good: 'Más cadera…', miss: 'Se zafó un tornillo', fever: '¡A bailar!' },
-    yunque:     { idle: 'Martillo listo.', perfect: 'Golpe exacto.', great: 'Acero firme.', good: 'Le falta temple', miss: 'Chispa perdida', fever: '¡Fundición total!' },
-    vector:     { idle: 'Ruta: 1986.', perfect: 'Neón perfecto.', great: 'Radical.', good: 'Rebobiná un poco', miss: 'Se trabó el casete', fever: '¡Velocidad de escape!' },
-    estatica:   { idle: 'Sintonizando…', perfect: 'Señal clara.', great: 'Buena recepción', good: 'Hay interferencia', miss: 'Se perdió la señal', fever: '¡Frecuencia máxima!' },
-    bruma:      { idle: 'Respirá…', perfect: 'Armonía.', great: 'Fluye…', good: 'Casi en calma', miss: 'Una ola rompió', fever: 'Todo resuena…' },
-    nubi:       { idle: 'Estudiemos un rato.', perfect: 'Chill total.', great: 'Buen beat.', good: 'Se enfrió el té', miss: 'Se despertó el gato', fever: '¡Modo concentración!' },
-    morse:      { idle: '·— ·—· ·—·', perfect: 'Código correcto.', great: 'Transmitido.', good: 'Ruido en la línea', miss: 'Paquete perdido', fever: '¡Sobrecarga eléctrica!' },
-    relojero:   { idle: 'Tic… tac…', perfect: 'Como un reloj.', great: 'Bien templado.', good: 'Un segundo tarde', miss: 'Se atrasó…', fever: '¡Tiempo de oro!' },
-    garua:      { idle: 'Devagar, devagar…', perfect: 'Que lindo.', great: 'Suave…', good: 'Más saudade', miss: 'Ay, llovió', fever: '¡Carnaval!' },
-    compadre:   { idle: 'Che, ¿bailamos?', perfect: '¡Qué firulete!', great: 'Con garra.', good: 'Más arrastre', miss: 'Me pisaste', fever: '¡Milonga brava!' },
-    rompeondas: { idle: 'Ajustate el casco.', perfect: '¡Velocidad pura!', great: 'Rompiendo.', good: 'Más rápido', miss: 'Te pasé', fever: '¡Hiperdrive!' },
+    bip: { idle: "Protocolo listo. Bip.", fever: "¡SOBRECARGA! Bip.",
+      perfect: ['Exacto. Bip.', 'Precisión: 100 %. Bip.', 'Registrado como ejemplar.', 'Bip bip. Bip.', 'Calibración perfecta.'],
+      great: ['Aceptable. Bip.', 'Dentro de parámetros.', 'Correcto. Casi exacto.', 'Rendimiento: satisfactorio.', 'Bip. Muy bien.'],
+      good: ['Dentro del margen.', 'Margen de error: tolerable.', 'Recalibrando…', 'Sugerencia: escuchar el bombo.', 'Bip… mejorable.'],
+      miss: ['Error 404. Bip.', 'Excepción no controlada.', 'Reiniciando… no, sigue.', 'Bip. Eso no estaba en el manual.', 'Falla registrada. Sin culpa.'] },
+    brasa: { idle: "¡¿Listos para el riff?!", fever: "¡QUE ARDA TODO!",
+      perfect: ['¡ROCK AND ROLL!', '¡ESO ES METAL!', '¡Solo de guitarra!', '¡Hasta el fondo del volcán!', '¡Encore, encore!'],
+      great: ['¡Eso, eso!', '¡Así se pega!', '¡Puro distorsión!', '¡Bien ahí, rocker!', '¡Sube la lava!'],
+      good: ['¡Más fuerte!', '¡No te oigo!', '¡Pegale con ganas!', '¡Le falta fuego!', '¡Más volumen, más!'],
+      miss: ['¡Se cortó una cuerda!', '¡Feedback!', '¡Se apagó el ampli!', '¡Uy, desafinó!', '¡Seguí, que el show sigue!'] },
+    lumi: { idle: "¿Cantamos? ♥", fever: "¡Todos juntos! ♥",
+      perfect: ['¡Perfecto! ♥♥', '¡Sos una estrella!', '¡Nota alta! ♪', '¡Quiero un autógrafo!', '¡Brillás como prisma!'],
+      great: ['¡Brillante!', '¡Qué lindo! ♥', '¡Así me gusta!', '¡Al ritmo del estribillo!', '¡Casi de póster!'],
+      good: ['Casi, casi…', '¡Vos podés! ♥', 'Un poquito antes…', '¡Más sonrisa!', 'Ensayemos otra vez'],
+      miss: ['Ups, desafinamos', '¡Ay, se cayó el micro!', 'No pasa nada ♥', 'Eso no va al video', '¡Retomamos en el coro!'] },
+    duque: { idle: "La pista es tuya.", fever: "¡Fiebre de sábado!",
+      perfect: ['Divino.', 'Sublime, querida estrella.', 'Brillás más que mi peinado.', 'Eso merece aplausos.', 'Exquisito.'],
+      great: ['Con estilo.', 'Muy elegante.', 'Ese paso tiene clase.', 'La bola de espejos aprueba.', 'Glamoroso.'],
+      good: ['Le falta brillo…', 'Más lentejuela, por favor.', 'Un poco de swing en la cadera.', 'Casi a la moda.', 'Mmm, retocá ese paso.'],
+      miss: ['Ay, se rayó el disco', 'Tropezaste con la plataforma', 'Qué escándalo…', 'Fingí que fue a propósito', 'La pista perdona. Yo, casi.'] },
+    neutron: { idle: "¿LISTOS PARA EL DROP?", fever: "¡¡BASS BOOST!!",
+      perfect: ['¡DROP!', '¡ESO ESTÁ EN LA PLAYLIST!', '¡FRECUENCIA PERFECTA!', '¡LA PISTA EXPLOTA!', '¡MAX VOLUMEN!'],
+      great: ['¡ARRIBA ESAS MANOS!', '¡SUBE, SUBE!', '¡BUEN BUILD-UP!', '¡ESO SUENA GORDO!', '¡SIGAN SALTANDO!'],
+      good: ['Subí el volumen', '¡MÁS ENERGÍA!', 'EL BPM NO ESPERA', '¡CASI EN EL BEAT!', '¡SINCRONIZÁ!'],
+      miss: ['¿SE CORTÓ EL AUDIO?', '¡ERROR EN LA CONSOLA!', '¡SE ME CAYÓ EL CASCO!', '¡SILENCIO INCÓMODO!', '¡REMIX DE EMERGENCIA!'] },
+    smokey: { idle: "Sin apuro, gato.", fever: "¡Improvisá!",
+      perfect: ['Swing puro.', 'Eso es jazz.', 'Perfecto en el dos y el cuatro.', 'Me sacaste el sombrero.', 'Fino, fino.'],
+      great: ['Groovy.', 'Lindo fraseo.', 'Así se camina.', 'Tiene sabor.', 'Me gusta ese tono.'],
+      good: ['Más suelto…', 'Relajá la muñeca.', 'Respirá con la frase.', 'Casi en el pocket.', 'Un pelito tarde, gato.'],
+      miss: ['Nota azul… muy azul', 'Bueno, eso fue free jazz', 'Ups, contratiempo', 'Hacé como que fue intencional', 'El silencio también cuenta'] },
+    grua: { idle: "¡Casco puesto!", fever: "¡Turno doble!",
+      perfect: ['¡Encastre perfecto!', '¡Obra de arte!', '¡Así se construye!', '¡Ni un milímetro de luz!', '¡Aprobado por inspección!'],
+      great: ['Bien soldado.', 'Firme.', 'Buen trabajo, operario.', 'Así se apila.', 'Seguimos en horario.'],
+      good: ['Revisá el nivel', 'Un poco torcido…', 'Ajustá esa grúa', 'Ojo con el ritmo', 'Casi a plomo'],
+      miss: ['¡Pieza suelta!', '¡Cuidado abajo!', '¡Pare la obra!', 'Eso va a reclamo', '¡Silbato! Otra vez'] },
+    remache: { idle: "Sentí el groove.", fever: "¡A bailar!",
+      perfect: ['¡Funky!', '¡Qué groove!', '¡Eso tiene onda!', '¡Bajo y batería, hermano!', '¡Clavado en el uno!'],
+      great: ['Ahí está el bajo', 'Buena onda', 'Se mueve, se mueve', 'Así encastra el funk', 'Me gusta ese paso'],
+      good: ['Más cadera…', 'Aflojá un poco', 'Seguí el bajo', 'Casi en el bolsillo', 'Soltá los hombros'],
+      miss: ['Se zafó un tornillo', 'Uh, se trabó la tuerca', 'Eso no tiene groove', 'Chatarra a la chatarra', 'Respirá y volvemos'] },
+    yunque: { idle: "Martillo listo.", fever: "¡Fundición total!",
+      perfect: ['Golpe exacto.', 'Forja perfecta.', 'Acero de primera.', 'Templado al punto.', 'Sin una grieta.'],
+      great: ['Acero firme.', 'Buen golpe.', 'Sólido.', 'Bien forjado.', 'Resistente.'],
+      good: ['Le falta temple', 'Pegale más fuerte', 'Calentá el metal', 'Casi en el yunque', 'Medio torcido'],
+      miss: ['Chispa perdida', 'Se partió la pieza', 'Martillazo en el dedo', 'A refundir', 'Mal temple'] },
+    vector: { idle: "Ruta: 1986.", fever: "¡Velocidad de escape!",
+      perfect: ['Neón perfecto.', 'Totalmente radical.', 'Récord en la arcade.', 'Brillo de atardecer digital.', 'Wow. Wow.'],
+      great: ['Radical.', 'Tubular.', 'Bien sintetizado.', 'Ochentoso.', 'Cromado.'],
+      good: ['Rebobiná un poco', 'Casi en la grilla', 'Ajustá el tracking', 'Más reverb', 'Un poco desfasado'],
+      miss: ['Se trabó el casete', 'Game over… no, sigue', 'Pixel muerto', 'Se cortó la luz del neón', 'Error de VHS'] },
+    estatica: { idle: "Sintonizando…", fever: "¡Frecuencia máxima!",
+      perfect: ['Señal clara.', 'Recepción perfecta.', 'Cinco por cinco.', 'Fuerte y claro.', 'Sin una interferencia.'],
+      great: ['Buena recepción', 'Se escucha bien', 'Copiado', 'En frecuencia', 'Clara, casi'],
+      good: ['Hay interferencia', 'Movete un poco la antena', 'Leve estática', 'Recepción baja', 'Repetí, por favor'],
+      miss: ['Se perdió la señal', 'Ksssh… nada', 'Fuera de frecuencia', 'Llamada caída', 'Sin cobertura'] },
+    bruma: { idle: "Respirá…", fever: "Todo resuena…",
+      perfect: ['Armonía.', 'Calma perfecta.', 'Como una ola tranquila.', 'Eso flotó.', 'Resonancia pura.'],
+      great: ['Fluye…', 'Suave…', 'Bien llevado.', 'En calma.', 'Lindo eco.'],
+      good: ['Casi en calma', 'Respirá más lento', 'Un poquito de prisa', 'Dejate llevar', 'La ola llega sola'],
+      miss: ['Una ola rompió', 'Ruido en la niebla', 'Se disipó…', 'Volvé a respirar', 'El silencio te espera'] },
+    nubi: { idle: "Estudiemos un rato.", fever: "¡Modo concentración!",
+      perfect: ['Chill total.', 'Beat perfecto.', 'Así se estudia.', 'El gato ronronea.', '10 de 10.'],
+      great: ['Buen beat.', 'Tranqui y bien.', 'Me gusta.', 'Va bien la tarde.', 'Vibes.'],
+      good: ['Se enfrió el té', 'Medio dormido…', 'Un sorbo de té y seguimos', 'Casi', 'Concentración…'],
+      miss: ['Se despertó el gato', 'Se volcó el té', 'Uh, se rayó el vinilo', 'Pausa… no, sigue', 'Mmm, otra vuelta'] },
+    morse: { idle: "·— ·—· ·—·", fever: "¡Sobrecarga eléctrica!",
+      perfect: ['Código correcto.', '·—·—· PERFECTO.', 'Transmisión impecable.', 'Paquete íntegro.', 'Bits en su lugar.'],
+      great: ['Transmitido.', 'Recibido.', 'Señal estable.', 'Acuse de recibo.', 'Datos válidos.'],
+      good: ['Ruido en la línea', 'Bit corrupto', 'Reintentando…', 'Latencia detectada', 'Checksum dudoso'],
+      miss: ['Paquete perdido', 'Conexión reiniciada', '—·—· ERROR —·—·', 'Timeout', 'Señal fuera de banda'] },
+    relojero: { idle: "Tic… tac…", fever: "¡Tiempo de oro!",
+      perfect: ['Como un reloj.', 'Precisión suiza.', 'Ni un segundo de más.', 'Exacto al tic.', 'Engranaje perfecto.'],
+      great: ['Bien templado.', 'Buen pulso.', 'Casi exacto.', 'Marcha bien.', 'Correcto.'],
+      good: ['Un segundo tarde', 'Dele cuerda', 'Ajuste el péndulo', 'Se adelantó un poco', 'Más paciencia'],
+      miss: ['Se atrasó…', 'Se trabó el engranaje', 'Hay que darle cuerda', 'Tic… ¿y el tac?', 'Desfasado'] },
+    garua: { idle: "Devagar, devagar…", fever: "¡Carnaval!",
+      perfect: ['Que lindo.', 'Que maravilha.', 'Suave como la arena.', 'Así se toca bossa.', 'Me hiciste suspirar.'],
+      great: ['Suave…', 'Bonito.', 'Con calma.', 'Linda brisa.', 'Bien.'],
+      good: ['Más saudade', 'Sin apuro…', 'Dejate llevar', 'Un poquito más suave', 'Casi, casi'],
+      miss: ['Ay, llovió', 'Se mojó la guitarra', 'Se cortó la brisa', 'No pasa nada, amor', 'Seguimos en la orilla'] },
+    compadre: { idle: "Che, ¿bailamos?", fever: "¡Milonga brava!",
+      perfect: ['¡Qué firulete!', '¡Eso es tango, viejo!', '¡Ocho perfecto!', '¡De película!', '¡Bandoneón de oro!'],
+      great: ['Con garra.', 'Bien plantado.', 'Así se marca.', 'Linda caminada.', 'Con arrabal.'],
+      good: ['Más arrastre', 'Abrazá la música', 'Pisá firme', 'Medio tímido, pibe', 'Casi en el compás'],
+      miss: ['Me pisaste', 'Se cortó el fuelle', 'Se te fue la pareja', 'Eso fue un tropezón', 'Volvé a la ronda'] },
+    rompeondas: { idle: "Ajustate el casco.", fever: "¡Hiperdrive!",
+      perfect: ['¡Velocidad pura!', '¡Rompiste la barrera!', '¡Más rápido que el sonido!', '¡Eso fue un rayo!', '¡Imparable!'],
+      great: ['Rompiendo.', '¡Vamos!', 'Buen ritmo.', 'Sigue, sigue.', '¡Rápido!'],
+      good: ['Más rápido', 'No frenes', '¡Acelerá!', 'Casi lo agarrás', 'Seguime'],
+      miss: ['Te pasé', '¡Derrapaste!', 'Wipeout', '¡Volvé al carril!', 'Uf, quedaste atrás'] },
   };
   const repOf = wi => REP[WORLDS[wi].id] || 'cora';
 
@@ -3216,13 +3310,19 @@ body.land .rx-txt { display: none; }
     el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, QUIPS[rxId]?.idle || ''));
     el.querySelector('.rx-name').textContent = SPK[rxId][0];
   }
+  // Elige una reacción al azar entre las cinco, sin repetir la última
+  let lastQuip = '';
+  function quipFor(id, kind) {
+    const q = QUIPS[id]?.[kind]; if (!Array.isArray(q)) return q || '';
+    const pool = q.filter(x => x !== lastQuip); lastQuip = pool[Math.floor(Math.random() * pool.length)] || q[0]; return lastQuip;
+  }
   function reactTo(j) {
     const kind = j === 'fever' ? 'fever' : REACT[j]; if (!kind || !rxId) return;
     const el = $('reactor'), now = performance.now();
     el.classList.remove('r-perfect', 'r-great', 'r-good', 'r-miss', 'r-fever'); void el.offsetWidth; el.classList.add('r-' + kind);
     // la frase cambia como mucho una vez por segundo, salvo fallo o fiebre, que siempre se dicen
-    if (kind !== rxKind && (now - rxSayAt > 1000 || kind === 'miss' || kind === 'fever')) {
-      rxSayAt = now; rxKind = kind; el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, QUIPS[rxId]?.[kind] || ''));
+    if ((kind !== rxKind && (now - rxSayAt > 1000 || kind === 'miss' || kind === 'fever')) || now - rxSayAt > 1800) {   // con racha del mismo juicio, cambia de frase cada ~2 s
+      rxSayAt = now; rxKind = kind; el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, quipFor(rxId, kind)));
     }
   }
 
@@ -3246,7 +3346,7 @@ body.land .rx-txt { display: none; }
     gal_intro: [
       ['cora', 'Este es el Cúmulo. Las galaxias apagadas todavía no confían en nosotros.'],
       ['cora', 'La más cercana es Vía Pulso. Ahí se habla con flechas: cada dirección es una palabra y cada combo, una frase.'],
-      ['cora', 'Para abrir las demás vamos a necesitar materia oscura. Se gana con hitos: superar canciones, sacar S, hacer Full Combo.'],
+      ['cora', 'Para abrir las demás vamos a necesitar {mo}. Se gana con hitos: superar canciones, sacar S, hacer Full Combo.'],
       ['cora', 'Su embajadora es Kadenza. Sabe algo de idioma terrestre, pero no mucho. Yo traduzco lo que falte.'],
       ['cora', 'Cuando quieras, tocá Ir al mapa. Yo ya cargué combustible. Mentira, la nave funciona con ritmo.'],
     ],
@@ -3332,7 +3432,7 @@ body.land .rx-txt { display: none; }
     // Embajadores: cuando reunís las recomendaciones para la galaxia vecina
     ref_pulso_ens: [
       ['kadenza', '↑ ↑ Te recomiendan ↑ ↑. → → Ensamble → espera. Tesela… ▙▟? ← Construye ←.'],
-      ['cora', 'Kadenza ya le avisó a Tesela. Con la materia oscura suficiente, Ensamble se abre en el mapa de galaxias.'],
+      ['cora', 'Kadenza ya le avisó a Tesela. Con la {mo} suficiente, Ensamble se abre en el mapa de galaxias.'],
     ],
     ref_pulso_sen: [
       ['kadenza', '↗ ↗ Muchas voces ↑ hablan de vos. ↘ Señal ↘ escucha. Eco-7… ∿ repite ∿.'],
@@ -3430,7 +3530,7 @@ body.land .rx-txt { display: none; }
   const GLYPHS = /([←↑→↓↖↗↘↙]+|[▀▄█▙▚▛▜▝▞▟▖▗▘]+|[∿〰]+|[◐◑◇]+|kssh)/g;
   const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const paintGlyphs = t => esc(t).replace(GLYPHS, '<span class="glyph">$1</span>');
-  const dlgPaint = t => { $('dlgText').innerHTML = paintGlyphs(t); };
+  const dlgPaint = t => { $('dlgText').innerHTML = cur(paintGlyphs(t.replace(/\{[a-z]*$/, ''))); };   // fichas de moneda con ícono (sin mostrar una ficha a medio escribir)
   function dlgNext() {
     clearInterval(dlgTimer);
     dlgLine = dlgQueue.shift();
@@ -3842,13 +3942,14 @@ body.land .rx-txt { display: none; }
     $('galSvg').innerHTML = GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('galaxies').innerHTML = GALAXIES.map(g => {
       const open = !!S.galOpen[g.id], here = S.galaxy === g.id;
-      const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : !galRecsOk(g.id) ? `${recFor(g.id).length}/${recNeed(g.id)} recomendaciones` : `${g.cost} de materia oscura`;
-      return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%;--g-acc:${g.color}" aria-label="${g.name}, ${status}">
+      const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : !galRecsOk(g.id) ? `${recFor(g.id).length}/${recNeed(g.id)} recomendaciones` : `${g.cost} de {mo}`;
+      return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%;--g-acc:${g.color}" aria-label="${g.name}, ${curPlain(status)}">
         <span class="gxw"><span class="gx" data-g="${g.id}"></span></span>
         ${here ? HERE_MARK : ''}${galSel === g.id ? SEL_MARK : ''}
         <span class="pgn">${g.modeName}</span><span class="pn">${g.name}</span><span class="pp">${status}</span>
       </button>`;
     }).join('');
+    $('galaxies').innerHTML = cur($('galaxies').innerHTML);
     renderGalInfo();
     requestAnimationFrame(() => galPan.center(...pos[S.galaxy]));
   }
@@ -3858,8 +3959,8 @@ body.land .rx-txt { display: none; }
     const btn = here ? '<button class="play-btn" id="galGo">Ir al mapa</button>'
       : open ? '<button class="play-btn" id="galGo">Viajar</button>'
       : !galRecsOk(g.id) ? `<button class="play-btn" disabled>Faltan recomendaciones (${recFor(g.id).length}/${recNeed(g.id)})</button>`
-      : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de materia oscura</button>`
-      : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
+      : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de {mo}</button>`
+      : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de {mo}</button>`;
     $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
     const amb = AMB[g.id], [ambName, ambRole] = SPK[amb];
     const recHtml = open ? '' : (() => {
@@ -3870,7 +3971,8 @@ body.land .rx-txt { display: none; }
         <div class="gi-reclist">${cands.map(id => `<span class="gi-rec${got.includes(id) ? ' ok' : ''}" title="${AFF_TIERS[affTier(affState(id).pts)][1]}"><span class="pf">${faceSvg(id)}</span>${SPK[id][0]}</span>`).join('')}</div></div>`;
     })();
     $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}${recHtml}<p>${g.desc}</p>
-      <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
+      <div class="gi-stats"><span>${g.unit}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
+    $('galInfo').innerHTML = cur($('galInfo').innerHTML);
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
   $('galInfo').addEventListener('click', e => {
@@ -3976,7 +4078,7 @@ body.land .rx-txt { display: none; }
     ['Cómo se juzga', 'Cada toque se compara con el tiempo de la música: <b>PERFECTO</b> (±45 ms) vale una nota entera, <b>GENIAL</b> (±90 ms) 70% y <b>BIEN</b> (±135 ms) 40%. Las mejoras de margen agrandan esas ventanas.'],
     ['Estrellas y multiplicador', 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras y modificadores incluidos. Cada estrella por encima de 1 suma x0,5 a lo que ganás.'],
     ['Calificación', 'Depende solo de la precisión: S desde 95%, A desde 88%, B desde 78%, C desde 65%. Tocar donde no hay nota baja la precisión.'],
-    ['Qué ganás', 'La moneda de la galaxia, para su árbol. La primera vez que superás una dificultad, sacás S o hacés Full Combo, ganás materia oscura. Tu mejor resultado queda como eco y sigue rindiendo solo. Los tutoriales no dan recursos.'],
+    ['Qué ganás', 'La moneda de la galaxia, para su árbol. La primera vez que superás una dificultad, sacás S o hacés Full Combo, ganás {mo}. Tu mejor resultado queda como eco y sigue rindiendo solo. Los tutoriales no dan recursos.'],
   ];
   const RULES = {
     arrows: [['Objetivo', 'Tocá cada flecha justo cuando llega a los receptores de arriba.'],
@@ -4050,11 +4152,12 @@ body.land .rx-txt { display: none; }
       }
       return h + '</div>';
     }).join('');
+    $('songs').innerHTML = cur($('songs').innerHTML);
     const c = getChart(S.sel, S.diff);
     $('playBtn').textContent = `Jugar “${SONGS[S.sel].name}” · ${DIFFS[S.diff].name} ${dec1(c.stars)}★`;
     $('keycfg').hidden = !(mode === 'arrows' && S.diff === 3);
-    $('rulesBox').innerHTML = [...RULES[mode], ...RULES_COMMON].map(([t, d]) => `<section><h3>${t}</h3><p>${d}</p></section>`).join('')
-      + `<section><h3>Dificultad elegida</h3><p>${diffInfo(SONGS[S.sel], S.diff)}</p></section>`;
+    $('rulesBox').innerHTML = cur([...RULES[mode], ...RULES_COMMON].map(([t, d]) => `<section><h3>${t}</h3><p>${d}</p></section>`).join('')
+      + `<section><h3>Dificultad elegida</h3><p>${diffInfo(SONGS[S.sel], S.diff)}</p></section>`);
     const nMods = activeMods(SONGS[S.sel]).length;
     $('modCount').hidden = !nMods; $('modCount').textContent = nMods;
     for (const side of ['L', 'R']) {
@@ -4078,13 +4181,22 @@ body.land .rx-txt { display: none; }
   }
   // Tarjetas laterales del menú: Reglas (izquierda), Mecánicas y Modificadores (derecha)
   const CARD_TITLE = { rules: 'Reglas', mech: 'Mecánicas', mods: 'Modificadores' };
+  // Reglas es un cajón lateral (tiene mucho texto); Mecánicas y Modificadores, tarjetas flotantes junto a su botón.
+  // En el celular, las tres suben como hoja desde abajo.
   function sideCard(name) {
-    const card = $('sideCard'), on = !!name;
-    card.classList.toggle('open', on); $('sideBack').classList.toggle('open', on);
+    const card = $('sideCard'), on = !!name, pop = on && name !== 'rules';
+    card.classList.toggle('open', on); $('sideBack').classList.toggle('open', on); $('sideBack').classList.toggle('pop', pop);
     document.querySelectorAll('.side-btn').forEach(b => b.setAttribute('aria-expanded', String(b.dataset.card === name)));
+    card.style.left = card.style.top = '';
     if (!on) return;
-    card.dataset.side = name === 'rules' ? 'l' : 'r'; $('scTitle').textContent = CARD_TITLE[name];
+    card.dataset.side = name === 'rules' ? 'l' : 'pop'; $('scTitle').textContent = CARD_TITLE[name];
     card.querySelectorAll('.sc-body').forEach(b => { b.hidden = b.dataset.card !== name; });
+    if (pop && innerWidth > 640) {
+      const r = document.querySelector(`.side-btn[data-card="${name}"]`).getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight, m = 12;
+      const x = Math.max(m, Math.min(r.left, innerWidth - w - m));
+      let y = r.bottom + 8; if (y + h > innerHeight - m) y = Math.max(m, r.top - h - 8);
+      card.style.left = x + 'px'; card.style.top = y + 'px';
+    }
     $('scClose').focus();
   }
   document.querySelectorAll('.side-btn').forEach(b => b.addEventListener('click', () => sideCard($('sideCard').classList.contains('open') && $('sideCard').querySelector(`.sc-body[data-card="${b.dataset.card}"]`).hidden === false ? null : b.dataset.card)));
@@ -4130,7 +4242,7 @@ body.land .rx-txt { display: none; }
     $('coreGrid').innerHTML = T.nodes.filter(n => n.br === 'core').map(nodeBtn).join('');
     $('branches').className = 'branches' + (T.branches.length === 2 ? ' two' : '');
     $('branches').innerHTML = T.branches.map(b => `<div class="branch" data-br="${b.id}">
-        <div><h3>${b.name}</h3><p>${b.tag}</p></div>
+        <div><h3>${b.name}</h3><p>${cur(b.tag)}</p></div>
         <div class="bgrid">${T.nodes.filter(n => n.br === b.id).map(nodeBtn).join('')}</div>
       </div>`).join('');
   }
@@ -4208,14 +4320,15 @@ body.land .rx-txt { display: none; }
     $('treeSvg').innerHTML = out;
   }
   if (window.ResizeObserver) new ResizeObserver(() => { if (view === 'tree') drawLines(); }).observe(tree);
-  const walletUnit = tid => tid === 'global' ? 'de materia oscura' : GX[tid].unit;
+  const walletUnit = tid => tid === 'global' ? 'de {mo}' : GX[tid].unit;
   function renderDetail() {
     const n = N[selNode]; if (!n) return;
     const lv = L(n.id), isMax = maxed(n), T = TREES[n.tree];
     $('dBr').textContent = `${BR_NAME[n.br]}${n.isCore ? '' : ' · ' + (n.max ? `nivel ${lv}/${n.max}` : `nivel ${lv}`)}`;
     $('dName').textContent = n.name;
-    $('dDesc').textContent = n.desc;
+    $('dDesc').innerHTML = cur(n.desc);
     $('dFx').innerHTML = n.isCore ? '' : `<div><span>Ahora</span>${TOGGLES[n.id] && lv && isOff(n.id) ? 'Apagada en canciones' : n.fx(lv)}</div>` + (isMax ? '' : `<div><span>Siguiente</span>${n.fx(lv + 1)}</div>`);
+    $('dFx').innerHTML = cur($('dFx').innerHTML);
     const reqs = (n.req || []).filter(([id]) => !CORE_IDS.has(id));
     $('dReq').innerHTML = reqs.length ? 'Requiere: ' + reqs.map(([id, r]) => {
       const ok = L(id) >= r;
@@ -4234,7 +4347,7 @@ body.land .rx-txt { display: none; }
     if (isMax) { btn.disabled = true; btn.textContent = 'Al máximo'; }
     else if (!reqMet(n)) { btn.disabled = true; btn.textContent = 'Bloqueado'; }
     else if (capped(n)) { btn.disabled = true; btn.textContent = 'Abrí otro planeta'; }
-    else { const c = nodeCost(n, lv); btn.disabled = S[T.wallet] < c; btn.textContent = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)}${n.tree === 'global' ? ' MO' : ''}`; }
+    else { const c = nodeCost(n, lv); btn.disabled = S[T.wallet] < c; btn.innerHTML = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)} ${curIcon(n.tree === 'global' ? 'mo' : GX[n.tree].cur)}`; }
   }
   // Modificadores de la galaxia: chips que se encienden y muestran cuántas estrellas suman o restan
   function renderMods(gal) {
@@ -4273,8 +4386,9 @@ body.land .rx-txt { display: none; }
     const box = $('condBox'); if (treeId === 'global') { box.hidden = true; return; }
     const g = GX[treeId], c = condCost(treeId), n = S.cond[treeId] || 0, ok = S[g.cur] >= c;
     box.hidden = false;
-    box.innerHTML = `<div><b>Condensador</b><span>Convertí ${g.unit} en materia oscura. Cada condensación cuesta 6% más${n ? ` · llevás ${n}` : ''}.</span></div>
-      <button class="play-btn" id="condBtn" ${ok ? '' : 'disabled'}>+1 materia oscura · ${fmt(c)} ${g.unit}</button>`;
+    box.innerHTML = `<div><b>Condensador</b><span>Convertí ${g.unit} en {mo}. Cada condensación cuesta 6% más${n ? ` · llevás ${n}` : ''}.</span></div>
+      <button class="play-btn" id="condBtn" ${ok ? '' : 'disabled'}>+1 {mo} · ${fmt(c)} ${g.unit}</button>`;
+    box.innerHTML = cur(box.innerHTML);
   }
   $('condBox').addEventListener('click', e => {
     if (e.target.id !== 'condBtn' || treeId === 'global') return;
@@ -4285,7 +4399,7 @@ body.land .rx-txt { display: none; }
   function renderRespec(confirming) {
     renderCond();
     const spent = spentOnTree(treeId), back = Math.floor(spent * REFUND), u = walletUnit(treeId);
-    $('spentInfo').textContent = `${TREES[treeId].title} · invertido: ${fmt(spent)} ${u}`;
+    $('spentInfo').innerHTML = cur(`${TREES[treeId].title} · invertido: ${fmt(spent)} ${u}`);
     $('respecBox').innerHTML = !spent ? ''
       : confirming
         ? `<span>Recuperás ${fmt(back)} de ${fmt(spent)} (40%). ¿Seguro?</span><button class="play-btn" id="respecYes">Sí, reiniciar</button><button class="ghost-btn" id="respecNo">Cancelar</button>`
@@ -4312,11 +4426,11 @@ body.land .rx-txt { display: none; }
   function renderUI(force) {
     const now = performance.now(); if (!force && now - lastUI < 250) return; lastUI = now;
     const g = GX[S.galaxy], rate = ecoRate(g.id);
-    $('curName').textContent = g.curName;
+    $('curName').innerHTML = cur(g.unit);
     $('pts').textContent = fmt(S[g.cur]);
-    $('rate').textContent = view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos';
-    $('moLine').innerHTML = `Materia oscura: <b>${Math.floor(S.mo)}</b>`;
-    $('tot').textContent = `Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`;
+    $('rate').innerHTML = cur(view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos');
+    $('moLine').innerHTML = cur(`{mo}: <b>${Math.floor(S.mo)}</b>`);
+    $('tot').innerHTML = cur(`Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`);
     const nb = TREES[S.galaxy].nodes.filter(canBuy).length, ng = TREES.global.nodes.filter(canBuy).length;
     $('badge').hidden = !nb; $('badge').textContent = nb;
     $('badgeG').hidden = !ng; $('badgeG').textContent = ng;
@@ -4445,7 +4559,7 @@ body.land .rx-txt { display: none; }
   }
   function boot() {
     applyLand();
-    if (offlineNote) { $('noticeText').textContent = offlineNote; $('notice').hidden = false; }
+    if (offlineNote) { $('noticeText').innerHTML = cur(offlineNote); $('notice').hidden = false; }
     storyInit(); setView(S.story.prologue ? 'map' : 'gal'); requestAnimationFrame(frame);
   }
   document.fonts?.ready?.then(() => { resize(); if (view === 'tree') drawLines(); });
