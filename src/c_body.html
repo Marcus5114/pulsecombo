@@ -30,7 +30,7 @@
       </div></div>
     </div>
     <div class="gal-info" id="galInfo"></div>
-    <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La materia oscura se gana con hitos en cualquier galaxia: sirve para abrir galaxias nuevas y comprar el árbol global.</p>
+    <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La materia oscura se gana con hitos en cualquier galaxia y sirve para abrir galaxias nuevas y comprar el árbol global. Para abrir una galaxia también necesitás recomendaciones: los representantes de las galaxias vecinas te recomiendan cuando llegan a Confianza.</p>
   </section>
 
   <section class="view" id="vMap">
@@ -52,6 +52,16 @@
     </div>
     <aside class="rep pf" id="repCard" aria-label="Representante del planeta"></aside>
     <p class="hint" id="whDesc"></p>
+    <!-- Botones a los costados del menú (en pantallas angostas, una fila arriba de las canciones) -->
+    <div class="side-bar">
+    <div class="side-btns side-l">
+      <button class="side-btn" data-card="rules" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">?</span><span class="sb-tx">Reglas</span></button>
+    </div>
+    <div class="side-btns side-r">
+      <button class="side-btn" data-card="mech" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">⚙</span><span class="sb-tx">Mecánicas</span></button>
+      <button class="side-btn" data-card="mods" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">±</span><span class="sb-tx">Modificadores</span><b class="sb-n" id="modCount" hidden></b></button>
+    </div>
+    </div>
     <h2>Elegí canción y dificultad</h2>
     <div class="songs" id="songs"></div>
     <div class="keycfg" id="keycfg" hidden>
@@ -60,17 +70,19 @@
       <div class="kc-row"><span>Tablero derecho</span><div class="seg" data-side="R"></div></div>
     </div>
     <button class="play-btn" id="playBtn">Jugar</button>
-    <div class="mech-box" id="mechBox">
-      <h2>Mecánicas en las canciones</h2>
-      <div class="mech" id="mech"></div>
-      <p class="hint" id="mechHint" hidden>Tocá una mecánica para apagarla o encenderla. Apagada baja la dificultad y las estrellas (y el multiplicador). La mejora sigue comprada.</p>
-    </div>
-    <div class="mech-box" id="modBox">
-      <h2>Modificadores</h2>
-      <div class="mech" id="mods"></div>
-      <p class="hint" id="modHint"></p>
-    </div>
-    <p class="hint" id="menuHint"></p>
+    <div class="side-back" id="sideBack"></div>
+    <aside class="side-card" id="sideCard" role="dialog" aria-labelledby="scTitle">
+      <div class="sc-head"><h2 id="scTitle">Reglas</h2><button class="ghost-btn" id="scClose" aria-label="Cerrar">✕</button></div>
+      <div class="sc-body rules" data-card="rules" id="rulesBox"></div>
+      <div class="sc-body mech-box" data-card="mech" id="mechBox">
+        <div class="mech" id="mech"></div>
+        <p class="hint" id="mechHint"></p>
+      </div>
+      <div class="sc-body mech-box" data-card="mods" id="modBox">
+        <div class="mech" id="mods"></div>
+        <p class="hint" id="modHint"></p>
+      </div>
+    </aside>
   </section>
 
   <section class="view" id="vPlay" hidden>

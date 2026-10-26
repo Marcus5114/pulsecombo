@@ -385,3 +385,49 @@ body.land .rx-txt { display: none; }
 .rm-talk { align-self: flex-start; margin-top: 4px; }
 .aff-gate { margin-top: 2px; line-height: 1.35; }
 .aff-gate.on { color: var(--fg); border-left: 2px solid var(--acc); padding-left: 6px; }
+/* Recomendaciones en el panel de galaxias */
+.gi-recs { font-size: 0.78rem; color: var(--muted); line-height: 1.45; }
+.gi-recs > b { color: var(--fg); }
+.gi-reclist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.gi-rec { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 2px; border: 1px dashed var(--line); border-radius: 999px; font-size: 0.72rem; opacity: 0.65; }
+.gi-rec .pf { width: 22px; height: 22px; display: block; }
+.gi-rec .pf svg { width: 100%; height: 100%; display: block; }
+.gi-rec.ok { opacity: 1; border-style: solid; border-color: var(--acc); color: var(--fg); }
+
+/* ---------- Botones laterales y tarjetas del menú de canciones ---------- */
+.side-btns { display: flex; gap: 6px; }
+.side-btn { display: inline-flex; align-items: center; gap: 7px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px 6px 6px; cursor: pointer; font: inherit; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; position: relative; }
+.side-btn:hover, .side-btn[aria-expanded="true"] { border-color: var(--acc); color: var(--acc); }
+.sb-ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--surface2); color: var(--acc); font-size: 0.9rem; font-weight: 900; flex: none; }
+.sb-n { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--acc); color: var(--bg); font-size: 0.68rem; display: grid; place-items: center; }
+/* pantallas angostas: una fila arriba de las canciones */
+.side-bar { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 419px) { .side-btn .sb-ic { display: none; } .side-btn { padding: 7px 12px; font-size: 0.7rem; } }
+/* pantallas anchas: flotan a los costados de la columna */
+@media (min-width: 1000px) {
+  .side-bar { display: contents; }
+  .side-btns { position: fixed; top: 50%; transform: translateY(-50%); flex-direction: column; z-index: 20; }
+  .side-l { right: calc(50% + 300px + 20px); align-items: flex-end; }
+  .side-r { left: calc(50% + 300px + 20px); align-items: flex-start; }
+  .side-btn { padding: 8px 14px 8px 8px; }
+}
+.side-back { display: none; }
+.side-back.open { display: block; position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.45); }
+.side-card { display: none; position: fixed; z-index: 61; top: 0; bottom: 0; width: min(380px, 92vw); background: var(--surface); border: 1px solid var(--line); padding: 16px 18px 20px; overflow-y: auto; flex-direction: column; gap: 12px; box-shadow: 0 0 40px rgba(0, 0, 0, 0.5); }
+.side-card.open { display: flex; }
+.side-card[data-side="l"] { left: 0; border-left: 0; border-radius: 0 14px 14px 0; animation: scl 0.2s ease-out; }
+.side-card[data-side="r"] { right: 0; border-right: 0; border-radius: 14px 0 0 14px; animation: scr 0.2s ease-out; }
+@keyframes scl { from { transform: translateX(-100%); } }
+@keyframes scr { from { transform: translateX(100%); } }
+.sc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sc-head h2 { margin: 0; color: var(--acc); }
+.sc-head .ghost-btn { padding: 4px 10px; }
+.sc-body { display: flex; flex-direction: column; gap: 10px; }
+.rules section h3 { margin: 0 0 3px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--acc); }
+.rules section p { margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--fg); }
+.rules kbd { font-size: 0.72rem; }
+@media (max-width: 640px) {
+  .side-card { top: auto; left: 0 !important; right: 0 !important; width: auto; max-height: 80vh; border: 1px solid var(--line); border-bottom: 0; border-radius: 14px 14px 0 0 !important; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: scu 0.22s ease-out !important; }
+  @keyframes scu { from { transform: translateY(100%); } }
+}
+@media (prefers-reduced-motion: reduce) { .side-card { animation: none !important; } }

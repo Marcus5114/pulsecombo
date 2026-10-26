@@ -15,9 +15,15 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 - El código de desarrollador no funcionaba porque el juego tenía guardada la huella de otro código. Ahora reconoce el código correcto.
 
 ### Agregado
+- Diálogos de recomendación. Cada representante dice una línea propia al recomendarte, en su idioma según la Sintonía, y CORA cuenta cuántas recomendaciones llevás para cada galaxia vecina. Cuando alcanzan, el embajador de tu galaxia te presenta ante el de la vecina (Kadenza ante Tesela o Eco-7, Tesela y Eco-7 entre sí y ante los Gemelos Vaivén).
 - Un segundo código de desarrollador que reinicia toda la progresión. Pide la misma confirmación que el botón Reiniciar progreso.
 
 ### Cambiado
+- **Abrir galaxias pide recomendaciones.** Además de la materia oscura, cada galaxia pide que te recomienden representantes de galaxias vecinas que ya tengas abiertas: 2 para Ensamble, 3 para Señal y 3 para Compás. Un representante te recomienda cuando la Sintonía llega a Confianza. El panel de galaxias muestra cuántas tenés y de quién, y en el mapa se ve "2/3 recomendaciones". Las galaxias que ya tenías abiertas no se cierran.
+- **Menos materia oscura.** Los hitos dan la mitad que antes: superar una dificultad, la primera S y el primer Full Combo dan 0,5, y cada planeta nuevo da 1. El condensador y los costos no cambiaron.
+- **Tarjetas en el menú de canciones.** Las mecánicas y los modificadores ya no están debajo del botón Jugar: se abren desde botones a los costados del menú, Reglas a la izquierda y Mecánicas y Modificadores a la derecha. En pantallas angostas, los botones son una fila arriba de las canciones y las tarjetas suben como una hoja desde abajo. El botón Modificadores muestra cuántos tenés activos.
+  - **Reglas** (nuevo): objetivo, controles, barra de vida y lo propio de cada modo, más cómo se juzga, estrellas, calificación, qué ganás y qué cambia la dificultad elegida.
+  - **Mecánicas:** en Vía Pulso se pueden apagar y encender como antes. En las otras galaxias muestra las mecánicas compradas en su árbol.
 - Reiniciar el progreso (con el botón o con el código) también borra la historia y la Sintonía, vuelve a mostrar la cinemática de inicio y arranca en el mapa de galaxias.
 
 ## v0.4.2

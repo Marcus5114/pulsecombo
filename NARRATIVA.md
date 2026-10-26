@@ -133,6 +133,10 @@ Código en `src/d3e_affinity.js`. Elegido: un medidor por personaje (1A), gustos
 - **Personajes** (`AFF_CHARS`): los 18 representantes (los 4 operadores de tutorial están desactivados por ahora con `AFF_TUTORIALS`), cada uno con su planeta, 2 gustos y 1 disgusto.
 - **Pedidos** (`REQ_TEMPLATES`): un pool de 18 plantillas. Las generales sirven en todos los modos: calificación mínima, sacar S, Full Combo, combo, cantidad de PERFECTO, precisión, no tocar sin nota, jugar con un modificador y volver a una canción 3 veces. También hay plantillas propias de cada modo: fiebre, notas extra y flechas largas (Vía Pulso); filas y filas de a cuatro, racha de ritmo (Ensamble); decodificar todo (Señal); tramos perfectos y baldosas doradas (Compás). Cada personaje tiene **3 pedidos activos** a la vez (cuentan como mucho 2 por visita), elegidos según su planeta, las dificultades abiertas y las mejoras compradas. Al cumplir uno se repone otro, y en la pantalla de resultado aparece una tarjeta animada con su retrato y el sello de ¡CUMPLIDO! (`REQ_MAX`, `REQ_GAIN`).
 
+### Recomendaciones (v0.4.3)
+- Un representante te recomienda al llegar a **Confianza** (`REC_TIER`). Cada galaxia cerrada pide recomendaciones de representantes de galaxias vecinas abiertas (`GX[g].recs`): Ensamble 2, Señal 3, Compás 3. Además cuesta materia oscura.
+- Diálogos: `rec_<personaje>` (línea propia más el conteo de CORA) y `ref_<origen>_<destino>` (el embajador de tu galaxia te presenta ante el vecino). Después, al viajar, el embajador de destino da la bienvenida (`arrive_<galaxia>`).
+
 ### Puntos de extensión
 - `AFF_SCENES[personaje][nivel]`: diálogos que se muestran al subir de nivel (hoy vacío).
 - `AFF_HOOKS.tierUp / requestDone / result`: funciones que se llaman en cada evento, para bonos, regalos o logros.

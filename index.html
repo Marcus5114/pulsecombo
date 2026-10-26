@@ -627,6 +627,52 @@ body.land .rx-txt { display: none; }
 .rm-talk { align-self: flex-start; margin-top: 4px; }
 .aff-gate { margin-top: 2px; line-height: 1.35; }
 .aff-gate.on { color: var(--fg); border-left: 2px solid var(--acc); padding-left: 6px; }
+/* Recomendaciones en el panel de galaxias */
+.gi-recs { font-size: 0.78rem; color: var(--muted); line-height: 1.45; }
+.gi-recs > b { color: var(--fg); }
+.gi-reclist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.gi-rec { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 2px; border: 1px dashed var(--line); border-radius: 999px; font-size: 0.72rem; opacity: 0.65; }
+.gi-rec .pf { width: 22px; height: 22px; display: block; }
+.gi-rec .pf svg { width: 100%; height: 100%; display: block; }
+.gi-rec.ok { opacity: 1; border-style: solid; border-color: var(--acc); color: var(--fg); }
+
+/* ---------- Botones laterales y tarjetas del menú de canciones ---------- */
+.side-btns { display: flex; gap: 6px; }
+.side-btn { display: inline-flex; align-items: center; gap: 7px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px 6px 6px; cursor: pointer; font: inherit; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; position: relative; }
+.side-btn:hover, .side-btn[aria-expanded="true"] { border-color: var(--acc); color: var(--acc); }
+.sb-ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--surface2); color: var(--acc); font-size: 0.9rem; font-weight: 900; flex: none; }
+.sb-n { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--acc); color: var(--bg); font-size: 0.68rem; display: grid; place-items: center; }
+/* pantallas angostas: una fila arriba de las canciones */
+.side-bar { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 419px) { .side-btn .sb-ic { display: none; } .side-btn { padding: 7px 12px; font-size: 0.7rem; } }
+/* pantallas anchas: flotan a los costados de la columna */
+@media (min-width: 1000px) {
+  .side-bar { display: contents; }
+  .side-btns { position: fixed; top: 50%; transform: translateY(-50%); flex-direction: column; z-index: 20; }
+  .side-l { right: calc(50% + 300px + 20px); align-items: flex-end; }
+  .side-r { left: calc(50% + 300px + 20px); align-items: flex-start; }
+  .side-btn { padding: 8px 14px 8px 8px; }
+}
+.side-back { display: none; }
+.side-back.open { display: block; position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.45); }
+.side-card { display: none; position: fixed; z-index: 61; top: 0; bottom: 0; width: min(380px, 92vw); background: var(--surface); border: 1px solid var(--line); padding: 16px 18px 20px; overflow-y: auto; flex-direction: column; gap: 12px; box-shadow: 0 0 40px rgba(0, 0, 0, 0.5); }
+.side-card.open { display: flex; }
+.side-card[data-side="l"] { left: 0; border-left: 0; border-radius: 0 14px 14px 0; animation: scl 0.2s ease-out; }
+.side-card[data-side="r"] { right: 0; border-right: 0; border-radius: 14px 0 0 14px; animation: scr 0.2s ease-out; }
+@keyframes scl { from { transform: translateX(-100%); } }
+@keyframes scr { from { transform: translateX(100%); } }
+.sc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sc-head h2 { margin: 0; color: var(--acc); }
+.sc-head .ghost-btn { padding: 4px 10px; }
+.sc-body { display: flex; flex-direction: column; gap: 10px; }
+.rules section h3 { margin: 0 0 3px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--acc); }
+.rules section p { margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--fg); }
+.rules kbd { font-size: 0.72rem; }
+@media (max-width: 640px) {
+  .side-card { top: auto; left: 0 !important; right: 0 !important; width: auto; max-height: 80vh; border: 1px solid var(--line); border-bottom: 0; border-radius: 14px 14px 0 0 !important; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: scu 0.22s ease-out !important; }
+  @keyframes scu { from { transform: translateY(100%); } }
+}
+@media (prefers-reduced-motion: reduce) { .side-card { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -662,7 +708,7 @@ body.land .rx-txt { display: none; }
       </div></div>
     </div>
     <div class="gal-info" id="galInfo"></div>
-    <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La materia oscura se gana con hitos en cualquier galaxia: sirve para abrir galaxias nuevas y comprar el árbol global.</p>
+    <p class="hint">Cada galaxia cambia la forma de jugar y tiene su propia moneda y su propio árbol. La materia oscura se gana con hitos en cualquier galaxia y sirve para abrir galaxias nuevas y comprar el árbol global. Para abrir una galaxia también necesitás recomendaciones: los representantes de las galaxias vecinas te recomiendan cuando llegan a Confianza.</p>
   </section>
 
   <section class="view" id="vMap">
@@ -684,6 +730,16 @@ body.land .rx-txt { display: none; }
     </div>
     <aside class="rep pf" id="repCard" aria-label="Representante del planeta"></aside>
     <p class="hint" id="whDesc"></p>
+    <!-- Botones a los costados del menú (en pantallas angostas, una fila arriba de las canciones) -->
+    <div class="side-bar">
+    <div class="side-btns side-l">
+      <button class="side-btn" data-card="rules" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">?</span><span class="sb-tx">Reglas</span></button>
+    </div>
+    <div class="side-btns side-r">
+      <button class="side-btn" data-card="mech" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">⚙</span><span class="sb-tx">Mecánicas</span></button>
+      <button class="side-btn" data-card="mods" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">±</span><span class="sb-tx">Modificadores</span><b class="sb-n" id="modCount" hidden></b></button>
+    </div>
+    </div>
     <h2>Elegí canción y dificultad</h2>
     <div class="songs" id="songs"></div>
     <div class="keycfg" id="keycfg" hidden>
@@ -692,17 +748,19 @@ body.land .rx-txt { display: none; }
       <div class="kc-row"><span>Tablero derecho</span><div class="seg" data-side="R"></div></div>
     </div>
     <button class="play-btn" id="playBtn">Jugar</button>
-    <div class="mech-box" id="mechBox">
-      <h2>Mecánicas en las canciones</h2>
-      <div class="mech" id="mech"></div>
-      <p class="hint" id="mechHint" hidden>Tocá una mecánica para apagarla o encenderla. Apagada baja la dificultad y las estrellas (y el multiplicador). La mejora sigue comprada.</p>
-    </div>
-    <div class="mech-box" id="modBox">
-      <h2>Modificadores</h2>
-      <div class="mech" id="mods"></div>
-      <p class="hint" id="modHint"></p>
-    </div>
-    <p class="hint" id="menuHint"></p>
+    <div class="side-back" id="sideBack"></div>
+    <aside class="side-card" id="sideCard" role="dialog" aria-labelledby="scTitle">
+      <div class="sc-head"><h2 id="scTitle">Reglas</h2><button class="ghost-btn" id="scClose" aria-label="Cerrar">✕</button></div>
+      <div class="sc-body rules" data-card="rules" id="rulesBox"></div>
+      <div class="sc-body mech-box" data-card="mech" id="mechBox">
+        <div class="mech" id="mech"></div>
+        <p class="hint" id="mechHint"></p>
+      </div>
+      <div class="sc-body mech-box" data-card="mods" id="modBox">
+        <div class="mech" id="mods"></div>
+        <p class="hint" id="modHint"></p>
+      </div>
+    </aside>
   </section>
 
   <section class="view" id="vPlay" hidden>
@@ -812,11 +870,11 @@ body.land .rx-txt { display: none; }
   const GALAXIES = [
     { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: 'pulsos', cost: 0, need: 4, cond: 30000, color: '#5cd0e6',
       desc: 'Flechas que suben hasta los receptores al ritmo de cada género. Cinco planetas, cinco estilos.' },
-    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2, cond: 800, color: '#ff8c5a',
+    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', recs: 2, cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2, cond: 800, color: '#ff8c5a',
       desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar piezas.' },
-    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
+    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', recs: 3, cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
       desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
-    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
+    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', recs: 3, cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
       desc: 'Dos planetas unidos sobre un panal de baldosas. El que gira recorre una órbita hexagonal, un lado por corchea: contá los lados hasta la próxima baldosa y tocá al llegar.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
@@ -1153,6 +1211,8 @@ body.land .rx-txt { display: none; }
   // ---------- Materia oscura ----------
   // Hitos: primera vez que superás una dificultad (+1; los tutoriales no dan), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
   const darkMult = () => 1 + 0.25 * L('g_dark');
+  // Los hitos dan la mitad de materia oscura que antes (v0.4.3): las galaxias también piden recomendaciones
+  const MO_RATE = 0.5;
   // Condensador: convierte la moneda de una galaxia en 1 de materia oscura. Cada condensación cuesta 6% más.
   const COND_GROWTH = 1.06;
   const condCost = gal => Math.ceil(GX[gal].cond * COND_GROWTH ** (S.cond[gal] || 0));
@@ -2196,7 +2256,7 @@ body.land .rx-txt { display: none; }
     const mult = galMult(gal), paid = gain * mult;
     S[g.cur] += paid; S.tot[gal] += paid;
     const newWorlds = [...openWorlds(gal)].filter(wi => !openBefore.has(wi));
-    const mo = s.tut ? 0 : (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult();   // el planeta que abre un tutorial tampoco da materia oscura
+    const mo = s.tut ? 0 : (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult() * MO_RATE;   // el planeta que abre un tutorial tampoco da materia oscura
     S.mo += mo;
     save();
     if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);
@@ -3254,6 +3314,46 @@ body.land .rx-txt { display: none; }
     done_disco: [['duque', 'Tomá esta lentejuela. Es la número un millón. Cuidala como a tu ritmo.']],
     done_edm: [['neutron', 'Te regalo mi mejor drop. Literal: se me cayó el casco. Quedátelo.']],
     done_jazz: [['smokey', 'Guardá esta nota azul. Algún día vas a necesitar un silencio que suene bien.']],
+    // Recomendaciones: cada representante, al llegar a Confianza (CORA agrega el conteo según la galaxia)
+    rec_brasa: [['brasa', '¡Escuchame bien! Voy a gritar tu nombre en todas las galaxias vecinas. Literal. Tengo amplificador.']],
+    rec_lumi: [['lumi', '¡Te escribí una carta de recomendación! Tiene tres estribillos y un corazoncito al final. ♥']],
+    rec_duque: [['duque', 'Querida estrella: tenés mi bendición de lentejuela. Que te abran la pista en todos lados.']],
+    rec_neutron: [['neutron', 'ATENCIÓN, GALAXIAS VECINAS: ESTA PERSONA ES DE CONFIANZA. …Perdón, el micrófono seguía en máximo.']],
+    rec_smokey: [['smokey', 'Mirá, no recomiendo a cualquiera. Pero vos entendés los silencios. Voy a pasar la voz… despacito.']],
+    rec_remache: [['remache', 'Che, encastrás como la gente. Ya les avisé a los vecinos que sos de fierro. Con onda.']],
+    rec_yunque: [['yunque', 'Forjado. Probado. Aprobado. Mi recomendación pesa una tonelada. Usala bien.']],
+    rec_vector: [['vector', 'Tu nombre ya brilla en neón en todos los hangares. Mandé la recomendación a velocidad crucero.']],
+    rec_bruma: [['bruma', 'Tu eco… se quedó conmigo. Lo voy a soltar despacio hacia las otras galaxias. Te van a escuchar.']],
+    rec_nubi: [['nubi', 'mmm… sí. sos buena compañía para estudiar. ya mandé tu nombre en la playlist de recomendados.']],
+    rec_morse: [['morse', 'TRANSMISIÓN APROBADA. RECOMENDACIÓN ENVIADA EN TODAS LAS FRECUENCIAS. PUNTO. RAYA. PUNTO.']],
+    rec_garua: [['garua', 'Ai, que bonito tocás… Vou te recomendar a toda la costa. Sin apuro, pero con cariño.']],
+    rec_compadre: [['compadre', 'Mirá, pibe… perdón, terrícola. En el arrabal la palabra vale. Y la mía es que sos de ley.']],
+    rec_rompeondas: [['rompeondas', '¡Ya está! Recomendación enviada antes de que terminaras de leer esto. Y esto también.']],
+    // Embajadores: cuando reunís las recomendaciones para la galaxia vecina
+    ref_pulso_ens: [
+      ['kadenza', '↑ ↑ Te recomiendan ↑ ↑. → → Ensamble → espera. Tesela… ▙▟? ← Construye ←.'],
+      ['cora', 'Kadenza ya le avisó a Tesela. Con la materia oscura suficiente, Ensamble se abre en el mapa de galaxias.'],
+    ],
+    ref_pulso_sen: [
+      ['kadenza', '↗ ↗ Muchas voces ↑ hablan de vos. ↘ Señal ↘ escucha. Eco-7… ∿ repite ∿.'],
+      ['cora', 'Señal aceptó recibirnos. Eco-7 nos espera del otro lado de la estática.'],
+    ],
+    ref_ens_sen: [
+      ['tesela', '▄▄▄▄ Filas completas = recomendación ▄▄▄▄. ▚▞ Señal ▚▞ avisada. ▟ Andá ▙.'],
+      ['cora', 'Tesela habló con Eco-7. Señal ya puede abrirse.'],
+    ],
+    ref_sen_ens: [
+      ['eco7', 'kssh ∿ Recomendación ∿ recibida ∿ y reenviada. ∿∿ Ensamble ∿ lo sabe. Cambio.'],
+      ['cora', 'Eco-7 avisó a Tesela. Ensamble ya puede abrirse.'],
+    ],
+    ref_ens_com: [
+      ['tesela', '▛▜ Compás ▛▜ … los Gemelos ▙▟ giran. ▄▄ Te recomendamos ▄▄. ▚▞ No te mareés ▚▞.'],
+      ['cora', 'Tesela nos consiguió una cita con los Gemelos Vaivén. Compás ya puede abrirse.'],
+    ],
+    ref_sen_com: [
+      ['eco7', '∿ Transmitiendo a Compás ∿ … kssh … ◐ ◑ responden ∿. Están ∿ esperándote. Cambio y fuera.'],
+      ['cora', 'Los Gemelos Vaivén contestaron la señal. Compás ya puede abrirse.'],
+    ],
     treaty_pulso: [
       ['kadenza', '↑ → ↓ ← Tus manos señalan como las nuestras. ↑ ↑ Acuerdo ↑ ↑ con vos.'],
       ['kadenza', 'Llevá nuestra luz → → → otras galaxias. Y en la Sinfonía… ↑ tocá con nosotros ↑.'],
@@ -3261,6 +3361,12 @@ body.land .rx-txt { display: none; }
     ],
   };
 
+  // CORA cuenta cómo van las recomendaciones para las galaxias vecinas que siguen cerradas
+  function recCoraLine(id) {
+    const name = SPK[id][0], gal = charGal(id), tg = galNeighbors(gal).filter(g => !S.galOpen[g]);
+    if (!tg.length) return `${name} nos recomendó. Ya tenemos abiertas todas las galaxias vecinas, pero nunca está de más.`;
+    return `${name} nos recomendó. ` + tg.map(g => `${GX[g].name}: ${recFor(g).length}/${recNeed(g)}`).join(' · ') + '.';
+  }
   // Cuándo se dispara cada momento (en el orden en que se revisan)
   const allSongsCleared = wi => WORLDS[wi].idx.every(i => [0, 1, 2, 3].some(d => recOf(SONGS[i], d)?.clear));
   function storyBeats(v) {
@@ -3274,6 +3380,9 @@ body.land .rx-txt { display: none; }
       out.push([`done_${w.id}`, allSongsCleared(wi)]);
     }
     out.push([`treaty_${gal}`, WORLDS.every((w, wi) => w.gal !== gal || worldDone(wi))]);
+    // recomendaciones de los representantes de esta galaxia, y aviso del embajador cuando alcanzan para una vecina
+    for (const id of Object.keys(AFF_CHARS)) if (charGal(id) === gal) out.push([`rec_${id}`, recommends(id)]);
+    for (const tg of galNeighbors(gal)) if (!S.galOpen[tg] && STORY[`ref_${gal}_${tg}`]) out.push([`ref_${gal}_${tg}`, galRecsOk(tg)]);
     if (v === 'menu') out.push([`meet_${WORLDS[S.world].id}`, true]);
     return out;
   }
@@ -3303,6 +3412,7 @@ body.land .rx-txt { display: none; }
       if (!ok || S.story[id]) continue;
       S.story[id] = true; save();
       if (STORY[id]) dlgQueue.push(...STORY[id]);
+      if (id.startsWith('rec_')) dlgQueue.push(['cora', recCoraLine(id.slice(4))]);
       if (id.startsWith('meet_') && !S.story.lang_hint && STORY[id] && comprehension(STORY[id][0][0]) < 0.6) {
         S.story.lang_hint = true; save();
         dlgQueue.push(['cora', 'No entendí todo. Los representantes hablan el idioma de su galaxia. Cuanta más Sintonía tengan, más palabras vas a entender.']);
@@ -3512,6 +3622,17 @@ body.land .rx-txt { display: none; }
   const affBonus = (id, kind) => 0;            // lugar para bonos por nivel (todavía no hay)
 
   // Al terminar una canción: Sintonía con el personaje del planeta según sus gustos y su pedido
+  // ---------- Recomendaciones ----------
+  // Un representante te recomienda cuando llegan a Confianza. Cada galaxia cerrada pide cierta cantidad (GX[g].recs)
+  // de representantes que te recomienden, de galaxias vecinas que ya tengas abiertas.
+  const REC_TIER = 2;
+  const recommends = id => affOn(id) && affTier(affState(id).pts) >= REC_TIER;
+  const galNeighbors = gal => GAL_LINKS.filter(l => l.includes(gal)).map(l => l[0] === gal ? l[1] : l[0]);
+  const recSources = gal => galNeighbors(gal).filter(g => S.galOpen[g]);
+  const recFor = gal => Object.keys(AFF_CHARS).filter(id => affOn(id) && recSources(gal).includes(charGal(id)) && recommends(id));
+  const recNeed = gal => GX[gal].recs || 0;
+  const galRecsOk = gal => recFor(gal).length >= recNeed(gal);
+
   // ---------- Topes por hitos ----------
   // Cada nivel pide un logro en el planeta del representante. Hasta cumplirlo, la Sintonía se frena justo antes del umbral.
   function affGate(wi, tier) {
@@ -3582,6 +3703,7 @@ body.land .rx-txt { display: none; }
     const tier1 = affTier(a.pts);
     if (tier1 > tier0) {
       out.push(`${name} y vos: ${AFF_TIERS[tier1][1]}`);
+      if (tier0 < REC_TIER && tier1 >= REC_TIER) out.push(`${name} te recomienda ante las galaxias vecinas`);
       for (const h of AFF_HOOKS.tierUp) h(id, tier1);
       const scene = AFF_SCENES[id]?.[tier1]; if (scene) dlgQueue.push(...scene);
     }
@@ -3689,6 +3811,7 @@ body.land .rx-txt { display: none; }
     if (v !== 'tree') closeTip();
     if (v === 'tree') { buildTree(); updateTree(); renderRespec(false); requestAnimationFrame(drawLines); }
     if (v !== 'play') hidePause();
+    if (v !== 'menu') sideCard(null);
     const g = GX[S.galaxy];
     $('keysHint').innerHTML = g.mode === 'stack'
       ? '<kbd>←</kbd><kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> bajar · <kbd>Espacio</kbd> soltar · <kbd>Esc</kbd> pausa'
@@ -3719,7 +3842,7 @@ body.land .rx-txt { display: none; }
     $('galSvg').innerHTML = GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('galaxies').innerHTML = GALAXIES.map(g => {
       const open = !!S.galOpen[g.id], here = S.galaxy === g.id;
-      const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : `${g.cost} de materia oscura`;
+      const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : !galRecsOk(g.id) ? `${recFor(g.id).length}/${recNeed(g.id)} recomendaciones` : `${g.cost} de materia oscura`;
       return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%;--g-acc:${g.color}" aria-label="${g.name}, ${status}">
         <span class="gxw"><span class="gx" data-g="${g.id}"></span></span>
         ${here ? HERE_MARK : ''}${galSel === g.id ? SEL_MARK : ''}
@@ -3734,18 +3857,26 @@ body.land .rx-txt { display: none; }
     const nW = WORLDS.filter(w => w.gal === g.id && !w.tutorial).length, wOpen = open ? genreWorldsOpen(g.id) : 0;
     const btn = here ? '<button class="play-btn" id="galGo">Ir al mapa</button>'
       : open ? '<button class="play-btn" id="galGo">Viajar</button>'
+      : !galRecsOk(g.id) ? `<button class="play-btn" disabled>Faltan recomendaciones (${recFor(g.id).length}/${recNeed(g.id)})</button>`
       : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de materia oscura</button>`
       : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
     $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
     const amb = AMB[g.id], [ambName, ambRole] = SPK[amb];
-    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}<p>${g.desc}</p>
+    const recHtml = open ? '' : (() => {
+      const src = recSources(g.id), got = recFor(g.id);
+      if (!src.length) return `<div class="gi-recs">Para abrirla necesitás <b>${recNeed(g.id)} recomendaciones</b> de representantes de ${galNeighbors(g.id).map(x => GX[x].name).join(' o ')}. Abrí primero una de esas galaxias.</div>`;
+      const cands = Object.keys(AFF_CHARS).filter(id => affOn(id) && src.includes(charGal(id)));
+      return `<div class="gi-recs"><b>Recomendaciones: ${got.length}/${recNeed(g.id)}</b> · te recomiendan los representantes de ${src.map(x => GX[x].name).join(' y ')} cuando llegan a Confianza.
+        <div class="gi-reclist">${cands.map(id => `<span class="gi-rec${got.includes(id) ? ' ok' : ''}" title="${AFF_TIERS[affTier(affState(id).pts)][1]}"><span class="pf">${faceSvg(id)}</span>${SPK[id][0]}</span>`).join('')}</div></div>`;
+    })();
+    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}${recHtml}<p>${g.desc}</p>
       <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
   $('galInfo').addEventListener('click', e => {
     if (e.target.id !== 'galGo') return;
     const g = GX[galSel];
-    if (!S.galOpen[g.id]) { if (S.mo < g.cost) return; S.mo -= g.cost; S.galOpen[g.id] = true; }
+    if (!S.galOpen[g.id]) { if (S.mo < g.cost || !galRecsOk(g.id)) return; S.mo -= g.cost; S.galOpen[g.id] = true; }
     travel(g.id);
   });
 
@@ -3840,11 +3971,40 @@ body.land .rx-txt { display: none; }
     return `<b>Doble:</b> dos tableros a la vez, ${GNAME[S.keysL]} a la izquierda y ${GNAME[S.keysR]} a la derecha. Secciones de un lado, alternadas y simultáneas. ` +
       (E('l_root') ? 'Largas de un lado mientras tocás del otro. ' : '') + (E('x_semi') ? 'Escaleras de notas extra.' : '');
   }
-  const MENU_HINT = {
-    arrows: 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras incluidas: más estrellas, más multiplicador. Tocar donde no hay flecha resta aguante. Si se vacía, te quedás con la mitad de lo ganado.',
-    stack: 'Cada movimiento se juzga contra las corcheas de la canción: a tiempo suma racha, fuera de tiempo daña el casco. Si el casco se rompe o las piezas llegan arriba, te quedás con la mitad.',
-    path: 'Tocá cualquier tecla cuando el planeta que gira llegue a la baldosa marcada. La órbita es un hexágono y cada lado vale una corchea (semicorchea en baldosas con triángulo, negra con círculo): derecho son 3 lados, cada lado menos o más dobla 60°. Borde punteado: el próximo giro cambia de sentido. Si se vacía el equilibrio, te quedás con la mitad.',
-    signal: 'Durante la llamada podés tocar libremente para practicar. En la respuesta, cada nota se juzga como en Vía Pulso. Repetir un patrón entero da un bonus.',
+  // Reglas de cada modo (tarjeta Reglas del menú de canciones)
+  const RULES_COMMON = [
+    ['Cómo se juzga', 'Cada toque se compara con el tiempo de la música: <b>PERFECTO</b> (±45 ms) vale una nota entera, <b>GENIAL</b> (±90 ms) 70% y <b>BIEN</b> (±135 ms) 40%. Las mejoras de margen agrandan esas ventanas.'],
+    ['Estrellas y multiplicador', 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras y modificadores incluidos. Cada estrella por encima de 1 suma x0,5 a lo que ganás.'],
+    ['Calificación', 'Depende solo de la precisión: S desde 95%, A desde 88%, B desde 78%, C desde 65%. Tocar donde no hay nota baja la precisión.'],
+    ['Qué ganás', 'La moneda de la galaxia, para su árbol. La primera vez que superás una dificultad, sacás S o hacés Full Combo, ganás materia oscura. Tu mejor resultado queda como eco y sigue rindiendo solo. Los tutoriales no dan recursos.'],
+  ];
+  const RULES = {
+    arrows: [['Objetivo', 'Tocá cada flecha justo cuando llega a los receptores de arriba.'],
+      ['Controles', 'Flechas, WASD o IJKL. En Doble, un grupo de teclas por tablero. <kbd>Esc</kbd> pausa.'],
+      ['Notas especiales', 'Las <b>notas extra</b> de color son opcionales: si las tocás suman, si no, no pasa nada. Las <b>flechas largas</b> se mantienen apretadas hasta el final.'],
+      ['Aguante', 'Cada fallo y cada toque sin flecha vacían la barra. Si se vacía, la canción no se supera y te quedás con la mitad de lo ganado.'],
+      ['Combo', 'Con el Contador de combo, las rachas largas multiplican lo que ganás (rangos de x1,5 a x5).']],
+    stack: [['Objetivo', 'Encastrá las piezas y completá filas moviéndote al compás de la música.'],
+      ['Controles', '<kbd>←</kbd> <kbd>→</kbd> mover, <kbd>↑</kbd> girar, <kbd>↓</kbd> bajar, <kbd>Espacio</kbd> soltar, <kbd>C</kbd> guardar (con Bodega). <kbd>Esc</kbd> pausa.'],
+      ['Ritmo', 'Cada movimiento se juzga contra las corcheas. A tiempo suma racha y multiplica lo que ganás; fuera de tiempo daña el casco.'],
+      ['Casco', 'Si el casco se rompe o las piezas llegan arriba, la canción no se supera y te quedás con la mitad.'],
+      ['Filas', 'Cada fila completa paga y repara un poco el casco. Cuatro filas juntas pagan mucho más.']],
+    signal: [['Objetivo', 'Escuchá la llamada de la baliza y repetila en la respuesta, con las mismas flechas y el mismo ritmo.'],
+      ['Controles', 'Flechas, WASD o IJKL. <kbd>Esc</kbd> pausa.'],
+      ['Llamada y respuesta', 'Durante la llamada podés tocar libremente para practicar: no se juzga. Después hay una breve pausa de radio y empieza la respuesta, que se juzga como en Vía Pulso.'],
+      ['Señal', 'Los fallos vacían la barra de señal. Si se vacía, la canción no se supera y te quedás con la mitad.'],
+      ['Patrones', 'Repetir un patrón entero sin fallar lo decodifica y da un bonus.']],
+    path: [['Objetivo', 'Tocá cualquier tecla cuando el planeta que gira llegue a la baldosa marcada.'],
+      ['Controles', 'Cualquier tecla: <kbd>Espacio</kbd>, flechas, WASD o IJKL. <kbd>Esc</kbd> pausa.'],
+      ['Cómo leer el camino', 'La órbita es un hexágono y cada lado vale una corchea (semicorchea en baldosas con triángulo, negra con círculo). Derecho son 3 lados; cada lado de menos o de más dobla 60°. Un borde punteado avisa que el próximo giro cambia de sentido.'],
+      ['Equilibrio', 'Tocar muy temprano o muy tarde vacía la barra. Si se vacía, la canción no se supera y te quedás con la mitad.'],
+      ['Tramos', 'Cada tramo de 8 compases sin fallar puede dar un bonus (con Tramo perfecto).']],
+  };
+  // Mecánicas que ya compraste en el árbol de cada galaxia (las de Vía Pulso se pueden apagar)
+  const MECH_INFO = {
+    stack: [['e_d_ghost', 'Proyección', 'muestra dónde cae la pieza'], ['e_d_hold', 'Bodega', 'guardar una pieza con C'], ['e_d_prev', 'Planos', 'ver las piezas siguientes'], ['e_c_root', 'Metrónomo', 'el ritmo multiplica'], ['e_c_tetra', 'Ensamble perfecto', 'bonus por 4 filas']],
+    signal: [['s_m_root', 'Marcas de ritmo', 'puntos de cuándo tocar'], ['s_m_arrows', 'Eco visual', 'qué flecha va en cada punto'], ['s_t_metro', 'Metrónomo de respuesta', 'clic en cada corchea'], ['s_t_fix', 'Corrección de errores', 'patrones con algún fallo cuentan'], ['s_m_streak', 'Racha de señal', 'patrones seguidos suman']],
+    path: [['p_r_root', 'Racha', 'baldosas seguidas multiplican'], ['p_c_root', 'Tramo perfecto', 'bonus por tramo sin fallas'], ['p_c_gold', 'Baldosas doradas', 'PERFECTO en dorada vale más'], ['p_r_safe', 'Red de seguridad', 'fallos que no cortan la racha']],
   };
   function renderSongs() {
     const W0 = WORLDS[S.world], mode = GX[W0.gal].mode, unit = GX[W0.gal].unit;
@@ -3893,24 +4053,44 @@ body.land .rx-txt { display: none; }
     const c = getChart(S.sel, S.diff);
     $('playBtn').textContent = `Jugar “${SONGS[S.sel].name}” · ${DIFFS[S.diff].name} ${dec1(c.stars)}★`;
     $('keycfg').hidden = !(mode === 'arrows' && S.diff === 3);
-    $('mechBox').hidden = mode !== 'arrows';
-    $('menuHint').textContent = MENU_HINT[mode];
+    $('rulesBox').innerHTML = [...RULES[mode], ...RULES_COMMON].map(([t, d]) => `<section><h3>${t}</h3><p>${d}</p></section>`).join('')
+      + `<section><h3>Dificultad elegida</h3><p>${diffInfo(SONGS[S.sel], S.diff)}</p></section>`;
+    const nMods = activeMods(SONGS[S.sel]).length;
+    $('modCount').hidden = !nMods; $('modCount').textContent = nMods;
     for (const side of ['L', 'R']) {
       const cur = side === 'L' ? S.keysL : S.keysR;
       document.querySelector(`.seg[data-side="${side}"]`).innerHTML = Object.keys(GROUPS)
         .map(g => `<button data-g="${g}" aria-pressed="${g === cur}">${GNAME[g]}</button>`).join('');
     }
-    const chips = Object.entries(TOGGLES).filter(([id, t]) => !t.parent || L(id)).map(([id, t]) => {
+    const chips = mode !== 'arrows' ? MECH_INFO[mode].map(([id, label, what]) => `<span class="chip${L(id) ? ' on' : ' locked'}" title="${what}">${L(id) ? '✓ ' : ''}${label}</span>`)
+      : Object.entries(TOGGLES).filter(([id, t]) => !t.parent || L(id)).map(([id, t]) => {
       if (!L(id)) return `<span class="chip locked${t.gold ? ' gold' : ''}" title="Se desbloquea en el árbol">${t.label}</span>`;
       const on = !isOff(id), parentOff = t.parent && S.off[t.parent];
       return `<button class="chip toggle${on ? ' on' : ''}${t.gold ? ' gold' : ''}" data-t="${id}" aria-pressed="${on}" ${parentOff ? 'disabled' : ''}>${on ? '✓ ' : ''}${t.label}</button>`;
     });
-    chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
+    if (mode === 'arrows') chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
     $('mech').innerHTML = chips.join('');
     renderMods(W0.gal);
     renderRep(S.world);
-    $('mechHint').hidden = !Object.keys(TOGGLES).some(id => L(id));
+    $('mechHint').innerHTML = mode === 'arrows'
+      ? 'Tocá una mecánica para apagarla o encenderla. Apagada baja la dificultad, las estrellas y el multiplicador; la mejora sigue comprada. Las grises se desbloquean en el árbol de Vía Pulso.'
+      : `Mecánicas de ${GX[W0.gal].name} que ya compraste en su árbol (las grises todavía no). ${MECH_INFO[mode].map(([, l, w]) => `<b>${l}:</b> ${w}.`).join(' ')}`;
   }
+  // Tarjetas laterales del menú: Reglas (izquierda), Mecánicas y Modificadores (derecha)
+  const CARD_TITLE = { rules: 'Reglas', mech: 'Mecánicas', mods: 'Modificadores' };
+  function sideCard(name) {
+    const card = $('sideCard'), on = !!name;
+    card.classList.toggle('open', on); $('sideBack').classList.toggle('open', on);
+    document.querySelectorAll('.side-btn').forEach(b => b.setAttribute('aria-expanded', String(b.dataset.card === name)));
+    if (!on) return;
+    card.dataset.side = name === 'rules' ? 'l' : 'r'; $('scTitle').textContent = CARD_TITLE[name];
+    card.querySelectorAll('.sc-body').forEach(b => { b.hidden = b.dataset.card !== name; });
+    $('scClose').focus();
+  }
+  document.querySelectorAll('.side-btn').forEach(b => b.addEventListener('click', () => sideCard($('sideCard').classList.contains('open') && $('sideCard').querySelector(`.sc-body[data-card="${b.dataset.card}"]`).hidden === false ? null : b.dataset.card)));
+  $('scClose').addEventListener('click', () => sideCard(null));
+  $('sideBack').addEventListener('click', () => sideCard(null));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('sideCard').classList.contains('open')) { sideCard(null); e.stopPropagation(); } }, true);
   $('songs').addEventListener('click', e => {
     const d = e.target.closest('.diff');
     if (d) {

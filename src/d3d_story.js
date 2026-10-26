@@ -268,6 +268,46 @@
     done_disco: [['duque', 'Tomá esta lentejuela. Es la número un millón. Cuidala como a tu ritmo.']],
     done_edm: [['neutron', 'Te regalo mi mejor drop. Literal: se me cayó el casco. Quedátelo.']],
     done_jazz: [['smokey', 'Guardá esta nota azul. Algún día vas a necesitar un silencio que suene bien.']],
+    // Recomendaciones: cada representante, al llegar a Confianza (CORA agrega el conteo según la galaxia)
+    rec_brasa: [['brasa', '¡Escuchame bien! Voy a gritar tu nombre en todas las galaxias vecinas. Literal. Tengo amplificador.']],
+    rec_lumi: [['lumi', '¡Te escribí una carta de recomendación! Tiene tres estribillos y un corazoncito al final. ♥']],
+    rec_duque: [['duque', 'Querida estrella: tenés mi bendición de lentejuela. Que te abran la pista en todos lados.']],
+    rec_neutron: [['neutron', 'ATENCIÓN, GALAXIAS VECINAS: ESTA PERSONA ES DE CONFIANZA. …Perdón, el micrófono seguía en máximo.']],
+    rec_smokey: [['smokey', 'Mirá, no recomiendo a cualquiera. Pero vos entendés los silencios. Voy a pasar la voz… despacito.']],
+    rec_remache: [['remache', 'Che, encastrás como la gente. Ya les avisé a los vecinos que sos de fierro. Con onda.']],
+    rec_yunque: [['yunque', 'Forjado. Probado. Aprobado. Mi recomendación pesa una tonelada. Usala bien.']],
+    rec_vector: [['vector', 'Tu nombre ya brilla en neón en todos los hangares. Mandé la recomendación a velocidad crucero.']],
+    rec_bruma: [['bruma', 'Tu eco… se quedó conmigo. Lo voy a soltar despacio hacia las otras galaxias. Te van a escuchar.']],
+    rec_nubi: [['nubi', 'mmm… sí. sos buena compañía para estudiar. ya mandé tu nombre en la playlist de recomendados.']],
+    rec_morse: [['morse', 'TRANSMISIÓN APROBADA. RECOMENDACIÓN ENVIADA EN TODAS LAS FRECUENCIAS. PUNTO. RAYA. PUNTO.']],
+    rec_garua: [['garua', 'Ai, que bonito tocás… Vou te recomendar a toda la costa. Sin apuro, pero con cariño.']],
+    rec_compadre: [['compadre', 'Mirá, pibe… perdón, terrícola. En el arrabal la palabra vale. Y la mía es que sos de ley.']],
+    rec_rompeondas: [['rompeondas', '¡Ya está! Recomendación enviada antes de que terminaras de leer esto. Y esto también.']],
+    // Embajadores: cuando reunís las recomendaciones para la galaxia vecina
+    ref_pulso_ens: [
+      ['kadenza', '↑ ↑ Te recomiendan ↑ ↑. → → Ensamble → espera. Tesela… ▙▟? ← Construye ←.'],
+      ['cora', 'Kadenza ya le avisó a Tesela. Con la materia oscura suficiente, Ensamble se abre en el mapa de galaxias.'],
+    ],
+    ref_pulso_sen: [
+      ['kadenza', '↗ ↗ Muchas voces ↑ hablan de vos. ↘ Señal ↘ escucha. Eco-7… ∿ repite ∿.'],
+      ['cora', 'Señal aceptó recibirnos. Eco-7 nos espera del otro lado de la estática.'],
+    ],
+    ref_ens_sen: [
+      ['tesela', '▄▄▄▄ Filas completas = recomendación ▄▄▄▄. ▚▞ Señal ▚▞ avisada. ▟ Andá ▙.'],
+      ['cora', 'Tesela habló con Eco-7. Señal ya puede abrirse.'],
+    ],
+    ref_sen_ens: [
+      ['eco7', 'kssh ∿ Recomendación ∿ recibida ∿ y reenviada. ∿∿ Ensamble ∿ lo sabe. Cambio.'],
+      ['cora', 'Eco-7 avisó a Tesela. Ensamble ya puede abrirse.'],
+    ],
+    ref_ens_com: [
+      ['tesela', '▛▜ Compás ▛▜ … los Gemelos ▙▟ giran. ▄▄ Te recomendamos ▄▄. ▚▞ No te mareés ▚▞.'],
+      ['cora', 'Tesela nos consiguió una cita con los Gemelos Vaivén. Compás ya puede abrirse.'],
+    ],
+    ref_sen_com: [
+      ['eco7', '∿ Transmitiendo a Compás ∿ … kssh … ◐ ◑ responden ∿. Están ∿ esperándote. Cambio y fuera.'],
+      ['cora', 'Los Gemelos Vaivén contestaron la señal. Compás ya puede abrirse.'],
+    ],
     treaty_pulso: [
       ['kadenza', '↑ → ↓ ← Tus manos señalan como las nuestras. ↑ ↑ Acuerdo ↑ ↑ con vos.'],
       ['kadenza', 'Llevá nuestra luz → → → otras galaxias. Y en la Sinfonía… ↑ tocá con nosotros ↑.'],
@@ -275,6 +315,12 @@
     ],
   };
 
+  // CORA cuenta cómo van las recomendaciones para las galaxias vecinas que siguen cerradas
+  function recCoraLine(id) {
+    const name = SPK[id][0], gal = charGal(id), tg = galNeighbors(gal).filter(g => !S.galOpen[g]);
+    if (!tg.length) return `${name} nos recomendó. Ya tenemos abiertas todas las galaxias vecinas, pero nunca está de más.`;
+    return `${name} nos recomendó. ` + tg.map(g => `${GX[g].name}: ${recFor(g).length}/${recNeed(g)}`).join(' · ') + '.';
+  }
   // Cuándo se dispara cada momento (en el orden en que se revisan)
   const allSongsCleared = wi => WORLDS[wi].idx.every(i => [0, 1, 2, 3].some(d => recOf(SONGS[i], d)?.clear));
   function storyBeats(v) {
@@ -288,6 +334,9 @@
       out.push([`done_${w.id}`, allSongsCleared(wi)]);
     }
     out.push([`treaty_${gal}`, WORLDS.every((w, wi) => w.gal !== gal || worldDone(wi))]);
+    // recomendaciones de los representantes de esta galaxia, y aviso del embajador cuando alcanzan para una vecina
+    for (const id of Object.keys(AFF_CHARS)) if (charGal(id) === gal) out.push([`rec_${id}`, recommends(id)]);
+    for (const tg of galNeighbors(gal)) if (!S.galOpen[tg] && STORY[`ref_${gal}_${tg}`]) out.push([`ref_${gal}_${tg}`, galRecsOk(tg)]);
     if (v === 'menu') out.push([`meet_${WORLDS[S.world].id}`, true]);
     return out;
   }
@@ -317,6 +366,7 @@
       if (!ok || S.story[id]) continue;
       S.story[id] = true; save();
       if (STORY[id]) dlgQueue.push(...STORY[id]);
+      if (id.startsWith('rec_')) dlgQueue.push(['cora', recCoraLine(id.slice(4))]);
       if (id.startsWith('meet_') && !S.story.lang_hint && STORY[id] && comprehension(STORY[id][0][0]) < 0.6) {
         S.story.lang_hint = true; save();
         dlgQueue.push(['cora', 'No entendí todo. Los representantes hablan el idioma de su galaxia. Cuanta más Sintonía tengan, más palabras vas a entender.']);

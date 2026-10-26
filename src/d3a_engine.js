@@ -266,7 +266,7 @@
     const mult = galMult(gal), paid = gain * mult;
     S[g.cur] += paid; S.tot[gal] += paid;
     const newWorlds = [...openWorlds(gal)].filter(wi => !openBefore.has(wi));
-    const mo = s.tut ? 0 : (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult();   // el planeta que abre un tutorial tampoco da materia oscura
+    const mo = s.tut ? 0 : (milestoneMO(s, before, rec) + 2 * newWorlds.length) * darkMult() * MO_RATE;   // el planeta que abre un tutorial tampoco da materia oscura
     S.mo += mo;
     save();
     if (mo > 0) notes.push(`+${dec(mo)} de materia oscura`);

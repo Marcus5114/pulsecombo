@@ -17,6 +17,7 @@
     if (v !== 'tree') closeTip();
     if (v === 'tree') { buildTree(); updateTree(); renderRespec(false); requestAnimationFrame(drawLines); }
     if (v !== 'play') hidePause();
+    if (v !== 'menu') sideCard(null);
     const g = GX[S.galaxy];
     $('keysHint').innerHTML = g.mode === 'stack'
       ? '<kbd>←</kbd><kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> bajar · <kbd>Espacio</kbd> soltar · <kbd>Esc</kbd> pausa'
@@ -47,7 +48,7 @@
     $('galSvg').innerHTML = GAL_LINKS.map(([a, b]) => `<line class="${S.galOpen[a] && S.galOpen[b] ? '' : 'off'}" x1="${pos[a][0]}%" y1="${pos[a][1]}%" x2="${pos[b][0]}%" y2="${pos[b][1]}%"/>`).join('');
     $('galaxies').innerHTML = GALAXIES.map(g => {
       const open = !!S.galOpen[g.id], here = S.galaxy === g.id;
-      const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : `${g.cost} de materia oscura`;
+      const status = here ? 'Estás acá' : open ? `${fmt(S[g.cur])} ${g.unit}` : !galRecsOk(g.id) ? `${recFor(g.id).length}/${recNeed(g.id)} recomendaciones` : `${g.cost} de materia oscura`;
       return `<button class="gxbtn${open ? '' : ' locked'}${here ? ' here' : ''}${galSel === g.id ? ' sel' : ''}" data-g="${g.id}" style="left:${pos[g.id][0]}%;top:${pos[g.id][1]}%;--g-acc:${g.color}" aria-label="${g.name}, ${status}">
         <span class="gxw"><span class="gx" data-g="${g.id}"></span></span>
         ${here ? HERE_MARK : ''}${galSel === g.id ? SEL_MARK : ''}
@@ -62,18 +63,26 @@
     const nW = WORLDS.filter(w => w.gal === g.id && !w.tutorial).length, wOpen = open ? genreWorldsOpen(g.id) : 0;
     const btn = here ? '<button class="play-btn" id="galGo">Ir al mapa</button>'
       : open ? '<button class="play-btn" id="galGo">Viajar</button>'
+      : !galRecsOk(g.id) ? `<button class="play-btn" disabled>Faltan recomendaciones (${recFor(g.id).length}/${recNeed(g.id)})</button>`
       : S.mo >= g.cost ? `<button class="play-btn" id="galGo">Abrir por ${g.cost} de materia oscura</button>`
       : `<button class="play-btn" disabled>Te ${g.cost - Math.floor(S.mo) === 1 ? 'falta' : 'faltan'} ${g.cost - Math.floor(S.mo)} de materia oscura</button>`;
     $('galInfo').style.setProperty('--acc', g.color); $('galInfo').style.setProperty('--acc-ink', '#0b0b0d');
     const amb = AMB[g.id], [ambName, ambRole] = SPK[amb];
-    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}<p>${g.desc}</p>
+    const recHtml = open ? '' : (() => {
+      const src = recSources(g.id), got = recFor(g.id);
+      if (!src.length) return `<div class="gi-recs">Para abrirla necesitás <b>${recNeed(g.id)} recomendaciones</b> de representantes de ${galNeighbors(g.id).map(x => GX[x].name).join(' o ')}. Abrí primero una de esas galaxias.</div>`;
+      const cands = Object.keys(AFF_CHARS).filter(id => affOn(id) && src.includes(charGal(id)));
+      return `<div class="gi-recs"><b>Recomendaciones: ${got.length}/${recNeed(g.id)}</b> · te recomiendan los representantes de ${src.map(x => GX[x].name).join(' y ')} cuando llegan a Confianza.
+        <div class="gi-reclist">${cands.map(id => `<span class="gi-rec${got.includes(id) ? ' ok' : ''}" title="${AFF_TIERS[affTier(affState(id).pts)][1]}"><span class="pf">${faceSvg(id)}</span>${SPK[id][0]}</span>`).join('')}</div></div>`;
+    })();
+    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}${recHtml}<p>${g.desc}</p>
       <div class="gi-stats"><span>${g.curName}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
   $('galInfo').addEventListener('click', e => {
     if (e.target.id !== 'galGo') return;
     const g = GX[galSel];
-    if (!S.galOpen[g.id]) { if (S.mo < g.cost) return; S.mo -= g.cost; S.galOpen[g.id] = true; }
+    if (!S.galOpen[g.id]) { if (S.mo < g.cost || !galRecsOk(g.id)) return; S.mo -= g.cost; S.galOpen[g.id] = true; }
     travel(g.id);
   });
 
@@ -168,11 +177,40 @@
     return `<b>Doble:</b> dos tableros a la vez, ${GNAME[S.keysL]} a la izquierda y ${GNAME[S.keysR]} a la derecha. Secciones de un lado, alternadas y simultáneas. ` +
       (E('l_root') ? 'Largas de un lado mientras tocás del otro. ' : '') + (E('x_semi') ? 'Escaleras de notas extra.' : '');
   }
-  const MENU_HINT = {
-    arrows: 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras incluidas: más estrellas, más multiplicador. Tocar donde no hay flecha resta aguante. Si se vacía, te quedás con la mitad de lo ganado.',
-    stack: 'Cada movimiento se juzga contra las corcheas de la canción: a tiempo suma racha, fuera de tiempo daña el casco. Si el casco se rompe o las piezas llegan arriba, te quedás con la mitad.',
-    path: 'Tocá cualquier tecla cuando el planeta que gira llegue a la baldosa marcada. La órbita es un hexágono y cada lado vale una corchea (semicorchea en baldosas con triángulo, negra con círculo): derecho son 3 lados, cada lado menos o más dobla 60°. Borde punteado: el próximo giro cambia de sentido. Si se vacía el equilibrio, te quedás con la mitad.',
-    signal: 'Durante la llamada podés tocar libremente para practicar. En la respuesta, cada nota se juzga como en Vía Pulso. Repetir un patrón entero da un bonus.',
+  // Reglas de cada modo (tarjeta Reglas del menú de canciones)
+  const RULES_COMMON = [
+    ['Cómo se juzga', 'Cada toque se compara con el tiempo de la música: <b>PERFECTO</b> (±45 ms) vale una nota entera, <b>GENIAL</b> (±90 ms) 70% y <b>BIEN</b> (±135 ms) 40%. Las mejoras de margen agrandan esas ventanas.'],
+    ['Estrellas y multiplicador', 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras y modificadores incluidos. Cada estrella por encima de 1 suma x0,5 a lo que ganás.'],
+    ['Calificación', 'Depende solo de la precisión: S desde 95%, A desde 88%, B desde 78%, C desde 65%. Tocar donde no hay nota baja la precisión.'],
+    ['Qué ganás', 'La moneda de la galaxia, para su árbol. La primera vez que superás una dificultad, sacás S o hacés Full Combo, ganás materia oscura. Tu mejor resultado queda como eco y sigue rindiendo solo. Los tutoriales no dan recursos.'],
+  ];
+  const RULES = {
+    arrows: [['Objetivo', 'Tocá cada flecha justo cuando llega a los receptores de arriba.'],
+      ['Controles', 'Flechas, WASD o IJKL. En Doble, un grupo de teclas por tablero. <kbd>Esc</kbd> pausa.'],
+      ['Notas especiales', 'Las <b>notas extra</b> de color son opcionales: si las tocás suman, si no, no pasa nada. Las <b>flechas largas</b> se mantienen apretadas hasta el final.'],
+      ['Aguante', 'Cada fallo y cada toque sin flecha vacían la barra. Si se vacía, la canción no se supera y te quedás con la mitad de lo ganado.'],
+      ['Combo', 'Con el Contador de combo, las rachas largas multiplican lo que ganás (rangos de x1,5 a x5).']],
+    stack: [['Objetivo', 'Encastrá las piezas y completá filas moviéndote al compás de la música.'],
+      ['Controles', '<kbd>←</kbd> <kbd>→</kbd> mover, <kbd>↑</kbd> girar, <kbd>↓</kbd> bajar, <kbd>Espacio</kbd> soltar, <kbd>C</kbd> guardar (con Bodega). <kbd>Esc</kbd> pausa.'],
+      ['Ritmo', 'Cada movimiento se juzga contra las corcheas. A tiempo suma racha y multiplica lo que ganás; fuera de tiempo daña el casco.'],
+      ['Casco', 'Si el casco se rompe o las piezas llegan arriba, la canción no se supera y te quedás con la mitad.'],
+      ['Filas', 'Cada fila completa paga y repara un poco el casco. Cuatro filas juntas pagan mucho más.']],
+    signal: [['Objetivo', 'Escuchá la llamada de la baliza y repetila en la respuesta, con las mismas flechas y el mismo ritmo.'],
+      ['Controles', 'Flechas, WASD o IJKL. <kbd>Esc</kbd> pausa.'],
+      ['Llamada y respuesta', 'Durante la llamada podés tocar libremente para practicar: no se juzga. Después hay una breve pausa de radio y empieza la respuesta, que se juzga como en Vía Pulso.'],
+      ['Señal', 'Los fallos vacían la barra de señal. Si se vacía, la canción no se supera y te quedás con la mitad.'],
+      ['Patrones', 'Repetir un patrón entero sin fallar lo decodifica y da un bonus.']],
+    path: [['Objetivo', 'Tocá cualquier tecla cuando el planeta que gira llegue a la baldosa marcada.'],
+      ['Controles', 'Cualquier tecla: <kbd>Espacio</kbd>, flechas, WASD o IJKL. <kbd>Esc</kbd> pausa.'],
+      ['Cómo leer el camino', 'La órbita es un hexágono y cada lado vale una corchea (semicorchea en baldosas con triángulo, negra con círculo). Derecho son 3 lados; cada lado de menos o de más dobla 60°. Un borde punteado avisa que el próximo giro cambia de sentido.'],
+      ['Equilibrio', 'Tocar muy temprano o muy tarde vacía la barra. Si se vacía, la canción no se supera y te quedás con la mitad.'],
+      ['Tramos', 'Cada tramo de 8 compases sin fallar puede dar un bonus (con Tramo perfecto).']],
+  };
+  // Mecánicas que ya compraste en el árbol de cada galaxia (las de Vía Pulso se pueden apagar)
+  const MECH_INFO = {
+    stack: [['e_d_ghost', 'Proyección', 'muestra dónde cae la pieza'], ['e_d_hold', 'Bodega', 'guardar una pieza con C'], ['e_d_prev', 'Planos', 'ver las piezas siguientes'], ['e_c_root', 'Metrónomo', 'el ritmo multiplica'], ['e_c_tetra', 'Ensamble perfecto', 'bonus por 4 filas']],
+    signal: [['s_m_root', 'Marcas de ritmo', 'puntos de cuándo tocar'], ['s_m_arrows', 'Eco visual', 'qué flecha va en cada punto'], ['s_t_metro', 'Metrónomo de respuesta', 'clic en cada corchea'], ['s_t_fix', 'Corrección de errores', 'patrones con algún fallo cuentan'], ['s_m_streak', 'Racha de señal', 'patrones seguidos suman']],
+    path: [['p_r_root', 'Racha', 'baldosas seguidas multiplican'], ['p_c_root', 'Tramo perfecto', 'bonus por tramo sin fallas'], ['p_c_gold', 'Baldosas doradas', 'PERFECTO en dorada vale más'], ['p_r_safe', 'Red de seguridad', 'fallos que no cortan la racha']],
   };
   function renderSongs() {
     const W0 = WORLDS[S.world], mode = GX[W0.gal].mode, unit = GX[W0.gal].unit;
@@ -221,24 +259,44 @@
     const c = getChart(S.sel, S.diff);
     $('playBtn').textContent = `Jugar “${SONGS[S.sel].name}” · ${DIFFS[S.diff].name} ${dec1(c.stars)}★`;
     $('keycfg').hidden = !(mode === 'arrows' && S.diff === 3);
-    $('mechBox').hidden = mode !== 'arrows';
-    $('menuHint').textContent = MENU_HINT[mode];
+    $('rulesBox').innerHTML = [...RULES[mode], ...RULES_COMMON].map(([t, d]) => `<section><h3>${t}</h3><p>${d}</p></section>`).join('')
+      + `<section><h3>Dificultad elegida</h3><p>${diffInfo(SONGS[S.sel], S.diff)}</p></section>`;
+    const nMods = activeMods(SONGS[S.sel]).length;
+    $('modCount').hidden = !nMods; $('modCount').textContent = nMods;
     for (const side of ['L', 'R']) {
       const cur = side === 'L' ? S.keysL : S.keysR;
       document.querySelector(`.seg[data-side="${side}"]`).innerHTML = Object.keys(GROUPS)
         .map(g => `<button data-g="${g}" aria-pressed="${g === cur}">${GNAME[g]}</button>`).join('');
     }
-    const chips = Object.entries(TOGGLES).filter(([id, t]) => !t.parent || L(id)).map(([id, t]) => {
+    const chips = mode !== 'arrows' ? MECH_INFO[mode].map(([id, label, what]) => `<span class="chip${L(id) ? ' on' : ' locked'}" title="${what}">${L(id) ? '✓ ' : ''}${label}</span>`)
+      : Object.entries(TOGGLES).filter(([id, t]) => !t.parent || L(id)).map(([id, t]) => {
       if (!L(id)) return `<span class="chip locked${t.gold ? ' gold' : ''}" title="Se desbloquea en el árbol">${t.label}</span>`;
       const on = !isOff(id), parentOff = t.parent && S.off[t.parent];
       return `<button class="chip toggle${on ? ' on' : ''}${t.gold ? ' gold' : ''}" data-t="${id}" aria-pressed="${on}" ${parentOff ? 'disabled' : ''}>${on ? '✓ ' : ''}${t.label}</button>`;
     });
-    chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
+    if (mode === 'arrows') chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
     $('mech').innerHTML = chips.join('');
     renderMods(W0.gal);
     renderRep(S.world);
-    $('mechHint').hidden = !Object.keys(TOGGLES).some(id => L(id));
+    $('mechHint').innerHTML = mode === 'arrows'
+      ? 'Tocá una mecánica para apagarla o encenderla. Apagada baja la dificultad, las estrellas y el multiplicador; la mejora sigue comprada. Las grises se desbloquean en el árbol de Vía Pulso.'
+      : `Mecánicas de ${GX[W0.gal].name} que ya compraste en su árbol (las grises todavía no). ${MECH_INFO[mode].map(([, l, w]) => `<b>${l}:</b> ${w}.`).join(' ')}`;
   }
+  // Tarjetas laterales del menú: Reglas (izquierda), Mecánicas y Modificadores (derecha)
+  const CARD_TITLE = { rules: 'Reglas', mech: 'Mecánicas', mods: 'Modificadores' };
+  function sideCard(name) {
+    const card = $('sideCard'), on = !!name;
+    card.classList.toggle('open', on); $('sideBack').classList.toggle('open', on);
+    document.querySelectorAll('.side-btn').forEach(b => b.setAttribute('aria-expanded', String(b.dataset.card === name)));
+    if (!on) return;
+    card.dataset.side = name === 'rules' ? 'l' : 'r'; $('scTitle').textContent = CARD_TITLE[name];
+    card.querySelectorAll('.sc-body').forEach(b => { b.hidden = b.dataset.card !== name; });
+    $('scClose').focus();
+  }
+  document.querySelectorAll('.side-btn').forEach(b => b.addEventListener('click', () => sideCard($('sideCard').classList.contains('open') && $('sideCard').querySelector(`.sc-body[data-card="${b.dataset.card}"]`).hidden === false ? null : b.dataset.card)));
+  $('scClose').addEventListener('click', () => sideCard(null));
+  $('sideBack').addEventListener('click', () => sideCard(null));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('sideCard').classList.contains('open')) { sideCard(null); e.stopPropagation(); } }, true);
   $('songs').addEventListener('click', e => {
     const d = e.target.closest('.diff');
     if (d) {

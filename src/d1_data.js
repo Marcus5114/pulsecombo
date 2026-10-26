@@ -18,11 +18,11 @@
   const GALAXIES = [
     { id: 'pulso', name: 'Vía Pulso', mode: 'arrows', modeName: 'Flechas', cur: 'pts', curName: 'Pulsos', unit: 'pulsos', cost: 0, need: 4, cond: 30000, color: '#5cd0e6',
       desc: 'Flechas que suben hasta los receptores al ritmo de cada género. Cinco planetas, cinco estilos.' },
-    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2, cond: 800, color: '#ff8c5a',
+    { id: 'ens', name: 'Ensamble', mode: 'stack', modeName: 'Encastre', recs: 2, cur: 'piezas', curName: 'Piezas', unit: 'piezas', cost: 5, need: 2, cond: 800, color: '#ff8c5a',
       desc: 'Un astillero en órbita. Las piezas caen al compás y solo se mueven bien si las movés a tiempo. Completá filas para ganar piezas.' },
-    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
+    { id: 'sen', name: 'Señal', mode: 'signal', modeName: 'Llamada y respuesta', recs: 3, cur: 'datos', curName: 'Datos', unit: 'datos', cost: 5, need: 2, cond: 800, color: '#b892ff',
       desc: 'Balizas alienígenas que emiten patrones. Escuchá la llamada y repetila en el compás siguiente. Cada patrón decodificado da datos.' },
-    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
+    { id: 'com', name: 'Compás', mode: 'path', modeName: 'Camino de baldosas', recs: 3, cur: 'giros', curName: 'Giros', unit: 'giros', cost: 8, need: 2, cond: 800, color: '#f2c14e',
       desc: 'Dos planetas unidos sobre un panal de baldosas. El que gira recorre una órbita hexagonal, un lado por corchea: contá los lados hasta la próxima baldosa y tocá al llegar.' },
   ];
   const GX = Object.fromEntries(GALAXIES.map(g => [g.id, g]));
@@ -359,6 +359,8 @@
   // ---------- Materia oscura ----------
   // Hitos: primera vez que superás una dificultad (+1; los tutoriales no dan), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
   const darkMult = () => 1 + 0.25 * L('g_dark');
+  // Los hitos dan la mitad de materia oscura que antes (v0.4.3): las galaxias también piden recomendaciones
+  const MO_RATE = 0.5;
   // Condensador: convierte la moneda de una galaxia en 1 de materia oscura. Cada condensación cuesta 6% más.
   const COND_GROWTH = 1.06;
   const condCost = gal => Math.ceil(GX[gal].cond * COND_GROWTH ** (S.cond[gal] || 0));

@@ -157,6 +157,17 @@
   const affBonus = (id, kind) => 0;            // lugar para bonos por nivel (todavía no hay)
 
   // Al terminar una canción: Sintonía con el personaje del planeta según sus gustos y su pedido
+  // ---------- Recomendaciones ----------
+  // Un representante te recomienda cuando llegan a Confianza. Cada galaxia cerrada pide cierta cantidad (GX[g].recs)
+  // de representantes que te recomienden, de galaxias vecinas que ya tengas abiertas.
+  const REC_TIER = 2;
+  const recommends = id => affOn(id) && affTier(affState(id).pts) >= REC_TIER;
+  const galNeighbors = gal => GAL_LINKS.filter(l => l.includes(gal)).map(l => l[0] === gal ? l[1] : l[0]);
+  const recSources = gal => galNeighbors(gal).filter(g => S.galOpen[g]);
+  const recFor = gal => Object.keys(AFF_CHARS).filter(id => affOn(id) && recSources(gal).includes(charGal(id)) && recommends(id));
+  const recNeed = gal => GX[gal].recs || 0;
+  const galRecsOk = gal => recFor(gal).length >= recNeed(gal);
+
   // ---------- Topes por hitos ----------
   // Cada nivel pide un logro en el planeta del representante. Hasta cumplirlo, la Sintonía se frena justo antes del umbral.
   function affGate(wi, tier) {
@@ -227,6 +238,7 @@
     const tier1 = affTier(a.pts);
     if (tier1 > tier0) {
       out.push(`${name} y vos: ${AFF_TIERS[tier1][1]}`);
+      if (tier0 < REC_TIER && tier1 >= REC_TIER) out.push(`${name} te recomienda ante las galaxias vecinas`);
       for (const h of AFF_HOOKS.tierUp) h(id, tier1);
       const scene = AFF_SCENES[id]?.[tier1]; if (scene) dlgQueue.push(...scene);
     }
