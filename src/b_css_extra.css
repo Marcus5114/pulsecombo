@@ -452,3 +452,4 @@ body.land .rx-txt { display: none; }
 .rule-diffs li b { color: var(--fg); }
 .rule-diffs li.on { border-left-color: var(--acc); color: var(--fg); }
 .rule-diffs li.on b { color: var(--acc); }
+#soundBox { display: inline-flex; gap: 14px; flex-wrap: wrap; }

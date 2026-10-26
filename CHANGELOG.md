@@ -15,6 +15,12 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 - El código de desarrollador no funcionaba porque el juego tenía guardada la huella de otro código. Ahora reconoce el código correcto.
 
 ### Agregado
+- **Música de fondo espacial** en los menús, los mapas y los árboles. Es sintetizada, sin archivos. Tiene un colchón de acordes lentos, notas agudas sueltas como estrellas con reverb, un zumbido grave y un viento de nebulosa. Es un loop de 48 segundos que entra con fundido y empalma con el siguiente mediante un fundido cruzado, sin cortes. Se apaga suavemente al entrar a una canción y vuelve al salir.
+- **Voces en los diálogos**, al estilo Animal Crossing: un sonido por sílaba mientras se escribe la línea.
+  - CORA suena digital, con un pitido al empezar a hablar. Lumen tiene una voz suave, sin eco.
+  - Los símbolos de los embajadores tienen su propio sonido: las flechas de Kadenza suben o bajan de tono, los bloques de Tesela hacen clics, las ondas de Eco-7 vibran y su voz pasa por una radio con estática, y los Gemelos Vaivén alternan dos tonos.
+  - Cada representante suena como su galaxia (suave, cuadrada, de radio o de dos tonos) y con su propia altura.
+- Botones en el pie de página para apagar o encender la música de fondo y las voces.
 - Reacciones nuevas de los representantes durante la partida: cinco frases distintas para PERFECTO, GENIAL, BIEN y FALLO en cada uno de los 18 personajes. Se eligen al azar sin repetir la anterior, y en una racha del mismo juicio la frase cambia cada dos segundos más o menos.
 - Las monedas se nombran siempre con mayúscula y un ícono propio del color de su galaxia: Pulsos (una onda), Piezas (bloques), Datos (señal de radio), Giros (dos planetas en órbita) y Materia Oscura (esfera con anillo). Aparecen en la barra de arriba, los árboles, el condensador, el panel de galaxias, el resultado, las reglas y los diálogos de CORA. Los botones de compra de los árboles muestran el ícono junto al precio.
 - Diálogos de recomendación. Cada representante dice una línea propia al recomendarte, en su idioma según la Sintonía, y CORA cuenta cuántas recomendaciones llevás para cada galaxia vecina. Cuando alcanzan, el embajador de tu galaxia te presenta ante el de la vecina (Kadenza ante Tesela o Eco-7, Tesela y Eco-7 entre sí y ante los Gemelos Vaivén).

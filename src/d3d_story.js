@@ -474,11 +474,12 @@
     $('dlg').hidden = false;
     $('dlgFace').innerHTML = faceSvg(who);
     $('dlgName').innerHTML = `${name} <span>${role}</span>`;
+    voiceOpen(who);
     dlgShown = 0; $('dlgText').textContent = '';
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) { dlgShown = text.length; dlgPaint(text); return; }
     dlgTimer = setInterval(() => {
-      dlgShown = Math.min(text.length, dlgShown + 1); dlgPaint(text.slice(0, dlgShown));
+      dlgShown = Math.min(text.length, dlgShown + 1); dlgPaint(text.slice(0, dlgShown)); voiceChar(who, text[dlgShown - 1]);
       if (dlgShown >= text.length) clearInterval(dlgTimer);
     }, 28);
   }

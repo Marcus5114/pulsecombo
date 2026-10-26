@@ -18,6 +18,7 @@
     if (v === 'tree') { buildTree(); updateTree(); renderRespec(false); requestAnimationFrame(drawLines); }
     if (v !== 'play') hidePause();
     if (v !== 'menu') sideCard(null);
+    ambientUpdate();
     const g = GX[S.galaxy];
     $('keysHint').innerHTML = g.mode === 'stack'
       ? '<kbd>←</kbd><kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> bajar · <kbd>Espacio</kbd> soltar · <kbd>Esc</kbd> pausa'
@@ -648,6 +649,11 @@
     else if (act === 'reset') { devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; resetAsk(); }
     else { $('devCode').value = ''; $('devCode').placeholder = 'Código incorrecto'; }
   });
+  // Sonido: música de fondo y voces de los diálogos (se pueden apagar)
+  function renderSound() { $('ambBtn').textContent = `Música de fondo: ${S.ambient === false ? 'no' : 'sí'}`; $('voiceBtn').textContent = `Voces: ${S.voices === false ? 'no' : 'sí'}`; }
+  $('ambBtn').addEventListener('click', () => { S.ambient = S.ambient === false; save(); renderSound(); ensureAudio(); ambientUpdate(); });
+  $('voiceBtn').addEventListener('click', () => { S.voices = S.voices === false; save(); renderSound(); });
+  renderSound();
   const resetBox = $('resetBox');
   // Reinicio total: también vuelven la cinemática de inicio, la historia y la Sintonía
   const resetAsk = () => { resetBox.innerHTML = '<span class="confirm">¿Borrar todo (monedas, árboles, galaxias, récords, historia y Sintonía)? <button class="link" id="yes">Sí, borrar</button><button class="link" id="no">Cancelar</button></span>'; resetBox.querySelector('#no').focus(); };
