@@ -45,6 +45,30 @@ Notas que hay que **evitar** en vez de tocar. Va como un modificador más de la 
   - `hit()`: en la respuesta, un toque en una ventana bomba explota en vez de contar como golpe al aire.
   - `drawSignal`: flecha tachada en la línea de tiempo.
 
+## Vía Pulso: modificador "Brújula" (las flechas giran antes de llegar)
+Las flechas suben apuntando hacia otra dirección (una de las otras tres, elegida con la semilla de la canción) y giran a su dirección correcta un tiempo antes de llegar al indicador. Hay que esperar el giro para saber qué tecla tocar. El carril ya es el correcto desde el principio: lo que engaña es la forma.
+- **Estrellas:** +20% como referencia, igual que Oculto. Se habilita como los demás: con el nodo Modificadores y superando Difícil en un planeta de Vía Pulso.
+- **Debe poder combinarse con Oculto y Repentino** (y con Sin indicadores). El giro tiene que pasar siempre en una zona donde la flecha se ve. Hoy, midiendo la distancia al indicador como fracción de la pista (0 en el indicador, 1 abajo):
+  - Oculto: la flecha se ve entera hasta 0,38 y desaparece del todo en 0,22.
+  - Repentino: aparece desde 0,55 y se ve entera desde 0,43.
+  - Con los dos, se ve entera solo entre 0,43 y 0,38, y a medias entre 0,55 y 0,43 y entre 0,38 y 0,22.
+- **Regla para ubicar el giro:**
+  1. El giro termina, en principio, un tiempo antes del indicador: la distancia que recorre la flecha en un tiempo (60/BPM × velocidad ÷ alto de la pista).
+  2. Con Oculto, el final del giro nunca puede pasar de 0,40. Si un tiempo antes cae más cerca, el giro se adelanta para terminar en 0,40, todavía visible.
+  3. Con Repentino, el inicio del giro nunca puede ser antes de 0,50, cuando la flecha ya se ve casi entera.
+  4. Si la ventana queda corta (Oculto + Repentino deja de 0,50 a 0,40), el giro se hace más rápido, con un mínimo de 0,06 de pista, para que entre completo.
+  5. Así, con Oculto + Repentino + Brújula se ve la flecha "mal", se ve el giro entero y recién después se apaga.
+- **Detalles:**
+  - El giro es una animación de rotación de 90°, 180° o 270° por el camino más corto, con un pequeño destello al terminar.
+  - Las notas extra y las cabezas de las flechas largas también giran. La cola de las largas no cambia, porque ya marca el carril.
+  - En Doble funciona igual en los dos tableros.
+  - Conviene que las flechas en un mismo acorde (saltos) no giren desde la misma dirección falsa, para no regalar la lectura.
+- **Cómo implementarlo:**
+  - `MODS.spin = { gal: 'pulso', label: 'Brújula', pct: 0.2, desc: '…' }`.
+  - En `buildChart`, cada nota guarda su dirección falsa con la semilla (`n.fake`).
+  - En `draw()`, el ángulo se interpola entre `ANG[n.fake]` y `ANG[lane]` según la distancia `d` y la ventana calculada con la regla de arriba. Ya existe `vis(y)` para Oculto y Repentino; la ventana del giro se calcula una vez por partida en `startRun` a partir de `run.mods`.
+  - Las estrellas no cambian el patrón, solo suman el porcentaje del modificador.
+
 ## Vía Pulso: mejora activable "Cámara lenta"
 Una mejora del árbol de Vía Pulso que, al apretar una tecla, ralentiza el tiempo durante unos segundos. La música y las flechas van más despacio y se vuelve más fácil leer un tramo denso.
 - **Dónde va:** nodo nuevo en la rama Combo (o una rama nueva, *Tiempo*), con 3 niveles:
