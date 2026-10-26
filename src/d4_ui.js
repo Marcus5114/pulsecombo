@@ -119,9 +119,9 @@
 
   // ---------- Mapa de planetas ----------
   const LAYOUT = {
-    pulso: { wide: { base: [9, 26], rock: [22, 66], pop: [40, 24], jazz: [45, 77], disco: [66, 40], edm: [87, 66] },
-             tall: { base: [50, 8], rock: [25, 24], pop: [74, 37], jazz: [28, 52], disco: [72, 66], edm: [40, 82] },
-             short: { base: [7, 24], rock: [22, 60], pop: [38, 20], jazz: [54, 60], disco: [70, 20], edm: [88, 58] } },
+    pulso: { wide: { base: [9, 26], pop: [22, 66], rock: [40, 24], jazz: [45, 77], disco: [66, 40], edm: [87, 66] },
+             tall: { base: [50, 8], pop: [25, 24], rock: [74, 37], jazz: [28, 52], disco: [72, 66], edm: [40, 82] },
+             short: { base: [7, 24], pop: [22, 60], rock: [38, 20], jazz: [54, 60], disco: [70, 20], edm: [88, 58] } },
     ens: { wide: { ens_base: [12, 30], ens_a: [36, 66], ens_b: [64, 30], ens_c: [85, 68] },
            tall: { ens_base: [50, 8], ens_a: [28, 34], ens_b: [72, 54], ens_c: [36, 80] },
            short: { ens_base: [10, 24], ens_a: [36, 60], ens_b: [62, 20], ens_c: [86, 58] } },

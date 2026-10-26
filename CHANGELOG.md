@@ -27,6 +27,12 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - **Reglas** (nuevo): objetivo, controles, barra de vida y lo propio de cada modo, más cómo se juzga, estrellas, calificación y qué ganás. Explica todas las dificultades de la galaxia (Fácil, Normal, Difícil y, en Vía Pulso, Doble), con la elegida resaltada. En Ensamble, el juicio y la calificación se explican con A TIEMPO y FUERA DE TIEMPO, que es como se juzga ahí.
   - Reglas es un cajón lateral con desplazamiento, para leer todo el contenido. Mecánicas y Modificadores son tarjetas flotantes junto a su botón, porque tienen poco contenido.
   - **Mecánicas:** en Vía Pulso se pueden apagar y encender como antes. En las otras galaxias muestra las mecánicas compradas en su árbol.
+- **Prisma pasa a ser el primer planeta de Vía Pulso**, y Magma el segundo. Lumi es la primera representante que conocés.
+  - Rutas nuevas: Estación → Prisma, y desde Prisma se abren Magma y Nebulosa. Magma lleva a Espejo.
+  - En el mapa, los dos planetas intercambian lugar. Prisma tiene ahora las canciones más fáciles y Magma un poco más de dificultad.
+  - Los diálogos se ajustaron: Kadenza te manda a Prisma, y CORA cuenta que Lumi habló bien de vos ante Magma y Nebulosa.
+  - Las partidas guardadas no pierden nada: un planeta donde ya superaste canciones sigue abierto.
+- **Canciones nuevas de Magma**, más metaleras: Trueno de Basalto, Autopista al Cráter, Jinetes de Lava, Maestro del Fuego, Bestia de Obsidiana y Cabalgata Final. Mantienen los tempos y los récords.
 - Reiniciar el progreso (con el botón o con el código) también borra la historia y la Sintonía, vuelve a mostrar la cinemática de inicio y arranca en el mapa de galaxias.
 
 ## v0.4.2

@@ -314,7 +314,7 @@
     ],
     tut_pulso: [
       ['kadenza', '↑ ↑ ↑ Bien. Tus flechas ← no tropiezan →. Te escuchamos.'],
-      ['kadenza', '↘ Magma ↘ te espera. Brasa es… ↑ ↑ ↑ ↑ ruidoso. ← Paciencia →.'],
+      ['kadenza', '↘ Prisma ↘ te espera. Lumi… ↑ ↑ ↑ canta mucho. → Sonreí →.'],
       ['cora', 'Traducción: aprobaste el examen de ingreso.'],
     ],
     meet_rock: [
@@ -337,8 +337,8 @@
       ['smokey', 'Tranqui, gato… perdón, terrícola. En Nebulosa nadie se apura.'],
       ['smokey', 'El secreto está en el dos y el cuatro. Y en las notas que no tocás.'],
     ],
-    open_pop: [['cora', 'Brasa habló bien de nosotros. Prisma abrió la ruta. Prepará tu mejor sonrisa de estribillo.']],
-    open_jazz: [['cora', 'Brasa avisó a Nebulosa que llegamos. Dicen que allá el tiempo se toma su tiempo.']],
+    open_rock: [['cora', 'Lumi habló bien de nosotros. Magma abrió la ruta. Te recomiendo tapones para los oídos. A mí no me hacen falta.']],
+    open_jazz: [['cora', 'Lumi avisó a Nebulosa que llegamos. Dicen que allá el tiempo se toma su tiempo.']],
     open_disco: [['cora', 'Nos invitaron a Espejo. Hay código de vestimenta: brillar. Yo no tengo problema.']],
     open_edm: [['cora', 'Púlsar abrió la ruta. Te recomiendo proteger tus oídos. Yo no tengo, así que te los recomiendo a vos.']],
     done_rock: [['brasa', '¡Tenés alma de rock! Tomá: una púa de basalto. No la uses para tocar, quema.']],
@@ -440,6 +440,7 @@
     storyInit();
     if (dlgOpen() || run && !run.over) return;
     if (!S.story.prologue) { S.story.prologue = true; save(); playIntro(); return; }
+    if (!S.story.open_rock && S.story.open_pop) S.story.open_rock = true;   // partidas de antes del cambio de orden: ya vieron la apertura
     for (const [id, ok] of storyBeats(v)) {
       if (!ok || S.story[id]) continue;
       S.story[id] = true; save();

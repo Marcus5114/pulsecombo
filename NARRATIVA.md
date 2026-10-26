@@ -40,8 +40,8 @@ Sos una exploradora o un explorador de la Tierra a bordo de **El Metrónomo**, u
 | Planeta | Género | Representante | Estereotipo visual |
 |---|---|---|---|
 | Estación | Tutorial | **Bip**, robot operador | Robot cuadrado con auriculares de radio y portapapeles. |
-| Magma | Rock | **Brasa** | Melena de fuego, campera de cuero con tachas, guitarra en V, pose de pie sobre un amplificador de basalto. |
-| Prisma | Pop | **Lumi** | Ídolo pop de cristal facetado, flequillo perfecto, micrófono vincha, brillos y corazones. |
+| Prisma | Pop | **Lumi** | Ídolo pop de cristal facetado, flequillo perfecto, micrófono vincha, brillos y corazones. Primer planeta después de la Estación. |
+| Magma | Rock | **Brasa** | Melena de fuego, campera de cuero con tachas, guitarra en V, pose de pie sobre un amplificador de basalto. Se abre desde Prisma. |
 | Espejo | Disco | **Duque Lentejuela** | Peinado afro que es una bola de espejos, cuello enorme, botas de plataforma. |
 | Púlsar | EDM | **DJ Neutrón** | Casco con visera de LEDs, auriculares gigantes, brazos levantados. |
 | Nebulosa | Jazz | **Smokey** | Hecho de humo azul, boina, anteojos oscuros, saxo, chasquea los dedos en el 2 y el 4. |

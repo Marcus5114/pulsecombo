@@ -40,10 +40,10 @@
     { gal: 'pulso', id: 'base', name: 'Estación', genre: 'Tutorial', tutorial: true, boost: 0, qb: 0, jb: 0, root: 43,
       desc: 'Tu punto de partida. Una canción lenta para aprender a jugar antes de salir a explorar los planetas.',
       songs: [['Primer Contacto', 84]] },
-    { gal: 'pulso', id: 'rock', name: 'Magma', genre: 'Rock', boost: 0, qb: 0, jb: 0.04, root: 40,
+    { gal: 'pulso', id: 'rock', name: 'Magma', genre: 'Rock', boost: 0.4, qb: 0, jb: 0.04, root: 40,
       desc: 'Planeta volcánico de guitarras saturadas. Bombo y redoblante clásicos, bajo en corcheas y acordes de quinta.',
-      songs: [['Riff de Magma', 96], ['Guitarra Meteoro', 108], ['Corteza Rota', 120], ['Amplificador Solar', 132], ['Estática Roja', 146], ['Erupción Final', 160]] },
-    { gal: 'pulso', id: 'pop', name: 'Prisma', genre: 'Pop', boost: 0.4, qb: 0.02, jb: 0.02, root: 45,
+      songs: [['Trueno de Basalto', 96], ['Autopista al Cráter', 108], ['Jinetes de Lava', 120], ['Maestro del Fuego', 132], ['Bestia de Obsidiana', 146], ['Cabalgata Final', 160]] },
+    { gal: 'pulso', id: 'pop', name: 'Prisma', genre: 'Pop', boost: 0, qb: 0.02, jb: 0.02, root: 45,
       desc: 'Un mundo brillante de estribillos pegadizos. Ritmo parejo, palmas y arpegios.',
       songs: [['Corazón Satélite', 100], ['Órbita de Verano', 108], ['Señal de Radio', 114], ['Estribillo Infinito', 120], ['Brillo Sintético', 128], ['Supernova Pop', 136]] },
     { gal: 'pulso', id: 'disco', name: 'Espejo', genre: 'Disco', boost: 0.9, qb: 0.05, jb: 0.01, root: 41,
@@ -344,13 +344,15 @@
   const worldDone = wi => WORLDS[wi].tutorial ? tutDone(WORLDS[wi].gal) : clearedIn(wi) >= GX[WORLDS[wi].gal].need;
   const WI = Object.fromEntries(WORLDS.map((w, i) => [w.id, i]));
   const LINKS = {
-    pulso: [['base', 'rock'], ['rock', 'pop'], ['rock', 'jazz'], ['pop', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']],
+    pulso: [['base', 'pop'], ['pop', 'rock'], ['pop', 'jazz'], ['rock', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']],   // v0.4.3: Prisma es el primer planeta y Magma el segundo
     ens: [['ens_base', 'ens_a'], ['ens_a', 'ens_b'], ['ens_a', 'ens_c'], ['ens_b', 'ens_c']],
     sen: [['sen_base', 'sen_a'], ['sen_a', 'sen_b'], ['sen_a', 'sen_c'], ['sen_b', 'sen_c']],
     com: [['com_base', 'com_a'], ['com_a', 'com_b'], ['com_a', 'com_c'], ['com_b', 'com_c']],
   };
   function openWorlds(gal) {
     const open = new Set([WORLDS.findIndex(w => w.gal === gal && w.tutorial)]);
+    // un planeta donde ya superaste canciones queda abierto aunque cambie el orden de las rutas (partidas de antes de v0.4.3)
+    WORLDS.forEach((w, wi) => { if (w.gal === gal && !w.tutorial && clearedIn(wi)) open.add(wi); });
     let changed = true;
     while (changed) {
       changed = false;
