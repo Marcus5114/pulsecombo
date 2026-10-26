@@ -29,6 +29,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - **Valores más bajos.** Base +0,5, gustos hasta +1 y disgustos hasta −0,5. Los pedidos dan +6, y cuentan como mucho 2 por visita al planeta: para que cuente otro, hay que salir y volver a entrar.
   - Lo que ya tenías ganado no se pierde.
 - Sintonía desactivada por ahora con los operadores de los tutoriales (Bip, Capataz Grúa, Operadora Estática y el Relojero). Con una sola canción, sus pedidos no tenían sentido. Siguen en su planeta y hablan idioma terrestre, pero sin barra ni pedidos. Queda en el backlog buscarles un sistema propio.
+- Las mejoras de vida de todos los árboles (Aguante, Casco, Redundancia y Órbita estable) son más suaves: cada nivel resta 6% del daño en vez de 12%. Al nivel máximo, un fallo resta 70% de lo normal (antes, 40%).
 - Los tutoriales ya no dan moneda, materia oscura ni ecos. Sirven para aprender, no para repetirlos y juntar recursos. Durante la partida el contador dice "Práctica", y el resultado explica por qué no suma. El planeta que se abre al completar el tutorial tampoco da materia oscura. En total, los hitos dan unos 24 de materia oscura menos.
 
 ### Corregido

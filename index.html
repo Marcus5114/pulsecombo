@@ -920,6 +920,8 @@ body.land .rx-txt { display: none; }
   const GNAME = { wasd: 'WASD', ijkl: 'IJKL', arrows: 'Flechas' };
 
   // ---------- Árboles ----------
+  // Mejoras de vida (Aguante, Casco, Redundancia, Órbita estable): cada nivel resta 6% del daño; al nivel 5, un fallo resta 70% de lo normal
+  const LIFE_STEP = 0.06;
   const RANKS = [[10, 1.5], [25, 2], [50, 2.5], [100, 3], [200, 4], [350, 5]];
   const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
   const pct = n => `${Math.round(n * 100)}%`;
@@ -935,7 +937,7 @@ body.land .rx-txt { display: none; }
         { id: 'core', br: 'core', name: 'Núcleo', max: 1, desc: 'El punto de partida. De acá salen las mejoras generales y las tres ramas.', fx: () => 'Activo' },
         { id: 'base', br: 'core', parent: 'core', name: 'Pulso base', cost: [10, 1.8], desc: 'Cada flecha que acertás vale más pulsos.', fx: lv => `${1 + lv} pulsos por flecha` },
         { id: 'win',  br: 'core', parent: 'core', name: 'Ventana', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing de todos los juicios.', fx: lv => `+${10 * lv}% de margen` },
-        { id: 'life', br: 'core', parent: 'core', name: 'Aguante', max: 5, cap: () => genreWorldsOpen('pulso'), cost: [180, 7.3], desc: 'Los fallos vacían menos la barra de aguante. Se puede mejorar un nivel por cada planeta que tengas abierto en Vía Pulso.', fx: lv => `Un fallo resta ${100 - 12 * lv}% de lo normal` },
+        { id: 'life', br: 'core', parent: 'core', name: 'Aguante', max: 5, cap: () => genreWorldsOpen('pulso'), cost: [180, 7.3], desc: 'Los fallos vacían menos la barra de aguante. Se puede mejorar un nivel por cada planeta que tengas abierto en Vía Pulso.', fx: lv => `Un fallo resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'x_root', br: 'x', pos: [2, 1], root: true, name: 'Contratiempos', max: 1, cost: [100, 1], req: [['core', 1]], desc: 'Aparecen notas extra de color entre los tiempos. Son opcionales: si las dejás pasar no perdés combo ni aguante.', fx: lv => lv ? 'Notas extra activas' : 'Sin notas extra' },
         { id: 'x_val',  br: 'x', pos: [1, 2], name: 'Brillo', max: 5, cost: [280, 6.6], req: [['x_root', 1]], desc: 'Las notas extra valen más pulsos.', fx: lv => `Valen ${50 + 25 * lv}% de una flecha` },
         { id: 'x_dens', br: 'x', pos: [3, 2], name: 'Densidad', max: 4, cost: [360, 7.3], req: [['x_root', 1]], desc: 'Aparecen más notas extra en cada canción.', fx: lv => `${100 + 25 * lv}% de notas extra` },
@@ -969,7 +971,7 @@ body.land .rx-txt { display: none; }
         { id: 'e_core', br: 'core', name: 'Grúa', max: 1, desc: 'La grúa principal del astillero. De acá salen todas las mejoras de Ensamble.', fx: () => 'Activa' },
         { id: 'e_base', br: 'core', parent: 'e_core', name: 'Prensa', cost: [10, 1.8], desc: 'Cada fila completa y cada pieza encastrada valen más piezas.', fx: lv => `Base ${1 + lv} por fila` },
         { id: 'e_win',  br: 'core', parent: 'e_core', name: 'Estabilizador', max: 5, cost: [160, 7.3], desc: 'Agranda el margen para que un movimiento cuente como a tiempo.', fx: lv => `+${10 * lv}% de margen` },
-        { id: 'e_life', br: 'core', parent: 'e_core', name: 'Casco', max: 5, cost: [180, 7.3], desc: 'Moverse fuera de tiempo daña menos la integridad del casco.', fx: lv => `Un error resta ${100 - 12 * lv}% de lo normal` },
+        { id: 'e_life', br: 'core', parent: 'e_core', name: 'Casco', max: 5, cost: [180, 7.3], desc: 'Moverse fuera de tiempo daña menos la integridad del casco.', fx: lv => `Un error resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'e_d_prev', br: 'ed', pos: [2, 1], root: true, name: 'Planos', max: 3, cost: [240, 8], req: [['e_core', 1]], desc: 'Ves más piezas siguientes en el panel lateral.', fx: lv => `Ves ${1 + lv} ${lv ? 'piezas' : 'pieza'}` },
         { id: 'e_d_ghost', br: 'ed', pos: [1, 2], name: 'Proyección', max: 1, cost: [90, 1], req: [['e_d_prev', 1]], desc: 'Muestra el contorno de dónde va a caer la pieza.', fx: lv => lv ? 'Contorno visible' : 'Sin contorno' },
         { id: 'e_d_hold', br: 'ed', pos: [3, 2], name: 'Bodega', max: 1, cost: [150, 1], req: [['e_d_prev', 1]], desc: 'Podés guardar una pieza para usarla después (tecla C). Una vez por pieza.', fx: lv => lv ? 'Bodega disponible' : 'Sin bodega' },
@@ -989,7 +991,7 @@ body.land .rx-txt { display: none; }
         { id: 's_core', br: 'core', name: 'Antena', max: 1, desc: 'La antena receptora. De acá salen todas las mejoras de Señal.', fx: () => 'Activa' },
         { id: 's_base', br: 'core', parent: 's_core', name: 'Potencia', cost: [10, 1.8], desc: 'Cada nota que repetís bien vale más datos.', fx: lv => `${1 + lv} datos por nota` },
         { id: 's_win',  br: 'core', parent: 's_core', name: 'Sintonía', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing al repetir.', fx: lv => `+${10 * lv}% de margen` },
-        { id: 's_life', br: 'core', parent: 's_core', name: 'Redundancia', max: 5, cost: [180, 7.3], desc: 'Los fallos vacían menos la barra de señal.', fx: lv => `Un fallo resta ${100 - 12 * lv}% de lo normal` },
+        { id: 's_life', br: 'core', parent: 's_core', name: 'Redundancia', max: 5, cost: [180, 7.3], desc: 'Los fallos vacían menos la barra de señal.', fx: lv => `Un fallo resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 's_m_root', br: 'sm', pos: [2, 1], root: true, name: 'Marcas de ritmo', max: 1, cost: [60, 1], req: [['s_core', 1]], desc: 'En la respuesta, la línea de tiempo muestra los puntos de cuándo tocar, en cualquier dificultad.', fx: lv => lv ? 'Puntos visibles' : 'Puntos solo en Fácil' },
         { id: 's_m_arrows', br: 'sm', pos: [2, 2], name: 'Eco visual', max: 1, cost: [160, 1], req: [['s_m_root', 1]], desc: 'Sobre cada punto de la respuesta aparece qué flecha va. Con Al revés o Memoria diferida no se muestra.', fx: lv => lv ? 'Flechas sobre los puntos' : 'Solo puntos' },
         { id: 's_m_dec', br: 'sm', pos: [1, 2], name: 'Decodificador', max: 5, cost: [280, 6.6], req: [['s_m_root', 1]], desc: 'Repetir un patrón entero da un bonus más grande.', fx: lv => `Bonus de ${100 + 40 * lv}% por patrón` },
@@ -1009,7 +1011,7 @@ body.land .rx-txt { display: none; }
         { id: 'p_core', br: 'core', name: 'Eje', max: 1, desc: 'El eje que une a los dos planetas. De acá salen todas las mejoras de Compás.', fx: () => 'Activo' },
         { id: 'p_base', br: 'core', parent: 'p_core', name: 'Impulso', cost: [10, 1.8], desc: 'Cada baldosa que tocás a tiempo vale más giros.', fx: lv => `${1 + lv} giros por baldosa` },
         { id: 'p_win',  br: 'core', parent: 'p_core', name: 'Precisión', max: 5, cost: [160, 7.3], desc: 'Agranda el margen de timing al tocar cada baldosa.', fx: lv => `+${10 * lv}% de margen` },
-        { id: 'p_life', br: 'core', parent: 'p_core', name: 'Órbita estable', max: 5, cost: [180, 7.3], desc: 'Salirte del camino vacía menos la barra de equilibrio.', fx: lv => `Un fallo resta ${100 - 12 * lv}% de lo normal` },
+        { id: 'p_life', br: 'core', parent: 'p_core', name: 'Órbita estable', max: 5, cost: [180, 7.3], desc: 'Salirte del camino vacía menos la barra de equilibrio.', fx: lv => `Un fallo resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'p_r_root', br: 'pr', pos: [2, 1], root: true, name: 'Racha', max: 1, cost: [80, 1], req: [['p_core', 1]], desc: 'Cada 16 baldosas seguidas sin fallar suben el multiplicador de racha en +0,25, hasta x1,5.', fx: lv => lv ? 'Racha hasta x1,5' : 'La racha no multiplica' },
         { id: 'p_r_rank', br: 'pr', pos: [1, 2], name: 'Inercia', max: 4, cost: [560, 8.7], req: [['p_r_root', 1]], desc: 'Sube el tope del multiplicador de racha.', fx: lv => `Racha hasta x${dec(1.5 + 0.5 * lv)}` },
         { id: 'p_r_perf', br: 'pr', pos: [3, 2], name: 'Centro exacto', max: 3, cost: [480, 8], req: [['p_r_root', 1]], desc: 'Los PERFECTO dan más giros.', fx: lv => `+${20 * lv}% por PERFECTO` },
@@ -1943,7 +1945,7 @@ body.land .rx-txt { display: none; }
   const gameT = () => clock() - run.t0;
   const modeWin = () => (run.mode === 'signal' ? 1 + 0.1 * L('s_win') : run.mode === 'stack' ? 1 + 0.1 * L('e_win') : run.mode === 'path' ? 1 + 0.1 * L('p_win') : 1 + 0.1 * L('win')) + tuneWin();
   const lifeLv = () => run.mode === 'signal' ? L('s_life') : run.mode === 'stack' ? L('e_life') : run.mode === 'path' ? L('p_life') : L('life');
-  const missDmg = () => (6 + run.stars * 0.6) * (1 - 0.12 * lifeLv());
+  const missDmg = () => (6 + run.stars * 0.6) * (1 - LIFE_STEP * lifeLv());
   const basePts = () => run && run.mode === 'signal' ? 1 + L('s_base') : run && run.mode === 'path' ? 1 + L('p_base') : 1 + L('base');
   // Compás: racha que multiplica cada 16 baldosas seguidas
   const pathMult = () => L('p_r_root') ? Math.min(1 + Math.floor(run.combo / 16) * 0.25, 1.5 + 0.5 * L('p_r_rank')) : 1;
@@ -2393,7 +2395,7 @@ body.land .rx-txt { display: none; }
     } else {
       run.off++; run.rcombo = 0; setJudge('off');
       if (ac) tone(ac.currentTime, 'square', 110, 0.04, 0.08);
-      hurt(4 * (1 - 0.12 * L('e_life'))); if (run.over) return;
+      hurt(4 * (1 - LIFE_STEP * L('e_life'))); if (run.over) return;
     }
     const p = run.piece;
     if (act === 'L' && fits(p, -1, 0)) p.x--;

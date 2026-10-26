@@ -15,7 +15,7 @@
   const gameT = () => clock() - run.t0;
   const modeWin = () => (run.mode === 'signal' ? 1 + 0.1 * L('s_win') : run.mode === 'stack' ? 1 + 0.1 * L('e_win') : run.mode === 'path' ? 1 + 0.1 * L('p_win') : 1 + 0.1 * L('win')) + tuneWin();
   const lifeLv = () => run.mode === 'signal' ? L('s_life') : run.mode === 'stack' ? L('e_life') : run.mode === 'path' ? L('p_life') : L('life');
-  const missDmg = () => (6 + run.stars * 0.6) * (1 - 0.12 * lifeLv());
+  const missDmg = () => (6 + run.stars * 0.6) * (1 - LIFE_STEP * lifeLv());
   const basePts = () => run && run.mode === 'signal' ? 1 + L('s_base') : run && run.mode === 'path' ? 1 + L('p_base') : 1 + L('base');
   // Compás: racha que multiplica cada 16 baldosas seguidas
   const pathMult = () => L('p_r_root') ? Math.min(1 + Math.floor(run.combo / 16) * 0.25, 1.5 + 0.5 * L('p_r_rank')) : 1;
@@ -465,7 +465,7 @@
     } else {
       run.off++; run.rcombo = 0; setJudge('off');
       if (ac) tone(ac.currentTime, 'square', 110, 0.04, 0.08);
-      hurt(4 * (1 - 0.12 * L('e_life'))); if (run.over) return;
+      hurt(4 * (1 - LIFE_STEP * L('e_life'))); if (run.over) return;
     }
     const p = run.piece;
     if (act === 'L' && fits(p, -1, 0)) p.x--;
