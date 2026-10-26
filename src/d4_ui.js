@@ -542,7 +542,8 @@
   // El código se normaliza antes de comparar: sin espacios, sin mayúsculas y sin tildes
   // (los teclados del celular suelen poner la primera letra en mayúscula o agregar un espacio al final)
   const devNorm = str => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').toLowerCase();
-  const DEV_HASHES = ['1ac84bc7'];
+  // Huellas de los códigos (el texto del código no queda en el archivo): uno desbloquea todo y otro reinicia la progresión
+  const DEV_CODES = { '6b5c4795': 'unlock', 'aa57be75': 'reset' };
   const devHash = str => { let h = 0x811c9dc5; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };
   function devUnlock() {
     for (const g of GALAXIES) S.galOpen[g.id] = true;
@@ -563,16 +564,18 @@
   });
   devBox.addEventListener('submit', e => {
     e.preventDefault();
-    const raw = $('devCode').value, ok = [raw.trim(), devNorm(raw)].some(v => DEV_HASHES.includes(devHash(v)));
-    if (ok) { devUnlock(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
+    const raw = $('devCode').value, act = [raw.trim(), devNorm(raw)].map(v => DEV_CODES[devHash(v)]).find(Boolean);
+    if (act === 'unlock') { devUnlock(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
+    else if (act === 'reset') { devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; resetAsk(); }
     else { $('devCode').value = ''; $('devCode').placeholder = 'Código incorrecto'; }
   });
   const resetBox = $('resetBox');
+  // Reinicio total: también vuelven la cinemática de inicio, la historia y la Sintonía
+  const resetAsk = () => { resetBox.innerHTML = '<span class="confirm">¿Borrar todo (monedas, árboles, galaxias, récords, historia y Sintonía)? <button class="link" id="yes">Sí, borrar</button><button class="link" id="no">Cancelar</button></span>'; resetBox.querySelector('#no').focus(); };
   resetBox.addEventListener('click', e => {
-    if (e.target.id === 'reset') {
-      resetBox.innerHTML = '<span class="confirm">¿Borrar todo (monedas, árboles, galaxias y récords)? <button class="link" id="yes">Sí, borrar</button><button class="link" id="no">Cancelar</button></span>';
-    } else if (e.target.id === 'yes' || e.target.id === 'no') {
-      if (e.target.id === 'yes') { run = null; S = fresh(); chartCache.clear(); treeId = 'pulso'; builtTree = null; save(); setView('map'); }
+    if (e.target.id === 'reset') resetAsk();
+    else if (e.target.id === 'yes' || e.target.id === 'no') {
+      if (e.target.id === 'yes') { run = null; if (dlgOpen()) dlgSkip(); S = fresh(); chartCache.clear(); treeId = 'pulso'; builtTree = null; galSel = 'pulso'; save(); setView('gal'); }
       resetBox.innerHTML = '<button class="link" id="reset">Reiniciar progreso</button>';
     }
   });

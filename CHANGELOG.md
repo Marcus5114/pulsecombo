@@ -9,6 +9,17 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
+## Sin publicar — próxima versión: v0.4.3
+
+### Corregido
+- El código de desarrollador no funcionaba porque el juego tenía guardada la huella de otro código. Ahora reconoce el código correcto.
+
+### Agregado
+- Un segundo código de desarrollador que reinicia toda la progresión. Pide la misma confirmación que el botón Reiniciar progreso.
+
+### Cambiado
+- Reiniciar el progreso (con el botón o con el código) también borra la historia y la Sintonía, vuelve a mostrar la cinemática de inicio y arranca en el mapa de galaxias.
+
 ## v0.4.2
 
 ### Agregado
