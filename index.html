@@ -689,6 +689,11 @@ body.land .rx-txt { display: none; }
 .side-card[data-side="pop"] { bottom: auto; width: 340px; max-height: min(70vh, 520px); border: 1px solid var(--line); border-radius: 12px; animation: scp 0.15s ease-out; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); }
 @keyframes scp { from { opacity: 0; transform: translateY(-6px); } }
 @media (max-width: 640px) { .side-card[data-side="pop"] { width: auto; max-height: 80vh; top: auto; bottom: 0; border-radius: 14px 14px 0 0; animation: scu 0.22s ease-out; } }
+.rule-diffs { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.rule-diffs li { font-size: 0.82rem; line-height: 1.45; padding-left: 8px; border-left: 2px solid var(--line); color: var(--muted); }
+.rule-diffs li b { color: var(--fg); }
+.rule-diffs li.on { border-left-color: var(--acc); color: var(--fg); }
+.rule-diffs li.on b { color: var(--acc); }
 </style>
 </head>
 <body>
@@ -4074,11 +4079,15 @@ body.land .rx-txt { display: none; }
       (E('l_root') ? 'Largas de un lado mientras tocás del otro. ' : '') + (E('x_semi') ? 'Escaleras de notas extra.' : '');
   }
   // Reglas de cada modo (tarjeta Reglas del menú de canciones)
-  const RULES_COMMON = [
-    ['Cómo se juzga', 'Cada toque se compara con el tiempo de la música: <b>PERFECTO</b> (±45 ms) vale una nota entera, <b>GENIAL</b> (±90 ms) 70% y <b>BIEN</b> (±135 ms) 40%. Las mejoras de margen agrandan esas ventanas.'],
+  const RULES_COMMON = mode => [
+    mode === 'stack'
+      ? ['Cómo se juzga', 'Cada movimiento (mover, girar, bajar o soltar) se compara con la corchea más cercana de la música. Dentro de ±75 ms es <b>A TIEMPO</b> (±97 ms en Fácil y en el tutorial); si no, es <b>FUERA DE TIEMPO</b>. Estabilizador agranda ese margen. Dejar caer la pieza sola no se juzga.']
+      : ['Cómo se juzga', 'Cada toque se compara con el tiempo de la música: <b>PERFECTO</b> (±45 ms) vale una nota entera, <b>GENIAL</b> (±90 ms) 70% y <b>BIEN</b> (±135 ms) 40%. Más lejos es <b>FALLO</b>. Las mejoras de margen agrandan esas ventanas.'],
     ['Estrellas y multiplicador', 'Las estrellas salen del patrón real de cada dificultad, con tus mejoras y modificadores incluidos. Cada estrella por encima de 1 suma x0,5 a lo que ganás.'],
-    ['Calificación', 'Depende solo de la precisión: S desde 95%, A desde 88%, B desde 78%, C desde 65%. Tocar donde no hay nota baja la precisión.'],
-    ['Qué ganás', 'La moneda de la galaxia, para su árbol. La primera vez que superás una dificultad, sacás S o hacés Full Combo, ganás {mo}. Tu mejor resultado queda como eco y sigue rindiendo solo. Los tutoriales no dan recursos.'],
+    mode === 'stack'
+      ? ['Calificación', 'Depende del porcentaje de movimientos a tiempo: S desde 95%, A desde 88%, B desde 78%, C desde 65%. Sin ningún movimiento fuera de tiempo cuenta como Full Combo.']
+      : ['Calificación', 'Depende solo de la precisión: S desde 95%, A desde 88%, B desde 78%, C desde 65%. Tocar donde no hay nota baja la precisión. Sin fallos es Full Combo.'],
+    ['Qué ganás', `La moneda de la galaxia, para su árbol. La primera vez que superás una dificultad, sacás S o hacés Full Combo, ganás {mo}. Tu mejor resultado queda como eco y sigue rindiendo solo. Los tutoriales no dan recursos.`],
   ];
   const RULES = {
     arrows: [['Objetivo', 'Tocá cada flecha justo cuando llega a los receptores de arriba.'],
@@ -4088,7 +4097,7 @@ body.land .rx-txt { display: none; }
       ['Combo', 'Con el Contador de combo, las rachas largas multiplican lo que ganás (rangos de x1,5 a x5).']],
     stack: [['Objetivo', 'Encastrá las piezas y completá filas moviéndote al compás de la música.'],
       ['Controles', '<kbd>←</kbd> <kbd>→</kbd> mover, <kbd>↑</kbd> girar, <kbd>↓</kbd> bajar, <kbd>Espacio</kbd> soltar, <kbd>C</kbd> guardar (con Bodega). <kbd>Esc</kbd> pausa.'],
-      ['Ritmo', 'Cada movimiento se juzga contra las corcheas. A tiempo suma racha y multiplica lo que ganás; fuera de tiempo daña el casco.'],
+      ['Ritmo', 'Cada movimiento se juzga contra las corcheas. A tiempo suma racha (con Metrónomo, la racha multiplica lo que ganás); fuera de tiempo daña el casco y corta la racha.'],
       ['Casco', 'Si el casco se rompe o las piezas llegan arriba, la canción no se supera y te quedás con la mitad.'],
       ['Filas', 'Cada fila completa paga y repara un poco el casco. Cuatro filas juntas pagan mucho más.']],
     signal: [['Objetivo', 'Escuchá la llamada de la baliza y repetila en la respuesta, con las mismas flechas y el mismo ritmo.'],
@@ -4156,8 +4165,11 @@ body.land .rx-txt { display: none; }
     const c = getChart(S.sel, S.diff);
     $('playBtn').textContent = `Jugar “${SONGS[S.sel].name}” · ${DIFFS[S.diff].name} ${dec1(c.stars)}★`;
     $('keycfg').hidden = !(mode === 'arrows' && S.diff === 3);
-    $('rulesBox').innerHTML = cur([...RULES[mode], ...RULES_COMMON].map(([t, d]) => `<section><h3>${t}</h3><p>${d}</p></section>`).join('')
-      + `<section><h3>Dificultad elegida</h3><p>${diffInfo(SONGS[S.sel], S.diff)}</p></section>`);
+    // Dificultades: se explican todas (la elegida, resaltada) con una canción normal de la galaxia como referencia
+    const refSong = SONGS[S.sel].tut ? SONGS.find(x => x.gal === W0.gal && !x.tut) : SONGS[S.sel];
+    const diffList = diffsOf(refSong).map(d => `<li class="${!SONGS[S.sel].tut && d === S.diff ? 'on' : ''}">${diffInfo(refSong, d)}</li>`).join('');
+    $('rulesBox').innerHTML = cur([...RULES[mode], ...RULES_COMMON(mode)].map(([t, d]) => `<section><h3>${t}</h3><p>${d}</p></section>`).join('')
+      + `<section><h3>Dificultades</h3><p>Cada dificultad de una canción se abre al superar la anterior en esa misma canción.${SONGS[S.sel].tut ? ' El tutorial tiene una sola dificultad, más simple.' : ''}</p><ul class="rule-diffs">${diffList}</ul></section>`);
     const nMods = activeMods(SONGS[S.sel]).length;
     $('modCount').hidden = !nMods; $('modCount').textContent = nMods;
     for (const side of ['L', 'R']) {

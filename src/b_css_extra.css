@@ -447,3 +447,8 @@ body.land .rx-txt { display: none; }
 .side-card[data-side="pop"] { bottom: auto; width: 340px; max-height: min(70vh, 520px); border: 1px solid var(--line); border-radius: 12px; animation: scp 0.15s ease-out; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55); }
 @keyframes scp { from { opacity: 0; transform: translateY(-6px); } }
 @media (max-width: 640px) { .side-card[data-side="pop"] { width: auto; max-height: 80vh; top: auto; bottom: 0; border-radius: 14px 14px 0 0; animation: scu 0.22s ease-out; } }
+.rule-diffs { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.rule-diffs li { font-size: 0.82rem; line-height: 1.45; padding-left: 8px; border-left: 2px solid var(--line); color: var(--muted); }
+.rule-diffs li b { color: var(--fg); }
+.rule-diffs li.on { border-left-color: var(--acc); color: var(--fg); }
+.rule-diffs li.on b { color: var(--acc); }
