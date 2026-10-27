@@ -4,6 +4,7 @@
   // Las notas extra, la fiebre y sus juicios usan el color de la galaxia
   const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
   const XC = () => hexRgb(run ? GX[run.song.gal].color : '#ffffff');
+  let pressGrad = null;
   function arrow(x, y, s, a) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.scale(s, s);
     ctx.beginPath();
@@ -13,8 +14,11 @@
   }
   // Etiqueta de la partida: canción, dificultad, estrellas y modificadores activos
   // Arriba a la derecha: canción, dificultad y estrellas; debajo, los modificadores activos. Se achica si no entra.
+  let labelCache = {};   // medir texto en cada cuadro es caro: el tamaño de cada etiqueta se calcula una vez
   function drawRunLabel(U) {
-    const fit = (txt, px, y, wgt) => { ctx.font = F(wgt, px); const w = ctx.measureText(txt).width, max = W * 0.7; if (w > max) ctx.font = F(wgt, px * max / w); ctx.fillText(txt, W - 10, y); };
+    const fit = (txt, px, y, wgt) => { const key = txt + '|' + px + '|' + W; let f = labelCache[key];
+      if (!f) { ctx.font = F(wgt, px); const w = ctx.measureText(txt).width, max = W * 0.7; f = labelCache[key] = w > max ? F(wgt, px * max / w) : F(wgt, px); }
+      ctx.font = f; ctx.fillText(txt, W - 10, y); };
     ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillStyle = 'rgba(255,255,255,0.45)';
     fit(`${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`, U * 0.032, 24, 600);
     if (run.ch.mods.length) { ctx.fillStyle = `rgba(${XC()},0.8)`; fit(run.ch.mods.map(id => MODS[id].label).join(' + '), U * 0.028, 24 + U * 0.042, 700); }
@@ -30,20 +34,20 @@
     const rY = H * 0.16, size = Math.min(lw * 0.72, 64), speed = (H - rY) / TRAVEL;
     const fever = t < run.feverUntil;
     ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
-    for (const st of STARS) {
+    if (!S.lowGfx) for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
-      ctx.fillStyle = `rgba(255,255,255,${st.a})`; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
+      ctx.globalAlpha = st.a; ctx.fillStyle = '#fff'; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
     }
+    ctx.globalAlpha = 1;
 
     for (let i = 0; i < nb * 4; i++) {
       const x0 = laneL(i);
       ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.045)' : 'rgba(255,255,255,0.025)'; ctx.fillRect(x0, 0, lw, H);
       const holdingHere = run.active.some(n => n.lane === i && n.holding && n.relAt == null);
       const p = holdingHere ? 0.7 : Math.max(0, 1 - (now - press[i]) / 180);
-      if (p > 0) {
-        const g = ctx.createLinearGradient(0, rY, 0, H);
-        g.addColorStop(0, `rgba(255,255,255,${0.12 * p})`); g.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = g; ctx.fillRect(x0, rY, lw, H - rY);
+      if (p > 0) {   // brillo del carril al apretar: un solo degradado por tamaño de pantalla, con transparencia
+        if (!pressGrad || pressGrad.h !== H) { const g = ctx.createLinearGradient(0, rY, 0, H); g.addColorStop(0, 'rgba(255,255,255,0.12)'); g.addColorStop(1, 'rgba(255,255,255,0)'); pressGrad = { g, h: H }; }
+        ctx.globalAlpha = p; ctx.fillStyle = pressGrad.g; ctx.fillRect(x0, rY, lw, H - rY); ctx.globalAlpha = 1;
       }
     }
     if (fever) { ctx.fillStyle = `rgba(${XC()},${0.06 + 0.03 * Math.sin(now / 90)})`; ctx.fillRect(0, 0, W, H); }

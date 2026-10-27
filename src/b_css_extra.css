@@ -286,14 +286,11 @@ button.chip.mod:hover { border-color: var(--fg); }
 /* ---------- Reacciones en la partida ---------- */
 .stage { position: relative; }
 .reactor { position: absolute; z-index: 3; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 6px; right: calc(100% + 18px); top: 30px; width: 150px; text-align: center; }
-.rx-face { width: 120px; height: 120px; transition: filter 0.3s; }
+.rx-face { width: 120px; height: 120px; transition: opacity 0.3s; will-change: transform; }
 .rx-name { font-size: 0.7rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--acc); }
 .rx-say { font-size: 0.85rem; font-weight: 700; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; min-height: 1.4em; }
-.reactor.r-perfect .rx-face { animation: rxjump 0.4s ease-out; }
-.reactor.r-great .rx-face { animation: rxnod 0.35s ease-out; }
-.reactor.r-good .rx-face { animation: rxtilt 0.4s ease-out; }
-.reactor.r-miss .rx-face { animation: rxshake 0.4s ease-out; filter: grayscale(1) brightness(0.7); }
-.reactor.r-fever .rx-face { animation: rxfever 0.5s ease-in-out 3; filter: drop-shadow(0 0 12px var(--acc)); }
+.reactor.r-miss .rx-face { opacity: 0.55; }   /* antes: filtro de gris (caro en el celular) */
+.reactor.r-fever .rx-face { border-radius: 50%; box-shadow: 0 0 0 2px var(--acc); }
 .reactor.r-perfect .rx-say, .reactor.r-fever .rx-say { border-color: var(--acc); color: var(--acc); }
 .reactor.r-miss .rx-say { color: var(--muted); }
 @keyframes rxjump { 30% { transform: translateY(-12px) scale(1.06); } }
@@ -484,3 +481,8 @@ body.land .rx-txt { display: none; }
 /* Compás: aviso de que se puede tocar en cualquier parte (solo en pantallas táctiles) */
 .tap-any { display: none; }
 @media (pointer: coarse) { .tap-any { display: block; } }
+.set-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.set-check input { margin-top: 3px; accent-color: var(--acc); width: 18px; height: 18px; flex: none; }
+.set-check span { display: flex; flex-direction: column; gap: 2px; }
+.set-check b { font-size: 0.85rem; }
+.set-check small { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }

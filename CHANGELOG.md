@@ -9,6 +9,19 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
+## Sin publicar — próxima versión: v0.5.2
+
+### Corregido
+- **Pocos cuadros por segundo en el celular.**
+  - En pantallas táctiles, la pista se dibuja a 1,5x la resolución en lugar de 2x, con menos píxeles por cuadro.
+  - Si durante la partida el juego no llega a unos 45 cuadros por segundo, baja solo la resolución hasta 1x.
+  - Las reacciones del representante ya no obligan al navegador a recalcular la página en cada toque: el retrato se anima con una transformación liviana y se quitaron los filtros de gris y de brillo, que son caros en el celular.
+  - Se dejaron de rehacer cosas en cada cuadro: el brillo de los carriles y la medida de los textos ahora se calculan una sola vez.
+  - La barra de arriba, que está oculta durante la partida, ya no se actualiza.
+
+### Agregado
+- **Modo rendimiento** en Ajustes (sección Gráficos), para celulares o computadoras lentas. Dibuja la pista a resolución 1x y apaga las estrellas de fondo y las animaciones de los personajes.
+
 ## v0.5.1
 
 ### Corregido

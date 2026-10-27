@@ -530,14 +530,11 @@ button.chip.mod:hover { border-color: var(--fg); }
 /* ---------- Reacciones en la partida ---------- */
 .stage { position: relative; }
 .reactor { position: absolute; z-index: 3; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 6px; right: calc(100% + 18px); top: 30px; width: 150px; text-align: center; }
-.rx-face { width: 120px; height: 120px; transition: filter 0.3s; }
+.rx-face { width: 120px; height: 120px; transition: opacity 0.3s; will-change: transform; }
 .rx-name { font-size: 0.7rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--acc); }
 .rx-say { font-size: 0.85rem; font-weight: 700; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; min-height: 1.4em; }
-.reactor.r-perfect .rx-face { animation: rxjump 0.4s ease-out; }
-.reactor.r-great .rx-face { animation: rxnod 0.35s ease-out; }
-.reactor.r-good .rx-face { animation: rxtilt 0.4s ease-out; }
-.reactor.r-miss .rx-face { animation: rxshake 0.4s ease-out; filter: grayscale(1) brightness(0.7); }
-.reactor.r-fever .rx-face { animation: rxfever 0.5s ease-in-out 3; filter: drop-shadow(0 0 12px var(--acc)); }
+.reactor.r-miss .rx-face { opacity: 0.55; }   /* antes: filtro de gris (caro en el celular) */
+.reactor.r-fever .rx-face { border-radius: 50%; box-shadow: 0 0 0 2px var(--acc); }
 .reactor.r-perfect .rx-say, .reactor.r-fever .rx-say { border-color: var(--acc); color: var(--acc); }
 .reactor.r-miss .rx-say { color: var(--muted); }
 @keyframes rxjump { 30% { transform: translateY(-12px) scale(1.06); } }
@@ -728,12 +725,17 @@ body.land .rx-txt { display: none; }
 /* Compás: aviso de que se puede tocar en cualquier parte (solo en pantallas táctiles) */
 .tap-any { display: none; }
 @media (pointer: coarse) { .tap-any { display: block; } }
+.set-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.set-check input { margin-top: 3px; accent-color: var(--acc); width: 18px; height: 18px; flex: none; }
+.set-check span { display: flex; flex-direction: column; gap: 2px; }
+.set-check b { font-size: 0.85rem; }
+.set-check small { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <h1>Combo Pulso <span>v0.5.1</span></h1>
+    <h1>Combo Pulso <span>v0.5.2</span></h1>
     <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
@@ -758,6 +760,8 @@ body.land .rx-txt { display: none; }
   <h3 class="set-h">Volumen</h3>
   <div class="vol-list" id="volList"></div>
   <p class="hint">Mové una barra para escuchar cómo suena. En cero, ese sonido se apaga.</p>
+  <h3 class="set-h">Gráficos</h3>
+  <label class="set-check"><input type="checkbox" id="lowGfx"><span><b>Modo rendimiento</b><small>Para celulares o computadoras lentas: dibuja la pista a menor resolución y apaga las estrellas de fondo y las animaciones de los personajes.</small></span></label>
 </div>
 
 <div class="notice" id="notice" hidden><span id="noticeText"></span><button class="link" id="noticeClose">Cerrar</button></div>
@@ -2267,8 +2271,13 @@ body.land .rx-txt { display: none; }
   // ---------- Juego ----------
   const cv = $('cv'), ctx = cv.getContext('2d');
   let W = 0, H = 0;
+  // Resolución del lienzo: en el celular arranca más baja (1,5x) y baja sola a 1x si los cuadros por segundo caen.
+  // Con "Modo rendimiento" (Ajustes) va siempre a 1x y se apagan efectos decorativos.
+  const COARSE = window.matchMedia('(pointer: coarse)').matches;
+  let gfxScale = 2;
+  const gfxMax = () => S.lowGfx ? 1 : COARSE ? 1.5 : 2;
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, gfxScale, gfxMax());
     W = cv.clientWidth; H = cv.clientHeight; if (!W) return;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2798,6 +2807,7 @@ body.land .rx-txt { display: none; }
   // Las notas extra, la fiebre y sus juicios usan el color de la galaxia
   const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
   const XC = () => hexRgb(run ? GX[run.song.gal].color : '#ffffff');
+  let pressGrad = null;
   function arrow(x, y, s, a) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.scale(s, s);
     ctx.beginPath();
@@ -2807,8 +2817,11 @@ body.land .rx-txt { display: none; }
   }
   // Etiqueta de la partida: canción, dificultad, estrellas y modificadores activos
   // Arriba a la derecha: canción, dificultad y estrellas; debajo, los modificadores activos. Se achica si no entra.
+  let labelCache = {};   // medir texto en cada cuadro es caro: el tamaño de cada etiqueta se calcula una vez
   function drawRunLabel(U) {
-    const fit = (txt, px, y, wgt) => { ctx.font = F(wgt, px); const w = ctx.measureText(txt).width, max = W * 0.7; if (w > max) ctx.font = F(wgt, px * max / w); ctx.fillText(txt, W - 10, y); };
+    const fit = (txt, px, y, wgt) => { const key = txt + '|' + px + '|' + W; let f = labelCache[key];
+      if (!f) { ctx.font = F(wgt, px); const w = ctx.measureText(txt).width, max = W * 0.7; f = labelCache[key] = w > max ? F(wgt, px * max / w) : F(wgt, px); }
+      ctx.font = f; ctx.fillText(txt, W - 10, y); };
     ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillStyle = 'rgba(255,255,255,0.45)';
     fit(`${run.song.name} · ${DIFFS[run.di].name} ${dec1(run.stars)}★`, U * 0.032, 24, 600);
     if (run.ch.mods.length) { ctx.fillStyle = `rgba(${XC()},0.8)`; fit(run.ch.mods.map(id => MODS[id].label).join(' + '), U * 0.028, 24 + U * 0.042, 700); }
@@ -2824,20 +2837,20 @@ body.land .rx-txt { display: none; }
     const rY = H * 0.16, size = Math.min(lw * 0.72, 64), speed = (H - rY) / TRAVEL;
     const fever = t < run.feverUntil;
     ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
-    for (const st of STARS) {
+    if (!S.lowGfx) for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
-      ctx.fillStyle = `rgba(255,255,255,${st.a})`; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
+      ctx.globalAlpha = st.a; ctx.fillStyle = '#fff'; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
     }
+    ctx.globalAlpha = 1;
 
     for (let i = 0; i < nb * 4; i++) {
       const x0 = laneL(i);
       ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.045)' : 'rgba(255,255,255,0.025)'; ctx.fillRect(x0, 0, lw, H);
       const holdingHere = run.active.some(n => n.lane === i && n.holding && n.relAt == null);
       const p = holdingHere ? 0.7 : Math.max(0, 1 - (now - press[i]) / 180);
-      if (p > 0) {
-        const g = ctx.createLinearGradient(0, rY, 0, H);
-        g.addColorStop(0, `rgba(255,255,255,${0.12 * p})`); g.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = g; ctx.fillRect(x0, rY, lw, H - rY);
+      if (p > 0) {   // brillo del carril al apretar: un solo degradado por tamaño de pantalla, con transparencia
+        if (!pressGrad || pressGrad.h !== H) { const g = ctx.createLinearGradient(0, rY, 0, H); g.addColorStop(0, 'rgba(255,255,255,0.12)'); g.addColorStop(1, 'rgba(255,255,255,0)'); pressGrad = { g, h: H }; }
+        ctx.globalAlpha = p; ctx.fillStyle = pressGrad.g; ctx.fillRect(x0, rY, lw, H - rY); ctx.globalAlpha = 1;
       }
     }
     if (fever) { ctx.fillStyle = `rgba(${XC()},${0.06 + 0.03 * Math.sin(now / 90)})`; ctx.fillRect(0, 0, W, H); }
@@ -2958,7 +2971,7 @@ body.land .rx-txt { display: none; }
   // Fondo común: estrellas que suben despacio
   function drawSky(t) {
     ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
-    for (const st of STARS) {
+    if (!S.lowGfx) for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
       ctx.fillStyle = `rgba(255,255,255,${st.a})`; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
     }
@@ -3583,10 +3596,19 @@ body.land .rx-txt { display: none; }
     const q = QUIPS[id]?.[kind]; if (!Array.isArray(q)) return q || '';
     const pool = q.filter(x => x !== lastQuip); lastQuip = pool[Math.floor(Math.random() * pool.length)] || q[0]; return lastQuip;
   }
+  const RX_ANIM = {
+    perfect: [{ transform: 'none' }, { transform: 'translateY(-12px) scale(1.06)', offset: 0.3 }, { transform: 'none' }],
+    great: [{ transform: 'none' }, { transform: 'translateY(4px)', offset: 0.4 }, { transform: 'none' }],
+    good: [{ transform: 'none' }, { transform: 'rotate(-6deg)', offset: 0.4 }, { transform: 'none' }],
+    miss: [{ transform: 'none' }, { transform: 'translateX(-6px)', offset: 0.2 }, { transform: 'translateX(6px)', offset: 0.4 }, { transform: 'translateX(-4px)', offset: 0.6 }, { transform: 'none' }],
+    fever: [{ transform: 'none' }, { transform: 'scale(1.12) rotate(4deg)', offset: 0.5 }, { transform: 'none' }],
+  };
   function reactTo(j) {
     const kind = j === 'fever' ? 'fever' : REACT[j]; if (!kind || !rxId) return;
     const el = $('reactor'), now = performance.now();
-    el.classList.remove('r-perfect', 'r-great', 'r-good', 'r-miss', 'r-fever'); void el.offsetWidth; el.classList.add('r-' + kind);
+    // la animación del retrato va por Web Animations (solo transform: no obliga a recalcular la página en cada toque)
+    if (el.dataset.k !== kind) { el.classList.remove('r-perfect', 'r-great', 'r-good', 'r-miss', 'r-fever'); el.classList.add('r-' + kind); el.dataset.k = kind; }
+    if (!S.lowGfx && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { const f = el.querySelector('.rx-face'); f.getAnimations().forEach(a => a.cancel()); f.animate(RX_ANIM[kind], { duration: kind === 'fever' ? 500 : 380, easing: 'ease-out' }); }
     // la frase cambia como mucho una vez por segundo, salvo fallo o fiebre, que siempre se dicen
     if ((kind !== rxKind && (now - rxSayAt > 1000 || kind === 'miss' || kind === 'fever')) || now - rxSayAt > 1800) {   // con racha del mismo juicio, cambia de frase cada ~2 s
       rxSayAt = now; rxKind = kind; el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, quipFor(rxId, kind)));
@@ -4702,6 +4724,7 @@ body.land .rx-txt { display: none; }
   let lastUI = 0;
   function renderUI(force) {
     const now = performance.now(); if (!force && now - lastUI < 250) return; lastUI = now;
+    if (view === 'play' && !force) return;   // la barra de arriba está oculta durante la partida
     const g = GX[S.galaxy], rate = ecoRate(g.id);
     $('curName').innerHTML = cur(g.unit);
     $('pts').textContent = fmt(S[g.cur]);
@@ -4841,8 +4864,9 @@ body.land .rx-txt { display: none; }
   }
   function settingsOpen(on) {
     $('setCard').hidden = $('setBack').hidden = !on;
-    if (on) { renderSettings(); $('setClose').focus(); }
+    if (on) { renderSettings(); $('lowGfx').checked = !!S.lowGfx; $('setClose').focus(); }
   }
+  $('lowGfx').addEventListener('change', e => { S.lowGfx = e.target.checked; if (!S.lowGfx) gfxScale = 2; save(); resize(); if (view === 'play' && run) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)(); });
   $('volList').addEventListener('input', e => {
     const r = e.target.closest('input[data-vol]'); if (!r) return;
     const k = r.dataset.vol, v = r.value / 100; setVol(k, v); r.nextElementSibling.textContent = r.value + '%';
@@ -4866,8 +4890,14 @@ body.land .rx-txt { display: none; }
 
   // ---------- Loop ----------
   let lastFrame = performance.now(), lastSave = 0;
+  let frameEma = 16, gfxDrop = 0;
   function frame(now) {
     const dt = Math.min(1, (now - lastFrame) / 1000); lastFrame = now;
+    // si el celular no llega a ~45 cuadros por segundo durante la partida, baja la resolución del lienzo un paso
+    if (view === 'play' && run && !run.paused && !run.over) {
+      frameEma = frameEma * 0.95 + dt * 1000 * 0.05;
+      if (frameEma > 22 && gfxScale > 1 && now - gfxDrop > 2500 && Math.min(window.devicePixelRatio || 1, gfxMax()) > 1) { gfxScale = Math.max(1, Math.min(gfxScale, gfxMax()) - 0.5); gfxDrop = now; resize(); }
+    } else frameEma = 16;
     creditEcos(dt);
     if (view === 'play' && run && !run.over && !run.paused) (run.mode === 'stack' ? updateStack : update)(gameT());
     if (view === 'play' && run && !run.paused) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)();

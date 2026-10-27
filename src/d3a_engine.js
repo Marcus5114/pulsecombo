@@ -2,8 +2,13 @@
   // ---------- Juego ----------
   const cv = $('cv'), ctx = cv.getContext('2d');
   let W = 0, H = 0;
+  // Resolución del lienzo: en el celular arranca más baja (1,5x) y baja sola a 1x si los cuadros por segundo caen.
+  // Con "Modo rendimiento" (Ajustes) va siempre a 1x y se apagan efectos decorativos.
+  const COARSE = window.matchMedia('(pointer: coarse)').matches;
+  let gfxScale = 2;
+  const gfxMax = () => S.lowGfx ? 1 : COARSE ? 1.5 : 2;
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, gfxScale, gfxMax());
     W = cv.clientWidth; H = cv.clientHeight; if (!W) return;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

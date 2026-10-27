@@ -248,10 +248,19 @@
     const q = QUIPS[id]?.[kind]; if (!Array.isArray(q)) return q || '';
     const pool = q.filter(x => x !== lastQuip); lastQuip = pool[Math.floor(Math.random() * pool.length)] || q[0]; return lastQuip;
   }
+  const RX_ANIM = {
+    perfect: [{ transform: 'none' }, { transform: 'translateY(-12px) scale(1.06)', offset: 0.3 }, { transform: 'none' }],
+    great: [{ transform: 'none' }, { transform: 'translateY(4px)', offset: 0.4 }, { transform: 'none' }],
+    good: [{ transform: 'none' }, { transform: 'rotate(-6deg)', offset: 0.4 }, { transform: 'none' }],
+    miss: [{ transform: 'none' }, { transform: 'translateX(-6px)', offset: 0.2 }, { transform: 'translateX(6px)', offset: 0.4 }, { transform: 'translateX(-4px)', offset: 0.6 }, { transform: 'none' }],
+    fever: [{ transform: 'none' }, { transform: 'scale(1.12) rotate(4deg)', offset: 0.5 }, { transform: 'none' }],
+  };
   function reactTo(j) {
     const kind = j === 'fever' ? 'fever' : REACT[j]; if (!kind || !rxId) return;
     const el = $('reactor'), now = performance.now();
-    el.classList.remove('r-perfect', 'r-great', 'r-good', 'r-miss', 'r-fever'); void el.offsetWidth; el.classList.add('r-' + kind);
+    // la animación del retrato va por Web Animations (solo transform: no obliga a recalcular la página en cada toque)
+    if (el.dataset.k !== kind) { el.classList.remove('r-perfect', 'r-great', 'r-good', 'r-miss', 'r-fever'); el.classList.add('r-' + kind); el.dataset.k = kind; }
+    if (!S.lowGfx && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { const f = el.querySelector('.rx-face'); f.getAnimations().forEach(a => a.cancel()); f.animate(RX_ANIM[kind], { duration: kind === 'fever' ? 500 : 380, easing: 'ease-out' }); }
     // la frase cambia como mucho una vez por segundo, salvo fallo o fiebre, que siempre se dicen
     if ((kind !== rxKind && (now - rxSayAt > 1000 || kind === 'miss' || kind === 'fever')) || now - rxSayAt > 1800) {   // con racha del mismo juicio, cambia de frase cada ~2 s
       rxSayAt = now; rxKind = kind; el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, quipFor(rxId, kind)));

@@ -539,6 +539,7 @@
   let lastUI = 0;
   function renderUI(force) {
     const now = performance.now(); if (!force && now - lastUI < 250) return; lastUI = now;
+    if (view === 'play' && !force) return;   // la barra de arriba está oculta durante la partida
     const g = GX[S.galaxy], rate = ecoRate(g.id);
     $('curName').innerHTML = cur(g.unit);
     $('pts').textContent = fmt(S[g.cur]);
@@ -678,8 +679,9 @@
   }
   function settingsOpen(on) {
     $('setCard').hidden = $('setBack').hidden = !on;
-    if (on) { renderSettings(); $('setClose').focus(); }
+    if (on) { renderSettings(); $('lowGfx').checked = !!S.lowGfx; $('setClose').focus(); }
   }
+  $('lowGfx').addEventListener('change', e => { S.lowGfx = e.target.checked; if (!S.lowGfx) gfxScale = 2; save(); resize(); if (view === 'play' && run) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)(); });
   $('volList').addEventListener('input', e => {
     const r = e.target.closest('input[data-vol]'); if (!r) return;
     const k = r.dataset.vol, v = r.value / 100; setVol(k, v); r.nextElementSibling.textContent = r.value + '%';
@@ -703,8 +705,14 @@
 
   // ---------- Loop ----------
   let lastFrame = performance.now(), lastSave = 0;
+  let frameEma = 16, gfxDrop = 0;
   function frame(now) {
     const dt = Math.min(1, (now - lastFrame) / 1000); lastFrame = now;
+    // si el celular no llega a ~45 cuadros por segundo durante la partida, baja la resolución del lienzo un paso
+    if (view === 'play' && run && !run.paused && !run.over) {
+      frameEma = frameEma * 0.95 + dt * 1000 * 0.05;
+      if (frameEma > 22 && gfxScale > 1 && now - gfxDrop > 2500 && Math.min(window.devicePixelRatio || 1, gfxMax()) > 1) { gfxScale = Math.max(1, Math.min(gfxScale, gfxMax()) - 0.5); gfxDrop = now; resize(); }
+    } else frameEma = 16;
     creditEcos(dt);
     if (view === 'play' && run && !run.over && !run.paused) (run.mode === 'stack' ? updateStack : update)(gameT());
     if (view === 'play' && run && !run.paused) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)();
