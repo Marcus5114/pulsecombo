@@ -18,6 +18,7 @@
     if (v === 'tree') { buildTree(); updateTree(); renderRespec(false); requestAnimationFrame(drawLines); }
     if (v !== 'play') hidePause();
     if (v !== 'menu') sideCard(null);
+    if (v !== 'play' && lowGfxNote) { lowGfxNote = false; $('noticeText').textContent = 'El juego iba lento en este dispositivo, así que se activó el Modo rendimiento (menos resolución, efectos y capas de sonido). Podés apagarlo en Ajustes.'; $('notice').hidden = false; }
     ambientUpdate();
     const g = GX[S.galaxy];
     $('keysHint').innerHTML = g.mode === 'stack'
@@ -705,13 +706,16 @@
 
   // ---------- Loop ----------
   let lastFrame = performance.now(), lastSave = 0;
-  let frameEma = 16, gfxDrop = 0;
+  let frameEma = 16, gfxDrop = 0, lowGfxNote = false;
   function frame(now) {
     const dt = Math.min(1, (now - lastFrame) / 1000); lastFrame = now;
     // si el celular no llega a ~45 cuadros por segundo durante la partida, baja la resolución del lienzo un paso
     if (view === 'play' && run && !run.paused && !run.over) {
       frameEma = frameEma * 0.95 + dt * 1000 * 0.05;
       if (frameEma > 22 && gfxScale > 1 && now - gfxDrop > 2500 && Math.min(window.devicePixelRatio || 1, gfxMax()) > 1) { gfxScale = Math.max(1, Math.min(gfxScale, gfxMax()) - 0.5); gfxDrop = now; resize(); }
+      else if (frameEma > 25 && !S.lowGfx && !S.lowGfxAsked && now - gfxDrop > 4000 && run.ch && gameT() > LEAD + 6) {
+        S.lowGfx = true; S.lowGfxAsked = true; lowGfxNote = true; save(); resize();   // el aviso se muestra al salir de la partida
+      }
     } else frameEma = 16;
     creditEcos(dt);
     if (view === 'play' && run && !run.over && !run.paused) (run.mode === 'stack' ? updateStack : update)(gameT());

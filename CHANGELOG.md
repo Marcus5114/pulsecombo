@@ -18,9 +18,11 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - Las reacciones del representante ya no obligan al navegador a recalcular la página en cada toque: el retrato se anima con una transformación liviana y se quitaron los filtros de gris y de brillo, que son caros en el celular.
   - Se dejaron de rehacer cosas en cada cuadro: el brillo de los carriles y la medida de los textos ahora se calculan una sola vez.
   - La barra de arriba, que está oculta durante la partida, ya no se actualiza.
+  - Si aun a resolución 1x el juego sigue lento, se activa solo el Modo rendimiento y se avisa al salir de la canción, una sola vez.
+- El botón de pausa en el celular se veía como un cuadrado vacío en Android: el carácter ❚❚ no existe en algunas fuentes. Ahora el ícono se dibuja con dos barras.
 
 ### Agregado
-- **Modo rendimiento** en Ajustes (sección Gráficos), para celulares o computadoras lentas. Dibuja la pista a resolución 1x y apaga las estrellas de fondo y las animaciones de los personajes.
+- **Modo rendimiento** en Ajustes (sección Gráficos), para celulares o computadoras lentas. Dibuja la pista a resolución 1x, apaga las estrellas de fondo y las animaciones de los personajes, y la música usa un solo oscilador por nota y sin eco. Así se crean muchos menos nodos de audio, que en el celular provocan pausas periódicas.
 
 ## v0.5.1
 

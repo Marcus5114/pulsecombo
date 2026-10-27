@@ -237,7 +237,7 @@
     g.gain.setValueAtTime(sus, Math.max(end, at + T.att + 0.006));
     g.gain.exponentialRampToValueAtTime(0.0001, end + T.rel);
     f.connect(g).connect(out);
-    const e = echo || T.echo;
+    const e = S.lowGfx ? 0 : echo || T.echo;
     if (e) { const s = ac.createGain(); s.gain.value = e; g.connect(s).connect(mDelay); }
     const hz = mtof(midi);
     const osc = (type, fr, cents, v) => {
@@ -249,8 +249,9 @@
       }
       o.start(at); o.stop(end + T.rel + 0.05);
     };
-    if (T.det) { osc(T.type, hz, -T.det, 0.7); osc(T.type, hz, T.det, 0.7); } else osc(T.type, hz, 0, 1);
-    if (T.oct) osc('sine', hz * 2, 0, T.oct);
+    // Modo rendimiento: un solo oscilador por nota (menos nodos de audio que crear y descartar, menos pausas del recolector)
+    if (T.det && !S.lowGfx) { osc(T.type, hz, -T.det, 0.7); osc(T.type, hz, T.det, 0.7); } else osc(T.type, hz, 0, 1);
+    if (T.oct && !S.lowGfx) osc('sine', hz * 2, 0, T.oct);
   }
 
   // Melodía de una sección de 8 compases: un motivo de 2 compases que vuelve, una respuesta, una variación y un cierre en la tónica

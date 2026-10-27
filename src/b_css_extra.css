@@ -308,7 +308,8 @@ button.chip.mod:hover { border-color: var(--fg); }
   .rx-say { font-size: 0.8rem; padding: 6px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   body:not(.land) #quitBtn { width: 14%; min-width: 44px; min-height: 44px; margin-left: auto; padding: 0; display: grid; place-items: center; }
   body:not(.land) #quitBtn .q-tx, body:not(.land) #quitBtn .kbd-hint { display: none; }
-  body:not(.land) #quitBtn .q-ic { display: inline; font-size: 0.9rem; letter-spacing: -0.1em; }
+  body:not(.land) #quitBtn .q-ic { display: inline-flex; gap: 4px; }
+  body:not(.land) #quitBtn .q-ic i { display: block; width: 4px; height: 14px; border-radius: 1px; background: currentColor; }
 }
 /* celular acostado: arriba del grupo de botones de la izquierda */
 body.land .reactor { right: auto; bottom: auto; left: 4px; top: 2px; }
