@@ -220,34 +220,47 @@
   // Distorsión: curva de recorte suave (tanh) cacheada por ganancia
   const DIST = {};
   const distCurve = k => DIST[k] || (DIST[k] = Float32Array.from({ length: 1024 }, (_, i) => { const x = i / 511.5 - 1; return Math.tanh(k * x) / Math.tanh(k); }));
+  // Amplificador compartido por timbre distorsionado: recorte (tanh) → parlante (realce de medios) → filtro → bus de música
+  let AMPS = { ctx: null };
+  function ampFor(T) {
+    if (AMPS.ctx !== ac) AMPS = { ctx: ac };
+    const ak = T.dist + '|' + T.cut + '|' + T.vol; if (AMPS[ak]) return AMPS[ak];
+    const inp = ac.createGain(), sh = ac.createWaveShaper(), f = ac.createBiquadFilter();
+    sh.curve = distCurve(T.dist); sh.oversample = S.lowGfx ? 'none' : '2x';
+    f.type = 'lowpass'; f.frequency.value = T.cut; f.Q.value = T.q || 0.7;
+    let tail = sh;
+    if (T.cab) { const pk = ac.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 1400; pk.Q.value = 0.9; pk.gain.value = 5; sh.connect(pk); tail = pk; }
+    // la envolvente de cada nota llega con el volumen del timbre: se lleva a nivel pleno antes de recortar y se devuelve después
+    inp.gain.value = 1 / T.vol; const post = ac.createGain(); post.gain.value = T.vol;
+    inp.connect(sh); tail.connect(f).connect(post).connect(musicBus());
+    return AMPS[ak] = inp;
+  }
   function voice(at, midi, dur, T, echo) {
     const out = musicBus(); if (!out) return;
-    const f = ac.createBiquadFilter(), g = ac.createGain();
-    f.type = 'lowpass'; f.frequency.value = T.cut; f.Q.value = T.q || 0.7;
-    let inp = f;   // donde entran los osciladores
-    if (T.dist) {   // osciladores → recorte → (parlante: realce de medios y corte de agudos) → filtro
-      const sh = ac.createWaveShaper(); sh.curve = distCurve(T.dist); sh.oversample = '2x';
-      if (T.cab) { const pk = ac.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 1400; pk.Q.value = 0.9; pk.gain.value = 5; sh.connect(pk).connect(f); }
-      else sh.connect(f);
-      inp = sh;
-    }
+    const g = ac.createGain();
+    // timbres limpios: un filtro por nota; distorsionados: la nota entra al amplificador compartido
+    let inp;
+    if (T.dist) { inp = g; g.connect(ampFor(T)); }
+    else { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = T.cut; f.Q.value = T.q || 0.7; f.connect(g).connect(out); inp = f; }
     const end = at + Math.max(dur, T.att + 0.02), dEnd = Math.min(end, at + T.att + T.dec), sus = Math.max(0.0002, T.vol * T.sus);
     g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(T.vol, at + T.att);
     g.gain.exponentialRampToValueAtTime(sus, Math.max(dEnd, at + T.att + 0.005));
     g.gain.setValueAtTime(sus, Math.max(end, at + T.att + 0.006));
     g.gain.exponentialRampToValueAtTime(0.0001, end + T.rel);
-    f.connect(g).connect(out);
     const e = S.lowGfx ? 0 : echo || T.echo;
     if (e) { const s = ac.createGain(); s.gain.value = e; g.connect(s).connect(mDelay); }
-    const hz = mtof(midi);
+    const hz = mtof(midi), stopAt = end + T.rel + 0.05;
+    let pair = null;   // las dos voces desafinadas comparten una ganancia de 0,7
     const osc = (type, fr, cents, v) => {
       const o = ac.createOscillator(); o.type = type; o.frequency.value = fr; o.detune.value = cents;
-      if (v === 1) o.connect(inp); else { const gg = ac.createGain(); gg.gain.value = v; o.connect(gg).connect(inp); }
-      if (T.vib && dur > 0.25) {   // vibrato de guitarra en notas largas
+      if (v === 1) o.connect(inp);
+      else if (v === 0.7) { if (!pair) { pair = ac.createGain(); pair.gain.value = 0.7; pair.connect(inp); } o.connect(pair); }
+      else { const gg = ac.createGain(); gg.gain.value = v; o.connect(gg).connect(inp); }
+      if (T.vib && dur > 0.25 && !S.lowGfx) {   // vibrato de guitarra en notas largas
         const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = T.vib; lg.gain.value = 0; lg.gain.setValueAtTime(0, at + 0.15); lg.gain.linearRampToValueAtTime(18, at + Math.min(dur, 0.6));
-        lfo.connect(lg).connect(o.detune); lfo.start(at); lfo.stop(end + T.rel + 0.05);
+        lfo.connect(lg).connect(o.detune); lfo.start(at); lfo.stop(stopAt);
       }
-      o.start(at); o.stop(end + T.rel + 0.05);
+      o.start(at); o.stop(stopAt);
     };
     // Modo rendimiento: un solo oscilador por nota (menos nodos de audio que crear y descartar, menos pausas del recolector)
     if (T.det && !S.lowGfx) { osc(T.type, hz, -T.det, 0.7); osc(T.type, hz, T.det, 0.7); } else osc(T.type, hz, 0, 1);

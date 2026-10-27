@@ -34,10 +34,10 @@
     const rY = H * 0.16, size = Math.min(lw * 0.72, 64), speed = (H - rY) / TRAVEL;
     const fever = t < run.feverUntil;
     ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
-    if (!S.lowGfx) for (const st of STARS) {
+    if (!S.lowGfx) { ctx.fillStyle = '#fff'; for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
-      ctx.globalAlpha = st.a; ctx.fillStyle = '#fff'; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
-    }
+      ctx.globalAlpha = st.a; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
+    } }
     ctx.globalAlpha = 1;
 
     for (let i = 0; i < nb * 4; i++) {
@@ -72,9 +72,7 @@
         [0.38, 'Acertá seguido para subir el combo'], [0.62, 'No toques sin flecha: resta precisión'], [0.86, 'Terminá la canción para abrir el mapa']];
       const msg = (MSG.filter(m => tp >= m[0]).pop() || MSG[0])[1];
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = F(700, U * 0.04); ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      const words = msg.split(' '), lines = [''];
-      for (const w of words) { const tst = (lines[lines.length - 1] + ' ' + w).trim(); if (ctx.measureText(tst).width > W * 0.86) lines.push(w); else lines[lines.length - 1] = tst; }
-      lines.forEach((ln, k) => ctx.fillText(ln, W / 2, H * 0.84 + k * U * 0.055));
+      wrapLines(msg, W * 0.86).forEach((ln, k) => ctx.fillText(ln, W / 2, H * 0.84 + k * U * 0.055));
       ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.4)';
       for (let k = 0; k < 4; k++) ctx.fillText(`${'ASWD'[k]} · ${'JKIL'[k]}`, laneX(k), rY + size * 0.8);
     }

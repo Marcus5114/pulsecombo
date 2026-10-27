@@ -19,6 +19,15 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - Se dejaron de rehacer cosas en cada cuadro: el brillo de los carriles y la medida de los textos ahora se calculan una sola vez.
   - La barra de arriba, que está oculta durante la partida, ya no se actualiza.
   - Si aun a resolución 1x el juego sigue lento, se activa solo el Modo rendimiento y se avisa al salir de la canción, una sola vez.
+- **Abrir una galaxia y condensar a veces no hacía nada.** Desde que las monedas llevan ícono, tocar justo sobre el texto "Materia Oscura" dentro del botón no lo activaba. Ahora el botón entero responde.
+- **Revisión general de rendimiento**, medida con un celular simulado de procesador 6 veces más lento:
+  - **Música de Magma:** las guitarras distorsionadas pasan por un único "amplificador" compartido en lugar de crear uno por nota. Se pasó de 19 distorsionadores y 50 filtros nuevos por segundo a ninguno y 11. El peor cuadro bajó de 83 a 50 ms y el sonido es el mismo.
+  - **Todas las canciones:** las dos voces desafinadas de cada nota comparten un solo control de volumen, así que hay menos nodos de audio por nota.
+  - **Ecos:** la tasa de ecos se recalculaba en cada cuadro recorriendo todas las canciones y récords. Ahora se recalcula como mucho una vez por segundo, o enseguida al haber un récord nuevo.
+  - **Textos de los tutoriales:** las líneas se partían midiendo cada palabra en cada cuadro. Ahora se miden una sola vez.
+  - **Estrellas de fondo:** se dibujan sin crear un color nuevo por estrella en cada cuadro.
+  - **Menús y mapas:** las animaciones que se repetían sin parar (el destello de la barra de eco en cada canción, el pulso de Púlsar y del planeta donde empezar) animaban sombras, y eso obligaba a repintar en cada cuadro. Ahora animan solo opacidad o tamaño, que la placa de video resuelve sin repintar. El trabajo de dibujo bajó 27% en la lista de canciones y 35% en el mapa.
+  - **Barra de arriba y panel de galaxias:** solo se reescriben cuando cambia algún número. Antes el panel de galaxias se rehacía entero, con retratos, cada segundo.
 - El botón de pausa en el celular se veía como un cuadrado vacío en Android: el carácter ❚❚ no existe en algunas fuentes. Ahora el ícono se dibuja con dos barras.
 
 ### Agregado

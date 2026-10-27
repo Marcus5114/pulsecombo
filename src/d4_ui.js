@@ -79,12 +79,18 @@
         <div class="gi-reclist">${cands.map(id => `<span class="gi-rec${got.includes(id) ? ' ok' : ''}" title="${AFF_TIERS[affTier(affState(id).pts)][1]}"><span class="pf">${faceSvg(id)}</span>${SPK[id][0]}</span>`).join('')}</div></div>`;
     })();
     $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}${recHtml}<p>${g.desc}</p>
-      <div class="gi-stats"><span>${g.unit}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
+      <div class="gi-stats" id="galStats"></div>`;
     $('galInfo').innerHTML = cur($('galInfo').innerHTML);
+    renderGalStats();
+  }
+  function renderGalStats() {
+    const el = $('galStats'); if (!el) return;
+    const g = GX[galSel], open = !!S.galOpen[g.id], nW = WORLDS.filter(w => w.gal === g.id && !w.tutorial).length, wOpen = open ? genreWorldsOpen(g.id) : 0;
+    setHTML(el, cur(`<span>${g.unit}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span>`));
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
   $('galInfo').addEventListener('click', e => {
-    if (e.target.id !== 'galGo') return;
+    if (!e.target.closest('#galGo')) return;   // el botón tiene adentro el nombre de la moneda con su ícono
     const g = GX[galSel];
     if (!S.galOpen[g.id]) { if (S.mo < g.cost || !galRecsOk(g.id)) return; S.mo -= g.cost; S.galOpen[g.id] = true; }
     travel(g.id);
@@ -235,7 +241,7 @@
       const sel = i === S.sel, eb = ecoBest(s), iv = ecoInterval(s), reqs = affReqsForSong(i);
       // Eco por minuto: la barra se llena cada 60 s (sincronizada con el reloj) y al completarse destella y muestra lo ganado
       const perMin = ecoPerCycle(s) / iv * 60;
-      const eco = eb > 0 ? `<span class="eco" style="--delay:-${((Date.now() / 1000) % 60).toFixed(2)}s"><i></i>Eco: +${fmtRate(perMin)} ${unit}/min<b class="eco-pop" aria-hidden="true">+${fmtRate(perMin)}</b></span>` : '';
+      const eco = eb > 0 ? `<span class="eco" style="--delay:-${((Date.now() / 1000) % 60).toFixed(2)}s"><i><u></u></i>Eco: +${fmtRate(perMin)} ${unit}/min<b class="eco-pop" aria-hidden="true">+${fmtRate(perMin)}</b></span>` : '';
       let h = `<div class="songwrap${sel ? ' sel' : ''}">
         <button class="song" data-i="${i}" aria-expanded="${sel}">
           <span class="num">${String(s.k + 1).padStart(2, '0')}</span>
@@ -506,7 +512,7 @@
     box.innerHTML = cur(box.innerHTML);
   }
   $('condBox').addEventListener('click', e => {
-    if (e.target.id !== 'condBtn' || treeId === 'global') return;
+    if (!e.target.closest('#condBtn') || treeId === 'global') return;
     const g = GX[treeId], c = condCost(treeId); if (S[g.cur] < c) return;
     S[g.cur] -= c; S.cond[treeId] = (S.cond[treeId] || 0) + 1; S.mo += 1;
     save(); renderCond(); updateTree(); renderUI(true);
@@ -538,20 +544,23 @@
   });
 
   let lastUI = 0;
+  // Escribir en el DOM solo si cambió (cada escritura obliga al navegador a recalcular y repintar)
+  const setHTML = (el, h) => { if (el._h !== h) { el._h = h; el.innerHTML = h; } };
+  const setText = (el, t) => { t = String(t); if (el._t !== t) { el._t = t; el.textContent = t; } };
   function renderUI(force) {
     const now = performance.now(); if (!force && now - lastUI < 250) return; lastUI = now;
     if (view === 'play' && !force) return;   // la barra de arriba está oculta durante la partida
     const g = GX[S.galaxy], rate = ecoRate(g.id);
-    $('curName').innerHTML = cur(g.unit);
-    $('pts').textContent = fmt(S[g.cur]);
-    $('rate').innerHTML = cur(view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos');
-    $('moLine').innerHTML = cur(`{mo}: <b>${Math.floor(S.mo)}</b>`);
-    $('tot').innerHTML = cur(`Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`);
+    setHTML($('curName'), cur(g.unit));
+    setText($('pts'), fmt(S[g.cur]));
+    setHTML($('rate'), cur(view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos'));
+    setHTML($('moLine'), cur(`{mo}: <b>${Math.floor(S.mo)}</b>`));
+    setHTML($('tot'), cur(`Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`));
     const nb = TREES[S.galaxy].nodes.filter(canBuy).length, ng = TREES.global.nodes.filter(canBuy).length;
-    $('badge').hidden = !nb; $('badge').textContent = nb;
-    $('badgeG').hidden = !ng; $('badgeG').textContent = ng;
+    if ($('badge').hidden !== !nb) $('badge').hidden = !nb; setText($('badge'), nb);
+    if ($('badgeG').hidden !== !ng) $('badgeG').hidden = !ng; setText($('badgeG'), ng);
     if (view === 'tree' && !force) { updateTree(); renderCond(); if (tipOpen) renderDetail(); }
-    if (view === 'gal' && !force && now % 1000 < 260) renderGalInfo();
+    if (view === 'gal' && !force && now % 1000 < 260) renderGalStats();   // solo los números del panel, no el panel entero
   }
 
   // ---------- Teclado ----------

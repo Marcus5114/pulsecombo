@@ -268,7 +268,7 @@
     rec.best = Math.max(rec.best, gain);
     if (!rec.grade || gradeRank(grade) > gradeRank(rec.grade)) rec.grade = grade;
     rec.clear = rec.clear || cleared; rec.fc = rec.fc || (fc && cleared);
-    S.rec[key] = rec;
+    S.rec[key] = rec; ecoDirty();
     const mult = galMult(gal), paid = gain * mult;
     S[g.cur] += paid; S.tot[gal] += paid;
     const newWorlds = [...openWorlds(gal)].filter(wi => !openBefore.has(wi));

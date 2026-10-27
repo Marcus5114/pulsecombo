@@ -398,7 +398,11 @@
     return L('g_eco_all') ? bs.reduce((a, b) => a + b, 0) : Math.max(...bs);
   };
   const ecoPerCycle = s => ecoBest(s) * ecoEff() * galMult(s.gal);
-  const ecoRate = gal => SONGS.reduce((sum, s) => s.gal === gal ? sum + ecoPerCycle(s) / ecoInterval(s) : sum, 0);
+  const ecoRateRaw = gal => SONGS.reduce((sum, s) => s.gal === gal ? sum + ecoPerCycle(s) / ecoInterval(s) : sum, 0);
+  // La tasa de ecos solo cambia con un récord o una mejora: se recalcula como mucho una vez por segundo
+  let ecoCache = { at: -1e9, v: {} };
+  const ecoRate = gal => { const now = performance.now(); if (now - ecoCache.at > 1000) ecoCache = { at: now, v: {} }; return ecoCache.v[gal] ?? (ecoCache.v[gal] = ecoRateRaw(gal)); };
+  const ecoDirty = () => { ecoCache.at = -1e9; };
   const offlineCap = () => 3600 * (2 + 2 * L('g_eco_off'));
   function creditEcos(dt) {
     const got = {};

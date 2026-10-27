@@ -77,7 +77,7 @@ main { flex: 1; min-height: 0; width: 100%; display: flex; }
 .orb[data-w="edm"] { background: radial-gradient(circle at 50% 50%, #e8e8ec 0 8%, #6a6a70 22%, #26262a 60%, #121214); animation: pulsar 1.2s ease-in-out infinite; }
 .orb[data-w="edm"]::after { content: ""; position: absolute; left: -32%; right: -32%; top: 41%; height: 18%; border: 2px solid #d4d4d8; border-radius: 50%; transform: rotate(-18deg); }
 .orb[data-w="jazz"] { background: radial-gradient(circle at 34% 28%, rgba(255,255,255,0.28), transparent 50%), repeating-linear-gradient(168deg, #606066 0 9%, #3a3a40 9% 15%, #7c7c82 15% 19%, #46464c 19% 27%); }
-@keyframes pulsar { 50% { box-shadow: inset calc(var(--sz) * -0.12) calc(var(--sz) * -0.12) calc(var(--sz) * 0.25) rgba(0,0,0,0.7), 0 0 calc(var(--sz) * 0.55) rgba(255,255,255,0.22); } }
+@keyframes pulsar { 50% { transform: scale(1.06); opacity: 0.85; } }   /* solo transformación y opacidad: no repinta */
 @media (prefers-reduced-motion: reduce) { .orb[data-w="edm"] { animation: none; } }
 .world-head { display: flex; align-items: center; gap: 14px; }
 .world-head .back { padding: 9px 12px; font-size: 0.75rem; }
@@ -90,7 +90,7 @@ main { flex: 1; min-height: 0; width: 100%; display: flex; }
 .pl.locked .orb { filter: brightness(0.35); }
 .pl.locked .pn, .pl.locked .pgn { opacity: 0.45; }
 .pl.start .orb { animation: beacon 1.6s ease-in-out infinite; }
-@keyframes beacon { 50% { box-shadow: inset calc(var(--sz) * -0.12) calc(var(--sz) * -0.12) calc(var(--sz) * 0.25) rgba(0,0,0,0.7), 0 0 0 calc(var(--sz) * 0.18) rgba(255,255,255,0.12); } }
+@keyframes beacon { 50% { transform: scale(1.08); } }
 @media (prefers-reduced-motion: reduce) { .pl.start .orb { animation: none; } }
 .map-svg line.off { stroke: #222226; }
 .diffs.one { grid-template-columns: minmax(0, 1fr); max-width: 220px; }
@@ -287,14 +287,16 @@ body.playing .notice { display: none; }
 
 /* Ecos en la lista de canciones */
 .song .eco { grid-column: 2; position: relative; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 7px; }
-.song .eco i { display: inline-block; flex: none; width: 56px; height: 4px; background: var(--line); border-radius: 2px; position: relative; animation: ecoglow 60s linear infinite; animation-delay: var(--delay, 0s); }
+.song .eco i { display: inline-block; flex: none; width: 56px; height: 4px; background: var(--line); border-radius: 2px; position: relative; }
+/* destello al completar el minuto: una capa con sombra fija que solo cambia de opacidad (no obliga a repintar en cada cuadro) */
+.song .eco i u { position: absolute; inset: 0; border-radius: 2px; box-shadow: 0 0 0 2px var(--acc), 0 0 14px var(--acc); opacity: 0; animation: ecoglow 60s linear infinite; animation-delay: var(--delay, 0s); }
 .song .eco i::after { content: ""; position: absolute; inset: 0; border-radius: 2px; background: var(--acc); transform-origin: left; animation: ecofill 60s linear infinite; animation-delay: var(--delay, 0s); }
 .song .eco .eco-pop { position: relative; font-size: 0.72rem; font-weight: 900; color: var(--acc); pointer-events: none; opacity: 0; text-shadow: 0 0 8px var(--acc); animation: ecopop 60s ease-out infinite; animation-delay: var(--delay, 0s); }
 @keyframes ecofill { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
 /* al completarse el minuto: la barra destella con el color de la galaxia y sube el "+X" */
-@keyframes ecoglow { 0% { box-shadow: 0 0 0 2px var(--acc), 0 0 14px var(--acc); } 5% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; } 100% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; } }
+@keyframes ecoglow { 0% { opacity: 1; } 5% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes ecopop { 0% { opacity: 1; transform: translateY(2px) scale(1.15); } 6% { opacity: 0; transform: translateY(-12px) scale(1); } 100% { opacity: 0; transform: translateY(-12px); } }
-@media (prefers-reduced-motion: reduce) { .song .eco i, .song .eco i::after, .song .eco .eco-pop { animation: none; } .song .eco i::after { transform: scaleX(0.5); } }
+@media (prefers-reduced-motion: reduce) { .song .eco i u, .song .eco i::after, .song .eco .eco-pop { animation: none; } .song .eco i::after { transform: scaleX(0.5); } }
 
 /* Pads de Ensamble */
 .pg-pads.acts { grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); }
@@ -1320,7 +1322,11 @@ body.land .rx-txt { display: none; }
     return L('g_eco_all') ? bs.reduce((a, b) => a + b, 0) : Math.max(...bs);
   };
   const ecoPerCycle = s => ecoBest(s) * ecoEff() * galMult(s.gal);
-  const ecoRate = gal => SONGS.reduce((sum, s) => s.gal === gal ? sum + ecoPerCycle(s) / ecoInterval(s) : sum, 0);
+  const ecoRateRaw = gal => SONGS.reduce((sum, s) => s.gal === gal ? sum + ecoPerCycle(s) / ecoInterval(s) : sum, 0);
+  // La tasa de ecos solo cambia con un récord o una mejora: se recalcula como mucho una vez por segundo
+  let ecoCache = { at: -1e9, v: {} };
+  const ecoRate = gal => { const now = performance.now(); if (now - ecoCache.at > 1000) ecoCache = { at: now, v: {} }; return ecoCache.v[gal] ?? (ecoCache.v[gal] = ecoRateRaw(gal)); };
+  const ecoDirty = () => { ecoCache.at = -1e9; };
   const offlineCap = () => 3600 * (2 + 2 * L('g_eco_off'));
   function creditEcos(dt) {
     const got = {};
@@ -1754,34 +1760,47 @@ body.land .rx-txt { display: none; }
   // Distorsión: curva de recorte suave (tanh) cacheada por ganancia
   const DIST = {};
   const distCurve = k => DIST[k] || (DIST[k] = Float32Array.from({ length: 1024 }, (_, i) => { const x = i / 511.5 - 1; return Math.tanh(k * x) / Math.tanh(k); }));
+  // Amplificador compartido por timbre distorsionado: recorte (tanh) → parlante (realce de medios) → filtro → bus de música
+  let AMPS = { ctx: null };
+  function ampFor(T) {
+    if (AMPS.ctx !== ac) AMPS = { ctx: ac };
+    const ak = T.dist + '|' + T.cut + '|' + T.vol; if (AMPS[ak]) return AMPS[ak];
+    const inp = ac.createGain(), sh = ac.createWaveShaper(), f = ac.createBiquadFilter();
+    sh.curve = distCurve(T.dist); sh.oversample = S.lowGfx ? 'none' : '2x';
+    f.type = 'lowpass'; f.frequency.value = T.cut; f.Q.value = T.q || 0.7;
+    let tail = sh;
+    if (T.cab) { const pk = ac.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 1400; pk.Q.value = 0.9; pk.gain.value = 5; sh.connect(pk); tail = pk; }
+    // la envolvente de cada nota llega con el volumen del timbre: se lleva a nivel pleno antes de recortar y se devuelve después
+    inp.gain.value = 1 / T.vol; const post = ac.createGain(); post.gain.value = T.vol;
+    inp.connect(sh); tail.connect(f).connect(post).connect(musicBus());
+    return AMPS[ak] = inp;
+  }
   function voice(at, midi, dur, T, echo) {
     const out = musicBus(); if (!out) return;
-    const f = ac.createBiquadFilter(), g = ac.createGain();
-    f.type = 'lowpass'; f.frequency.value = T.cut; f.Q.value = T.q || 0.7;
-    let inp = f;   // donde entran los osciladores
-    if (T.dist) {   // osciladores → recorte → (parlante: realce de medios y corte de agudos) → filtro
-      const sh = ac.createWaveShaper(); sh.curve = distCurve(T.dist); sh.oversample = '2x';
-      if (T.cab) { const pk = ac.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 1400; pk.Q.value = 0.9; pk.gain.value = 5; sh.connect(pk).connect(f); }
-      else sh.connect(f);
-      inp = sh;
-    }
+    const g = ac.createGain();
+    // timbres limpios: un filtro por nota; distorsionados: la nota entra al amplificador compartido
+    let inp;
+    if (T.dist) { inp = g; g.connect(ampFor(T)); }
+    else { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = T.cut; f.Q.value = T.q || 0.7; f.connect(g).connect(out); inp = f; }
     const end = at + Math.max(dur, T.att + 0.02), dEnd = Math.min(end, at + T.att + T.dec), sus = Math.max(0.0002, T.vol * T.sus);
     g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(T.vol, at + T.att);
     g.gain.exponentialRampToValueAtTime(sus, Math.max(dEnd, at + T.att + 0.005));
     g.gain.setValueAtTime(sus, Math.max(end, at + T.att + 0.006));
     g.gain.exponentialRampToValueAtTime(0.0001, end + T.rel);
-    f.connect(g).connect(out);
     const e = S.lowGfx ? 0 : echo || T.echo;
     if (e) { const s = ac.createGain(); s.gain.value = e; g.connect(s).connect(mDelay); }
-    const hz = mtof(midi);
+    const hz = mtof(midi), stopAt = end + T.rel + 0.05;
+    let pair = null;   // las dos voces desafinadas comparten una ganancia de 0,7
     const osc = (type, fr, cents, v) => {
       const o = ac.createOscillator(); o.type = type; o.frequency.value = fr; o.detune.value = cents;
-      if (v === 1) o.connect(inp); else { const gg = ac.createGain(); gg.gain.value = v; o.connect(gg).connect(inp); }
-      if (T.vib && dur > 0.25) {   // vibrato de guitarra en notas largas
+      if (v === 1) o.connect(inp);
+      else if (v === 0.7) { if (!pair) { pair = ac.createGain(); pair.gain.value = 0.7; pair.connect(inp); } o.connect(pair); }
+      else { const gg = ac.createGain(); gg.gain.value = v; o.connect(gg).connect(inp); }
+      if (T.vib && dur > 0.25 && !S.lowGfx) {   // vibrato de guitarra en notas largas
         const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = T.vib; lg.gain.value = 0; lg.gain.setValueAtTime(0, at + 0.15); lg.gain.linearRampToValueAtTime(18, at + Math.min(dur, 0.6));
-        lfo.connect(lg).connect(o.detune); lfo.start(at); lfo.stop(end + T.rel + 0.05);
+        lfo.connect(lg).connect(o.detune); lfo.start(at); lfo.stop(stopAt);
       }
-      o.start(at); o.stop(end + T.rel + 0.05);
+      o.start(at); o.stop(stopAt);
     };
     // Modo rendimiento: un solo oscilador por nota (menos nodos de audio que crear y descartar, menos pausas del recolector)
     if (T.det && !S.lowGfx) { osc(T.type, hz, -T.det, 0.7); osc(T.type, hz, T.det, 0.7); } else osc(T.type, hz, 0, 1);
@@ -2539,7 +2558,7 @@ body.land .rx-txt { display: none; }
     rec.best = Math.max(rec.best, gain);
     if (!rec.grade || gradeRank(grade) > gradeRank(rec.grade)) rec.grade = grade;
     rec.clear = rec.clear || cleared; rec.fc = rec.fc || (fc && cleared);
-    S.rec[key] = rec;
+    S.rec[key] = rec; ecoDirty();
     const mult = galMult(gal), paid = gain * mult;
     S[g.cur] += paid; S.tot[gal] += paid;
     const newWorlds = [...openWorlds(gal)].filter(wi => !openBefore.has(wi));
@@ -2839,10 +2858,10 @@ body.land .rx-txt { display: none; }
     const rY = H * 0.16, size = Math.min(lw * 0.72, 64), speed = (H - rY) / TRAVEL;
     const fever = t < run.feverUntil;
     ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
-    if (!S.lowGfx) for (const st of STARS) {
+    if (!S.lowGfx) { ctx.fillStyle = '#fff'; for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
-      ctx.globalAlpha = st.a; ctx.fillStyle = '#fff'; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
-    }
+      ctx.globalAlpha = st.a; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
+    } }
     ctx.globalAlpha = 1;
 
     for (let i = 0; i < nb * 4; i++) {
@@ -2877,9 +2896,7 @@ body.land .rx-txt { display: none; }
         [0.38, 'Acertá seguido para subir el combo'], [0.62, 'No toques sin flecha: resta precisión'], [0.86, 'Terminá la canción para abrir el mapa']];
       const msg = (MSG.filter(m => tp >= m[0]).pop() || MSG[0])[1];
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = F(700, U * 0.04); ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      const words = msg.split(' '), lines = [''];
-      for (const w of words) { const tst = (lines[lines.length - 1] + ' ' + w).trim(); if (ctx.measureText(tst).width > W * 0.86) lines.push(w); else lines[lines.length - 1] = tst; }
-      lines.forEach((ln, k) => ctx.fillText(ln, W / 2, H * 0.84 + k * U * 0.055));
+      wrapLines(msg, W * 0.86).forEach((ln, k) => ctx.fillText(ln, W / 2, H * 0.84 + k * U * 0.055));
       ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.4)';
       for (let k = 0; k < 4; k++) ctx.fillText(`${'ASWD'[k]} · ${'JKIL'[k]}`, laneX(k), rY + size * 0.8);
     }
@@ -2973,10 +2990,10 @@ body.land .rx-txt { display: none; }
   // Fondo común: estrellas que suben despacio
   function drawSky(t) {
     ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
-    if (!S.lowGfx) for (const st of STARS) {
+    if (!S.lowGfx) { ctx.fillStyle = '#fff'; for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
-      ctx.fillStyle = `rgba(255,255,255,${st.a})`; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
-    }
+      ctx.globalAlpha = st.a; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
+    } ctx.globalAlpha = 1; }
   }
   function drawHud(U) {
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
@@ -2985,11 +3002,14 @@ body.land .rx-txt { display: none; }
     ctx.fillText(run.song.tut ? 'Práctica' : fmt(run.earned), 10, 22);
     drawRunLabel(U);
   }
-  function wrapText(msg, x, y, maxW, lh) {
-    const lines = [''];
-    for (const w of msg.split(' ')) { const tst = (lines[lines.length - 1] + ' ' + w).trim(); if (ctx.measureText(tst).width > maxW) lines.push(w); else lines[lines.length - 1] = tst; }
-    lines.forEach((ln, k) => ctx.fillText(ln, x, y + k * lh));
+  const wrapCache = new Map();   // partir un texto en líneas mide cada palabra: se hace una sola vez por texto, fuente y ancho
+  function wrapLines(msg, maxW) {
+    const key = msg + '|' + ctx.font + '|' + Math.round(maxW); let lines = wrapCache.get(key);
+    if (!lines) { lines = ['']; for (const w of msg.split(' ')) { const tst = (lines[lines.length - 1] + ' ' + w).trim(); if (ctx.measureText(tst).width > maxW) lines.push(w); else lines[lines.length - 1] = tst; }
+      if (wrapCache.size > 200) wrapCache.clear(); wrapCache.set(key, lines); }
+    return lines;
   }
+  function wrapText(msg, x, y, maxW, lh) { wrapLines(msg, maxW).forEach((ln, k) => ctx.fillText(ln, x, y + k * lh)); }
   function drawJudge(U, y) {
     const now = performance.now(), age = (now - judgeAt) / 600;
     if (!judge || age >= 1) return;
@@ -4266,12 +4286,18 @@ body.land .rx-txt { display: none; }
         <div class="gi-reclist">${cands.map(id => `<span class="gi-rec${got.includes(id) ? ' ok' : ''}" title="${AFF_TIERS[affTier(affState(id).pts)][1]}"><span class="pf">${faceSvg(id)}</span>${SPK[id][0]}</span>`).join('')}</div></div>`;
     })();
     $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}${recHtml}<p>${g.desc}</p>
-      <div class="gi-stats"><span>${g.unit}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span></div>`;
+      <div class="gi-stats" id="galStats"></div>`;
     $('galInfo').innerHTML = cur($('galInfo').innerHTML);
+    renderGalStats();
+  }
+  function renderGalStats() {
+    const el = $('galStats'); if (!el) return;
+    const g = GX[galSel], open = !!S.galOpen[g.id], nW = WORLDS.filter(w => w.gal === g.id && !w.tutorial).length, wOpen = open ? genreWorldsOpen(g.id) : 0;
+    setHTML(el, cur(`<span>${g.unit}: <b>${fmt(S[g.cur])}</b></span><span>Ecos: <b>+${fmtRate(ecoRate(g.id) * 60)}/min</b></span><span>Planetas abiertos: <b>${wOpen}/${nW}</b></span><span>Multiplicador global: <b>x${dec(galMult(g.id))}</b></span>`));
   }
   $('galaxies').addEventListener('click', e => { const b = e.target.closest('.gxbtn'); if (!b) return; galSel = b.dataset.g; renderGal(); });
   $('galInfo').addEventListener('click', e => {
-    if (e.target.id !== 'galGo') return;
+    if (!e.target.closest('#galGo')) return;   // el botón tiene adentro el nombre de la moneda con su ícono
     const g = GX[galSel];
     if (!S.galOpen[g.id]) { if (S.mo < g.cost || !galRecsOk(g.id)) return; S.mo -= g.cost; S.galOpen[g.id] = true; }
     travel(g.id);
@@ -4422,7 +4448,7 @@ body.land .rx-txt { display: none; }
       const sel = i === S.sel, eb = ecoBest(s), iv = ecoInterval(s), reqs = affReqsForSong(i);
       // Eco por minuto: la barra se llena cada 60 s (sincronizada con el reloj) y al completarse destella y muestra lo ganado
       const perMin = ecoPerCycle(s) / iv * 60;
-      const eco = eb > 0 ? `<span class="eco" style="--delay:-${((Date.now() / 1000) % 60).toFixed(2)}s"><i></i>Eco: +${fmtRate(perMin)} ${unit}/min<b class="eco-pop" aria-hidden="true">+${fmtRate(perMin)}</b></span>` : '';
+      const eco = eb > 0 ? `<span class="eco" style="--delay:-${((Date.now() / 1000) % 60).toFixed(2)}s"><i><u></u></i>Eco: +${fmtRate(perMin)} ${unit}/min<b class="eco-pop" aria-hidden="true">+${fmtRate(perMin)}</b></span>` : '';
       let h = `<div class="songwrap${sel ? ' sel' : ''}">
         <button class="song" data-i="${i}" aria-expanded="${sel}">
           <span class="num">${String(s.k + 1).padStart(2, '0')}</span>
@@ -4693,7 +4719,7 @@ body.land .rx-txt { display: none; }
     box.innerHTML = cur(box.innerHTML);
   }
   $('condBox').addEventListener('click', e => {
-    if (e.target.id !== 'condBtn' || treeId === 'global') return;
+    if (!e.target.closest('#condBtn') || treeId === 'global') return;
     const g = GX[treeId], c = condCost(treeId); if (S[g.cur] < c) return;
     S[g.cur] -= c; S.cond[treeId] = (S.cond[treeId] || 0) + 1; S.mo += 1;
     save(); renderCond(); updateTree(); renderUI(true);
@@ -4725,20 +4751,23 @@ body.land .rx-txt { display: none; }
   });
 
   let lastUI = 0;
+  // Escribir en el DOM solo si cambió (cada escritura obliga al navegador a recalcular y repintar)
+  const setHTML = (el, h) => { if (el._h !== h) { el._h = h; el.innerHTML = h; } };
+  const setText = (el, t) => { t = String(t); if (el._t !== t) { el._t = t; el.textContent = t; } };
   function renderUI(force) {
     const now = performance.now(); if (!force && now - lastUI < 250) return; lastUI = now;
     if (view === 'play' && !force) return;   // la barra de arriba está oculta durante la partida
     const g = GX[S.galaxy], rate = ecoRate(g.id);
-    $('curName').innerHTML = cur(g.unit);
-    $('pts').textContent = fmt(S[g.cur]);
-    $('rate').innerHTML = cur(view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos');
-    $('moLine').innerHTML = cur(`{mo}: <b>${Math.floor(S.mo)}</b>`);
-    $('tot').innerHTML = cur(`Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`);
+    setHTML($('curName'), cur(g.unit));
+    setText($('pts'), fmt(S[g.cur]));
+    setHTML($('rate'), cur(view === 'play' ? `${g.name} · ${g.modeName}` : rate > 0 ? `Ecos: +${fmtRate(rate * 60)} ${g.unit}/min` : 'Superá canciones para activar sus ecos'));
+    setHTML($('moLine'), cur(`{mo}: <b>${Math.floor(S.mo)}</b>`));
+    setHTML($('tot'), cur(`Total histórico en ${g.name}: ${fmt(S.tot[g.id])} ${g.unit}`));
     const nb = TREES[S.galaxy].nodes.filter(canBuy).length, ng = TREES.global.nodes.filter(canBuy).length;
-    $('badge').hidden = !nb; $('badge').textContent = nb;
-    $('badgeG').hidden = !ng; $('badgeG').textContent = ng;
+    if ($('badge').hidden !== !nb) $('badge').hidden = !nb; setText($('badge'), nb);
+    if ($('badgeG').hidden !== !ng) $('badgeG').hidden = !ng; setText($('badgeG'), ng);
     if (view === 'tree' && !force) { updateTree(); renderCond(); if (tipOpen) renderDetail(); }
-    if (view === 'gal' && !force && now % 1000 < 260) renderGalInfo();
+    if (view === 'gal' && !force && now % 1000 < 260) renderGalStats();   // solo los números del panel, no el panel entero
   }
 
   // ---------- Teclado ----------

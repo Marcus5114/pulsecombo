@@ -43,14 +43,16 @@ body.playing .notice { display: none; }
 
 /* Ecos en la lista de canciones */
 .song .eco { grid-column: 2; position: relative; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 7px; }
-.song .eco i { display: inline-block; flex: none; width: 56px; height: 4px; background: var(--line); border-radius: 2px; position: relative; animation: ecoglow 60s linear infinite; animation-delay: var(--delay, 0s); }
+.song .eco i { display: inline-block; flex: none; width: 56px; height: 4px; background: var(--line); border-radius: 2px; position: relative; }
+/* destello al completar el minuto: una capa con sombra fija que solo cambia de opacidad (no obliga a repintar en cada cuadro) */
+.song .eco i u { position: absolute; inset: 0; border-radius: 2px; box-shadow: 0 0 0 2px var(--acc), 0 0 14px var(--acc); opacity: 0; animation: ecoglow 60s linear infinite; animation-delay: var(--delay, 0s); }
 .song .eco i::after { content: ""; position: absolute; inset: 0; border-radius: 2px; background: var(--acc); transform-origin: left; animation: ecofill 60s linear infinite; animation-delay: var(--delay, 0s); }
 .song .eco .eco-pop { position: relative; font-size: 0.72rem; font-weight: 900; color: var(--acc); pointer-events: none; opacity: 0; text-shadow: 0 0 8px var(--acc); animation: ecopop 60s ease-out infinite; animation-delay: var(--delay, 0s); }
 @keyframes ecofill { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
 /* al completarse el minuto: la barra destella con el color de la galaxia y sube el "+X" */
-@keyframes ecoglow { 0% { box-shadow: 0 0 0 2px var(--acc), 0 0 14px var(--acc); } 5% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; } 100% { box-shadow: 0 0 0 0 transparent, 0 0 0 transparent; } }
+@keyframes ecoglow { 0% { opacity: 1; } 5% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes ecopop { 0% { opacity: 1; transform: translateY(2px) scale(1.15); } 6% { opacity: 0; transform: translateY(-12px) scale(1); } 100% { opacity: 0; transform: translateY(-12px); } }
-@media (prefers-reduced-motion: reduce) { .song .eco i, .song .eco i::after, .song .eco .eco-pop { animation: none; } .song .eco i::after { transform: scaleX(0.5); } }
+@media (prefers-reduced-motion: reduce) { .song .eco i u, .song .eco i::after, .song .eco .eco-pop { animation: none; } .song .eco i::after { transform: scaleX(0.5); } }
 
 /* Pads de Ensamble */
 .pg-pads.acts { grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); }

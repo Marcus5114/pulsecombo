@@ -2,10 +2,10 @@
   // Fondo común: estrellas que suben despacio
   function drawSky(t) {
     ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
-    if (!S.lowGfx) for (const st of STARS) {
+    if (!S.lowGfx) { ctx.fillStyle = '#fff'; for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
-      ctx.fillStyle = `rgba(255,255,255,${st.a})`; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
-    }
+      ctx.globalAlpha = st.a; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
+    } ctx.globalAlpha = 1; }
   }
   function drawHud(U) {
     ctx.fillStyle = '#2a2a2e'; ctx.fillRect(10, 10, W - 20, 6);
@@ -14,11 +14,14 @@
     ctx.fillText(run.song.tut ? 'Práctica' : fmt(run.earned), 10, 22);
     drawRunLabel(U);
   }
-  function wrapText(msg, x, y, maxW, lh) {
-    const lines = [''];
-    for (const w of msg.split(' ')) { const tst = (lines[lines.length - 1] + ' ' + w).trim(); if (ctx.measureText(tst).width > maxW) lines.push(w); else lines[lines.length - 1] = tst; }
-    lines.forEach((ln, k) => ctx.fillText(ln, x, y + k * lh));
+  const wrapCache = new Map();   // partir un texto en líneas mide cada palabra: se hace una sola vez por texto, fuente y ancho
+  function wrapLines(msg, maxW) {
+    const key = msg + '|' + ctx.font + '|' + Math.round(maxW); let lines = wrapCache.get(key);
+    if (!lines) { lines = ['']; for (const w of msg.split(' ')) { const tst = (lines[lines.length - 1] + ' ' + w).trim(); if (ctx.measureText(tst).width > maxW) lines.push(w); else lines[lines.length - 1] = tst; }
+      if (wrapCache.size > 200) wrapCache.clear(); wrapCache.set(key, lines); }
+    return lines;
   }
+  function wrapText(msg, x, y, maxW, lh) { wrapLines(msg, maxW).forEach((ln, k) => ctx.fillText(ln, x, y + k * lh)); }
   function drawJudge(U, y) {
     const now = performance.now(), age = (now - judgeAt) / 600;
     if (!judge || age >= 1) return;
