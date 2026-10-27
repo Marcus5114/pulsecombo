@@ -72,7 +72,7 @@
       compV: [[{ t: 'chord', p: 'x---------------', tim: 'pad' }]], compC: [[{ t: 'chord', p: 'x---x---x---x---', tim: 'ep' }]],
       lead: ['ltri', 'lbell'], cells: ['x---x---x---x---', 'x---x---x-------', 'x-x-x---x---x---', 'x---x-x-x-------'], ends: ['x---x---x-------', 'x-------x-------'],
     },
-    // Magma suena a metal (v0.4.3): progresiones menores (con bII frigio y V de menor armónica), acordes de quinta
+    // Magma suena a metal (v0.5): progresiones menores (con bII frigio y V de menor armónica), acordes de quinta
     // con mucha distorsión en galope y la melodía doblada una octava abajo
     rock: {
       progs: ['min|i bVI bVII i', 'min|i bVII bVI bVII', 'min|i bIII bVII bVI', 'min|i iv bVI V', 'min|i bII i bVII', 'min|i bVI bIII bVII'],

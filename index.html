@@ -715,7 +715,7 @@ body.land .rx-txt { display: none; }
 <body>
 <header class="top">
   <div class="brand">
-    <h1>Combo Pulso <span>v0.4.3</span></h1>
+    <h1>Combo Pulso <span>v0.5</span></h1>
     <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
@@ -1243,14 +1243,14 @@ body.land .rx-txt { display: none; }
   const worldDone = wi => WORLDS[wi].tutorial ? tutDone(WORLDS[wi].gal) : clearedIn(wi) >= GX[WORLDS[wi].gal].need;
   const WI = Object.fromEntries(WORLDS.map((w, i) => [w.id, i]));
   const LINKS = {
-    pulso: [['base', 'pop'], ['pop', 'rock'], ['pop', 'jazz'], ['rock', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']],   // v0.4.3: Prisma es el primer planeta y Magma el segundo
+    pulso: [['base', 'pop'], ['pop', 'rock'], ['pop', 'jazz'], ['rock', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']],   // v0.5: Prisma es el primer planeta y Magma el segundo
     ens: [['ens_base', 'ens_a'], ['ens_a', 'ens_b'], ['ens_a', 'ens_c'], ['ens_b', 'ens_c']],
     sen: [['sen_base', 'sen_a'], ['sen_a', 'sen_b'], ['sen_a', 'sen_c'], ['sen_b', 'sen_c']],
     com: [['com_base', 'com_a'], ['com_a', 'com_b'], ['com_a', 'com_c'], ['com_b', 'com_c']],
   };
   function openWorlds(gal) {
     const open = new Set([WORLDS.findIndex(w => w.gal === gal && w.tutorial)]);
-    // un planeta donde ya superaste canciones queda abierto aunque cambie el orden de las rutas (partidas de antes de v0.4.3)
+    // un planeta donde ya superaste canciones queda abierto aunque cambie el orden de las rutas (partidas de antes de v0.5)
     WORLDS.forEach((w, wi) => { if (w.gal === gal && !w.tutorial && clearedIn(wi)) open.add(wi); });
     let changed = true;
     while (changed) {
@@ -1266,7 +1266,7 @@ body.land .rx-txt { display: none; }
   // ---------- Materia oscura ----------
   // Hitos: primera vez que superás una dificultad (+1; los tutoriales no dan), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
   const darkMult = () => 1 + 0.25 * L('g_dark');
-  // Los hitos dan la mitad de materia oscura que antes (v0.4.3): las galaxias también piden recomendaciones
+  // Los hitos dan la mitad de materia oscura que antes (v0.5): las galaxias también piden recomendaciones
   const MO_RATE = 0.5;
   // Condensador: convierte la moneda de una galaxia en 1 de materia oscura. Cada condensación cuesta 6% más.
   const COND_GROWTH = 1.06;
@@ -1581,7 +1581,7 @@ body.land .rx-txt { display: none; }
       compV: [[{ t: 'chord', p: 'x---------------', tim: 'pad' }]], compC: [[{ t: 'chord', p: 'x---x---x---x---', tim: 'ep' }]],
       lead: ['ltri', 'lbell'], cells: ['x---x---x---x---', 'x---x---x-------', 'x-x-x---x---x---', 'x---x-x-x-------'], ends: ['x---x---x-------', 'x-------x-------'],
     },
-    // Magma suena a metal (v0.4.3): progresiones menores (con bII frigio y V de menor armónica), acordes de quinta
+    // Magma suena a metal (v0.5): progresiones menores (con bII frigio y V de menor armónica), acordes de quinta
     // con mucha distorsión en galope y la melodía doblada una octava abajo
     rock: {
       progs: ['min|i bVI bVII i', 'min|i bVII bVI bVII', 'min|i bIII bVII bVI', 'min|i iv bVI V', 'min|i bII i bVII', 'min|i bVI bIII bVII'],

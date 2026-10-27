@@ -344,14 +344,14 @@
   const worldDone = wi => WORLDS[wi].tutorial ? tutDone(WORLDS[wi].gal) : clearedIn(wi) >= GX[WORLDS[wi].gal].need;
   const WI = Object.fromEntries(WORLDS.map((w, i) => [w.id, i]));
   const LINKS = {
-    pulso: [['base', 'pop'], ['pop', 'rock'], ['pop', 'jazz'], ['rock', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']],   // v0.4.3: Prisma es el primer planeta y Magma el segundo
+    pulso: [['base', 'pop'], ['pop', 'rock'], ['pop', 'jazz'], ['rock', 'disco'], ['jazz', 'disco'], ['disco', 'edm'], ['jazz', 'edm']],   // v0.5: Prisma es el primer planeta y Magma el segundo
     ens: [['ens_base', 'ens_a'], ['ens_a', 'ens_b'], ['ens_a', 'ens_c'], ['ens_b', 'ens_c']],
     sen: [['sen_base', 'sen_a'], ['sen_a', 'sen_b'], ['sen_a', 'sen_c'], ['sen_b', 'sen_c']],
     com: [['com_base', 'com_a'], ['com_a', 'com_b'], ['com_a', 'com_c'], ['com_b', 'com_c']],
   };
   function openWorlds(gal) {
     const open = new Set([WORLDS.findIndex(w => w.gal === gal && w.tutorial)]);
-    // un planeta donde ya superaste canciones queda abierto aunque cambie el orden de las rutas (partidas de antes de v0.4.3)
+    // un planeta donde ya superaste canciones queda abierto aunque cambie el orden de las rutas (partidas de antes de v0.5)
     WORLDS.forEach((w, wi) => { if (w.gal === gal && !w.tutorial && clearedIn(wi)) open.add(wi); });
     let changed = true;
     while (changed) {
@@ -367,7 +367,7 @@
   // ---------- Materia oscura ----------
   // Hitos: primera vez que superás una dificultad (+1; los tutoriales no dan), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
   const darkMult = () => 1 + 0.25 * L('g_dark');
-  // Los hitos dan la mitad de materia oscura que antes (v0.4.3): las galaxias también piden recomendaciones
+  // Los hitos dan la mitad de materia oscura que antes (v0.5): las galaxias también piden recomendaciones
   const MO_RATE = 0.5;
   // Condensador: convierte la moneda de una galaxia en 1 de materia oscura. Cada condensación cuesta 6% más.
   const COND_GROWTH = 1.06;
