@@ -16,7 +16,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 - El código de desarrollador abría las galaxias pero no los planetas. Ahora también abre todos los planetas de todas las galaxias, todas las dificultades de cada canción y los modificadores, sin disparar los diálogos de apertura de cada planeta.
 
 ### Cambiado
-- La voz de Tesela y la de los representantes de Ensamble suenan más suaves, como bloques de madera, en lugar de un pitido cuadrado.
+- La voz de Tesela y la de los representantes de Ensamble suenan más suaves, como bloques de madera, en lugar de un pitido cuadrado, y a la mitad de volumen.
 - La reverb de las voces es mucho más corta, apenas un poco de sala. La música de fondo conserva su cola larga.
 
 ## v0.5
