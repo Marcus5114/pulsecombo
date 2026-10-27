@@ -12,7 +12,12 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.5.1
 
 ### Corregido
+- **Flechas largas en iPad y celulares.** Al mantener apretado un botón, el sistema mostraba la lupa o el menú de selección y cancelaba el toque a medio segundo, así que las flechas largas se cortaban. Ahora los botones bloquean esos gestos. Si apoyás un segundo dedo en el mismo botón y lo levantás, la nota sigue sostenida. Y despegar el dedo apenas, menos de 60 ms, ya no corta la flecha larga. Agarre suma su margen a ese.
 - El código de desarrollador abría las galaxias pero no los planetas. Ahora también abre todos los planetas de todas las galaxias, todas las dificultades de cada canción y los modificadores, sin disparar los diálogos de apertura de cada planeta.
+
+### Cambiado
+- La voz de Tesela y la de los representantes de Ensamble suenan más suaves, como bloques de madera, en lugar de un pitido cuadrado.
+- La reverb de las voces es mucho más corta, apenas un poco de sala. La música de fondo conserva su cola larga.
 
 ## v0.5
 

@@ -225,3 +225,5 @@ canvas { width: 100%; max-width: 100%; display: block; background: var(--bg); bo
 .foot { flex: none; width: 100%; max-width: 940px; margin: 8px auto 0; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 0.75rem; color: var(--muted); }
 .link { background: none; border: 0; color: var(--muted); font: 600 0.75rem var(--font); text-decoration: underline; cursor: pointer; padding: 0; }
 .confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.pad, .pads { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }

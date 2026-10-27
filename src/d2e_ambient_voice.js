@@ -9,8 +9,9 @@
     if (!ac) return null;
     if (!fxBus || fxBus.ctx !== ac) fxBus = { ctx: ac };
     if (fxBus[k]) return fxBus[k];
-    const inp = ac.createGain(), out = ac.createGain(); out.gain.value = 0.7; out.connect(bus(k));
-    for (const [t, fbv] of [[0.37, 0.62], [0.53, 0.58]]) {
+    const inp = ac.createGain(), out = ac.createGain(); out.gain.value = k === 'voice' ? 0.5 : 0.7; out.connect(bus(k));
+    // ambiente: cola larga; voces: un ambiente de sala corto, apenas un poco de espacio
+    for (const [t, fbv] of k === 'voice' ? [[0.045, 0.25], [0.07, 0.2]] : [[0.37, 0.62], [0.53, 0.58]]) {
       const d = ac.createDelay(2), fb = ac.createGain(), lp = ac.createBiquadFilter();
       d.delayTime.value = t; fb.gain.value = fbv; lp.type = 'lowpass'; lp.frequency.value = 1800;
       inp.connect(d); d.connect(lp); lp.connect(fb).connect(d); lp.connect(out);
@@ -123,13 +124,13 @@
     if (ch === '↑' || ch === '↗' || ch === '↖') parts.push(blip(at, f * 0.8, 'sine', 0.07, 0.09, f * 1.6));
     else if (ch === '↓' || ch === '↘' || ch === '↙') parts.push(blip(at, f * 1.5, 'sine', 0.07, 0.09, f * 0.75));
     else if (ch === '←' || ch === '→') parts.push(blip(at, f, 'triangle', 0.08, 0.07, f * (ch === '→' ? 1.25 : 0.8)));
-    else if (/[▀▄█▙▚▛▜▝▞▟▖▗▘]/.test(ch)) { parts.push(blip(at, f * 0.5, 'square', 0.04, 0.05)); parts.push(blip(at + 0.03, f, 'square', 0.03, 0.04)); }
+    else if (/[▀▄█▙▚▛▜▝▞▟▖▗▘]/.test(ch)) { parts.push(blip(at, f * 0.5, 'triangle', 0.06, 0.05, f * 0.45)); parts.push(blip(at + 0.035, f * 0.75, 'triangle', 0.045, 0.04)); }   // "toc-toc" de bloques, suave
     else if (ch === '∿' || ch === '〰') { const p = blip(at, f, 'sine', 0.06, 0.16, f * 1.02); const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = 22; lg.gain.value = 40; l.connect(lg).connect(p.o.frequency); l.start(at); l.stop(p.end); parts.push(p); }
     else if (ch === '◐' || ch === '◑' || ch === '◇') parts.push(blip(at, ch === '◑' ? f * 1.26 : f, 'triangle', 0.08, 0.08));
     else if (V.kind === 'digital') { parts.push(blip(at, f, 'square', 0.025, 0.045)); parts.push(blip(at, f * 2, 'sine', 0.02, 0.03)); }
     else if (V.kind === 'soft') parts.push(blip(at, f, 'triangle', 0.07, 0.07, f * 0.97));
     else if (V.kind === 'chirp') parts.push(blip(at, f * 0.9, 'sine', 0.06, 0.06, f * 1.15));
-    else if (V.kind === 'block') parts.push(blip(at, mtof(Math.round(m / 2) * 2), 'square', 0.035, 0.05));
+    else if (V.kind === 'block') parts.push(blip(at, mtof(Math.round(m / 2) * 2 - 5), 'triangle', 0.07, 0.055, mtof(Math.round(m / 2) * 2 - 7)));   // bloque de madera: grave y redondo
     else if (V.kind === 'twin') parts.push(blip(at, k % 4 < 2 ? f : f * 1.26, 'triangle', 0.07, 0.07));
     else if (V.kind === 'radio') {   // tono por una "radio": pasa-banda y un poco de estática
       const p = blip(at, f, 'square', 0.035, 0.07); parts.push(p);
@@ -138,7 +139,7 @@
       onBus('voice', () => nz(at, { type: 'bandpass', freq: 3200, q: 1.5, vol: 0.012, dur: 0.05 }));
     }
     for (const p of parts) { if (!p.routed) p.g.connect(out); p.o.start(at); p.o.stop(p.end); }
-    if (V.kind !== 'digital' && V.kind !== 'radio' && !V.dry) { const s = ac.createGain(); s.gain.value = 0.25; parts.forEach(p => p.g.connect(s)); s.connect(spaceVerb('voice')); }
+    if (V.kind !== 'digital' && V.kind !== 'radio' && !V.dry) { const s = ac.createGain(); s.gain.value = 0.15; parts.forEach(p => p.g.connect(s)); s.connect(spaceVerb('voice')); }
   }
   // Al abrir el cuadro: un chasquido de radio para los que hablan por radio, un pitido para CORA
   function voiceOpen(who, at = ac && ac.currentTime) {

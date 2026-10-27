@@ -204,7 +204,8 @@
       run.counts.miss++; if (run.mode === 'path') run.secMiss++; setJudge('miss'); breakCombo(); roundNote(n, false); hurt(missDmg());
       if (run.over) return;
     }
-    const grace = 0.1 * L('l_grip'), tickVal = basePts() * (0.3 + 0.15 * L('l_tick'));
+    // 60 ms de margen base: un dedo que se despega apenas no corta la flecha larga
+    const grace = 0.06 + 0.1 * L('l_grip'), tickVal = basePts() * (0.3 + 0.15 * L('l_tick'));
     for (const n of run.active) {
       if (!n.holding) continue;
       if (n.relAt != null && t - n.relAt > grace) {

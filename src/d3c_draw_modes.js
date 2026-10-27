@@ -355,11 +355,20 @@
           </div>`).join('');
       }
     }
+    // Pads táctiles. En iPad/iPhone, mantener apretado un botón dispara gestos del sistema (lupa, menú contextual,
+    // selección) que cancelan el toque a medio segundo y cortaban las flechas largas: se bloquean esos gestos.
+    // Cada pad cuenta sus dedos, así levantar un segundo dedo no suelta la nota que el primero sigue sosteniendo.
     pads.querySelectorAll('.pad[data-l]').forEach(p => {
-      const l = +p.dataset.l;
-      p.addEventListener('pointerdown', e => { e.preventDefault(); try { p.setPointerCapture(e.pointerId); } catch (err) {} keyDown[l] = true; p.classList.add('on'); hit(l); });
-      const up = () => { if (!keyDown[l]) return; keyDown[l] = false; p.classList.remove('on'); release(l); };
+      const l = +p.dataset.l, fingers = new Set();
+      p.addEventListener('pointerdown', e => {
+        e.preventDefault(); try { p.setPointerCapture(e.pointerId); } catch (err) {}
+        fingers.add(e.pointerId); if (fingers.size > 1) return;
+        keyDown[l] = true; p.classList.add('on'); hit(l);
+      });
+      const up = e => { fingers.delete(e.pointerId); if (fingers.size || !keyDown[l]) return; keyDown[l] = false; p.classList.remove('on'); release(l); };
       p.addEventListener('pointerup', up); p.addEventListener('pointercancel', up); p.addEventListener('lostpointercapture', up);
+      for (const ev of ['touchstart', 'touchmove', 'touchend']) p.addEventListener(ev, e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+      p.addEventListener('contextmenu', e => e.preventDefault());
     });
     pads.querySelectorAll('.pad[data-act]').forEach(p => p.addEventListener('pointerdown', e => {
       e.preventDefault(); p.classList.add('on'); setTimeout(() => p.classList.remove('on'), 120);
