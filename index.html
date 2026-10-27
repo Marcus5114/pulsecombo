@@ -715,7 +715,7 @@ body.land .rx-txt { display: none; }
 <body>
 <header class="top">
   <div class="brand">
-    <h1>Combo Pulso <span>v0.5</span></h1>
+    <h1>Combo Pulso <span>v0.5.1</span></h1>
     <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
@@ -1214,7 +1214,7 @@ body.land .rx-txt { display: none; }
   // Cada dificultad se abre al superar la anterior en esa canción. Cada planeta, cuando un vecino abierto tiene suficientes canciones superadas.
   const recOf = (s, d) => S.rec[`${s.id}-${d}`];
   const diffsOf = s => s.tut ? [0] : modeOf(s) === 'arrows' ? [0, 1, 2, 3] : [0, 1, 2];
-  const diffOpen = (s, d) => d === 0 || [0, 1, 2, 3].some(k => k >= d - 1 && recOf(s, k)?.clear);
+  const diffOpen = (s, d) => d === 0 || !!S.dev || [0, 1, 2, 3].some(k => k >= d - 1 && recOf(s, k)?.clear);
   // Modificadores de dificultad: se abren con el nodo global y, cada uno, al superar Difícil en un planeta de su galaxia.
   // pct: porcentaje de estrellas que suman (o restan) a la canción. No se aplican en los tutoriales.
   const MODS = {
@@ -1233,7 +1233,7 @@ body.land .rx-txt { display: none; }
     burst:   { gal: 'sen', label: 'Ráfagas', pct: 0.2, desc: 'Un tiempo de cada patrón trae dos o tres notas seguidas en semicorcheas.' },
     delay:   { gal: 'sen', label: 'Memoria diferida', pct: 0.4, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
   };
-  const galHardClear = gal => SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
+  const galHardClear = gal => !!S.dev || SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
   const modOpen = id => !!L('g_mods') && galHardClear(MODS[id].gal);
   const activeMods = s => s.tut ? [] : Object.keys(MODS).filter(id => MODS[id].gal === s.gal && S.mods[id] && modOpen(id));
   const modPct = id => MODS[id].pct > 0 ? MODS[id].pct * (1 + 0.25 * L('g_mod_amp')) : MODS[id].pct;
@@ -1249,6 +1249,7 @@ body.land .rx-txt { display: none; }
     com: [['com_base', 'com_a'], ['com_a', 'com_b'], ['com_a', 'com_c'], ['com_b', 'com_c']],
   };
   function openWorlds(gal) {
+    if (S.dev) return new Set(WORLDS.map((w, wi) => w.gal === gal ? wi : -1).filter(wi => wi >= 0));   // código de desarrollador: todo abierto
     const open = new Set([WORLDS.findIndex(w => w.gal === gal && w.tutorial)]);
     // un planeta donde ya superaste canciones queda abierto aunque cambie el orden de las rutas (partidas de antes de v0.5)
     WORLDS.forEach((w, wi) => { if (w.gal === gal && !w.tutorial && clearedIn(wi)) open.add(wi); });
@@ -4755,13 +4756,15 @@ body.land .rx-txt { display: none; }
   const devHash = str => { let h = 0x811c9dc5; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };
   function devUnlock() {
     for (const g of GALAXIES) S.galOpen[g.id] = true;
+    S.dev = true;   // también abre todos los planetas, todas las dificultades y los modificadores
+    S.story = S.story || {}; for (const w of WORLDS) S.story['open_' + w.id] = true;   // sin la catarata de diálogos de apertura
     for (const [tid, T] of Object.entries(TREES)) {
       let need = 0;
       for (const n of T.nodes) if (n.cost && n.max) for (let k = L(n.id); k < n.max; k++) need += nodeCost(n, k);
       S[T.wallet] += Math.ceil(need * 1.1) + (tid === 'global' ? 10 : 1000);
     }
     save(); renderUI(true); setView(view === 'play' ? 'map' : view);
-    $('noticeText').textContent = 'Código de desarrollador: todas las galaxias abiertas y moneda para comprar todas las mejoras.'; $('notice').hidden = false;
+    $('noticeText').textContent = 'Código de desarrollador: todas las galaxias, planetas y dificultades abiertos, y moneda para comprar todas las mejoras.'; $('notice').hidden = false;
   }
   const devBox = $('devBox');
   devBox.addEventListener('click', e => {

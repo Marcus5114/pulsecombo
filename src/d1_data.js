@@ -315,7 +315,7 @@
   // Cada dificultad se abre al superar la anterior en esa canción. Cada planeta, cuando un vecino abierto tiene suficientes canciones superadas.
   const recOf = (s, d) => S.rec[`${s.id}-${d}`];
   const diffsOf = s => s.tut ? [0] : modeOf(s) === 'arrows' ? [0, 1, 2, 3] : [0, 1, 2];
-  const diffOpen = (s, d) => d === 0 || [0, 1, 2, 3].some(k => k >= d - 1 && recOf(s, k)?.clear);
+  const diffOpen = (s, d) => d === 0 || !!S.dev || [0, 1, 2, 3].some(k => k >= d - 1 && recOf(s, k)?.clear);
   // Modificadores de dificultad: se abren con el nodo global y, cada uno, al superar Difícil en un planeta de su galaxia.
   // pct: porcentaje de estrellas que suman (o restan) a la canción. No se aplican en los tutoriales.
   const MODS = {
@@ -334,7 +334,7 @@
     burst:   { gal: 'sen', label: 'Ráfagas', pct: 0.2, desc: 'Un tiempo de cada patrón trae dos o tres notas seguidas en semicorcheas.' },
     delay:   { gal: 'sen', label: 'Memoria diferida', pct: 0.4, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
   };
-  const galHardClear = gal => SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
+  const galHardClear = gal => !!S.dev || SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
   const modOpen = id => !!L('g_mods') && galHardClear(MODS[id].gal);
   const activeMods = s => s.tut ? [] : Object.keys(MODS).filter(id => MODS[id].gal === s.gal && S.mods[id] && modOpen(id));
   const modPct = id => MODS[id].pct > 0 ? MODS[id].pct * (1 + 0.25 * L('g_mod_amp')) : MODS[id].pct;
@@ -350,6 +350,7 @@
     com: [['com_base', 'com_a'], ['com_a', 'com_b'], ['com_a', 'com_c'], ['com_b', 'com_c']],
   };
   function openWorlds(gal) {
+    if (S.dev) return new Set(WORLDS.map((w, wi) => w.gal === gal ? wi : -1).filter(wi => wi >= 0));   // código de desarrollador: todo abierto
     const open = new Set([WORLDS.findIndex(w => w.gal === gal && w.tutorial)]);
     // un planeta donde ya superaste canciones queda abierto aunque cambie el orden de las rutas (partidas de antes de v0.5)
     WORLDS.forEach((w, wi) => { if (w.gal === gal && !w.tutorial && clearedIn(wi)) open.add(wi); });

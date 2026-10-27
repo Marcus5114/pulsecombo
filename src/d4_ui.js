@@ -627,13 +627,15 @@
   const devHash = str => { let h = 0x811c9dc5; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };
   function devUnlock() {
     for (const g of GALAXIES) S.galOpen[g.id] = true;
+    S.dev = true;   // también abre todos los planetas, todas las dificultades y los modificadores
+    S.story = S.story || {}; for (const w of WORLDS) S.story['open_' + w.id] = true;   // sin la catarata de diálogos de apertura
     for (const [tid, T] of Object.entries(TREES)) {
       let need = 0;
       for (const n of T.nodes) if (n.cost && n.max) for (let k = L(n.id); k < n.max; k++) need += nodeCost(n, k);
       S[T.wallet] += Math.ceil(need * 1.1) + (tid === 'global' ? 10 : 1000);
     }
     save(); renderUI(true); setView(view === 'play' ? 'map' : view);
-    $('noticeText').textContent = 'Código de desarrollador: todas las galaxias abiertas y moneda para comprar todas las mejoras.'; $('notice').hidden = false;
+    $('noticeText').textContent = 'Código de desarrollador: todas las galaxias, planetas y dificultades abiertos, y moneda para comprar todas las mejoras.'; $('notice').hidden = false;
   }
   const devBox = $('devBox');
   devBox.addEventListener('click', e => {

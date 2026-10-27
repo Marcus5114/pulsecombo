@@ -9,6 +9,11 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
+## Sin publicar — próxima versión: v0.5.1
+
+### Corregido
+- El código de desarrollador abría las galaxias pero no los planetas. Ahora también abre todos los planetas de todas las galaxias, todas las dificultades de cada canción y los modificadores, sin disparar los diálogos de apertura de cada planeta.
+
 ## v0.5
 
 ### Corregido
