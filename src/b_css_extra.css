@@ -301,13 +301,17 @@ button.chip.mod:hover { border-color: var(--fg); }
 @keyframes rxtilt { 40% { transform: rotate(-6deg); } }
 @keyframes rxshake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
 @keyframes rxfever { 50% { transform: scale(1.12) rotate(4deg); } }
-/* Pantallas angostas: retrato chico sobre la pista, sin globo de texto */
+/* Pantallas angostas: el representante y su frase ocupan casi toda la fila de abajo; la pausa queda chica a la derecha */
+.q-ic { display: none; }
 @media (max-width: 899px) {
-  /* al lado del botón de pausa, para no tapar la pista */
-  .reactor { right: auto; top: auto; left: 0; bottom: 0; width: auto; }
-  .rx-face { width: 42px; height: 42px; }
-  .rx-txt { display: none; }
-  body:not(.land) #quitBtn { margin-left: 52px; }
+  .reactor { right: auto; top: auto; left: 0; bottom: 0; width: calc(86% - 8px); flex-direction: row; align-items: center; gap: 8px; text-align: left; }
+  .rx-face { width: 44px; height: 44px; flex: none; }
+  .rx-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .rx-name { display: none; }
+  .rx-say { font-size: 0.8rem; padding: 6px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body:not(.land) #quitBtn { width: 14%; min-width: 44px; min-height: 44px; margin-left: auto; padding: 0; display: grid; place-items: center; }
+  body:not(.land) #quitBtn .q-tx, body:not(.land) #quitBtn .kbd-hint { display: none; }
+  body:not(.land) #quitBtn .q-ic { display: inline; font-size: 0.9rem; letter-spacing: -0.1em; }
 }
 /* celular acostado: arriba del grupo de botones de la izquierda */
 body.land .reactor { right: auto; bottom: auto; left: 4px; top: 2px; }
@@ -468,3 +472,15 @@ body.land .rx-txt { display: none; }
 .vr-t small { font-size: 0.72rem; color: var(--muted); }
 .vol-row input { grid-area: r; width: 100%; accent-color: var(--acc); }
 .vol-row output { grid-area: o; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.8rem; font-weight: 800; }
+
+/* Señal: rueda cardinal */
+.pg-pads.wheel { position: relative; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); width: min(300px, 82vw); margin: 0 auto; gap: 6px; }
+.pg-pads.wheel .pad { padding: 12px 0; border-radius: 12px; }
+.pg-pads.wheel .pad[data-l="2"] { grid-area: 1 / 2; }
+.pg-pads.wheel .pad[data-l="0"] { grid-area: 2 / 1; }
+.pg-pads.wheel .pad[data-l="3"] { grid-area: 2 / 3; }
+.pg-pads.wheel .pad[data-l="1"] { grid-area: 3 / 2; }
+.wheel-hub { grid-area: 2 / 2; align-self: center; justify-self: center; width: 42%; aspect-ratio: 1; border-radius: 50%; border: 1px dashed var(--line); }
+/* Compás: aviso de que se puede tocar en cualquier parte (solo en pantallas táctiles) */
+.tap-any { display: none; }
+@media (pointer: coarse) { .tap-any { display: block; } }

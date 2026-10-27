@@ -12,10 +12,16 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.5.1
 
 ### Corregido
+- **Error grave de la v0.5: las voces de los diálogos pisaban el sonido de acierto.** Al acertar una nota, el juego fallaba a mitad del proceso, después de sumar el acierto pero antes de registrar el resto. Por eso las flechas largas no se podían sostener en ningún dispositivo, los patrones de Señal podían no contarse como decodificados y el sonido de acierto no sonaba. Ya funciona todo de nuevo.
+- **Ensamble rendía muy poco:** aun jugando perfecto daba la mitad que Vía Pulso. Ahora cada fila y cada pieza encastrada pagan 2,5 veces más (de 2, 5, 9 y 16 por 1 a 4 filas, a 5, 12, 22 y 40).
+- **La sombra de recomendación de Ensamble** aparecía en Fácil en todas las canciones. Ahora está siempre en el tutorial, y en el resto de las canciones se activa con una mejora nueva del árbol: **Plano guía** (rama Diseño, 140 Piezas, después de Proyección).
 - **Flechas largas en iPad y celulares.** Al mantener apretado un botón, el sistema mostraba la lupa o el menú de selección y cancelaba el toque a medio segundo, así que las flechas largas se cortaban. Ahora los botones bloquean esos gestos. Si apoyás un segundo dedo en el mismo botón y lo levantás, la nota sigue sostenida. Y despegar el dedo apenas, menos de 60 ms, ya no corta la flecha larga. Agarre suma su margen a ese.
 - El código de desarrollador abría las galaxias pero no los planetas. Ahora también abre todos los planetas de todas las galaxias, todas las dificultades de cada canción y los modificadores, sin disparar los diálogos de apertura de cada planeta.
 
 ### Cambiado
+- **En el celular, durante la partida**, el representante y su frase ocupan casi toda la fila de abajo, y el botón de pausa queda chico a la derecha (un ícono ❚❚, 14% del ancho). Antes se veía apenas el retrato.
+- **Compás en pantallas táctiles:** tocar en cualquier parte de la pista cuenta como TOCAR, no solo el botón. Con el mouse también funciona.
+- **Señal:** los botones forman una rueda cardinal (↑ arriba, ← y → a los costados, ↓ abajo), más cómoda con una mano o con dos.
 - La voz de Tesela y la de los representantes de Ensamble suenan más suaves, como bloques de madera, en lugar de un pitido cuadrado, y a la mitad de volumen.
 - La reverb de las voces es mucho más corta, apenas un poco de sala. La música de fondo conserva su cola larga.
 

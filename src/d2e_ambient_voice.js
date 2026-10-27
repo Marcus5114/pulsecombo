@@ -100,7 +100,7 @@
     return { kind: GAL_VOICE[gal], base: 57 + (h % 15) };   // cada representante con su propia altura
   };
   let voiceIdx = 0;
-  function blip(at, freq, type, vol, dur, toFreq) {
+  function vblip(at, freq, type, vol, dur, toFreq) {
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, at); if (toFreq) o.frequency.exponentialRampToValueAtTime(toFreq, at + dur);
     g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(vol, at + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
@@ -121,19 +121,19 @@
     const code = ch.toLowerCase().charCodeAt(0), vowel = 'aeiouáéíóú'.includes(ch.toLowerCase());
     const m = V.base + ((code * 7) % 5) - 2 + (vowel ? 2 : 0), f = mtof(m);
     let parts = [];
-    if (ch === '↑' || ch === '↗' || ch === '↖') parts.push(blip(at, f * 0.8, 'sine', 0.07, 0.09, f * 1.6));
-    else if (ch === '↓' || ch === '↘' || ch === '↙') parts.push(blip(at, f * 1.5, 'sine', 0.07, 0.09, f * 0.75));
-    else if (ch === '←' || ch === '→') parts.push(blip(at, f, 'triangle', 0.08, 0.07, f * (ch === '→' ? 1.25 : 0.8)));
-    else if (/[▀▄█▙▚▛▜▝▞▟▖▗▘]/.test(ch)) { parts.push(blip(at, f * 0.5, 'triangle', 0.028, 0.05, f * 0.45)); parts.push(blip(at + 0.035, f * 0.75, 'triangle', 0.02, 0.04)); }   // "toc-toc" de bloques, suave
-    else if (ch === '∿' || ch === '〰') { const p = blip(at, f, 'sine', 0.06, 0.16, f * 1.02); const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = 22; lg.gain.value = 40; l.connect(lg).connect(p.o.frequency); l.start(at); l.stop(p.end); parts.push(p); }
-    else if (ch === '◐' || ch === '◑' || ch === '◇') parts.push(blip(at, ch === '◑' ? f * 1.26 : f, 'triangle', 0.08, 0.08));
-    else if (V.kind === 'digital') { parts.push(blip(at, f, 'square', 0.025, 0.045)); parts.push(blip(at, f * 2, 'sine', 0.02, 0.03)); }
-    else if (V.kind === 'soft') parts.push(blip(at, f, 'triangle', 0.07, 0.07, f * 0.97));
-    else if (V.kind === 'chirp') parts.push(blip(at, f * 0.9, 'sine', 0.06, 0.06, f * 1.15));
-    else if (V.kind === 'block') parts.push(blip(at, mtof(Math.round(m / 2) * 2 - 5), 'triangle', 0.032, 0.055, mtof(Math.round(m / 2) * 2 - 7)));   // bloque de madera: grave y redondo
-    else if (V.kind === 'twin') parts.push(blip(at, k % 4 < 2 ? f : f * 1.26, 'triangle', 0.07, 0.07));
+    if (ch === '↑' || ch === '↗' || ch === '↖') parts.push(vblip(at, f * 0.8, 'sine', 0.07, 0.09, f * 1.6));
+    else if (ch === '↓' || ch === '↘' || ch === '↙') parts.push(vblip(at, f * 1.5, 'sine', 0.07, 0.09, f * 0.75));
+    else if (ch === '←' || ch === '→') parts.push(vblip(at, f, 'triangle', 0.08, 0.07, f * (ch === '→' ? 1.25 : 0.8)));
+    else if (/[▀▄█▙▚▛▜▝▞▟▖▗▘]/.test(ch)) { parts.push(vblip(at, f * 0.5, 'triangle', 0.028, 0.05, f * 0.45)); parts.push(vblip(at + 0.035, f * 0.75, 'triangle', 0.02, 0.04)); }   // "toc-toc" de bloques, suave
+    else if (ch === '∿' || ch === '〰') { const p = vblip(at, f, 'sine', 0.06, 0.16, f * 1.02); const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = 22; lg.gain.value = 40; l.connect(lg).connect(p.o.frequency); l.start(at); l.stop(p.end); parts.push(p); }
+    else if (ch === '◐' || ch === '◑' || ch === '◇') parts.push(vblip(at, ch === '◑' ? f * 1.26 : f, 'triangle', 0.08, 0.08));
+    else if (V.kind === 'digital') { parts.push(vblip(at, f, 'square', 0.025, 0.045)); parts.push(vblip(at, f * 2, 'sine', 0.02, 0.03)); }
+    else if (V.kind === 'soft') parts.push(vblip(at, f, 'triangle', 0.07, 0.07, f * 0.97));
+    else if (V.kind === 'chirp') parts.push(vblip(at, f * 0.9, 'sine', 0.06, 0.06, f * 1.15));
+    else if (V.kind === 'block') parts.push(vblip(at, mtof(Math.round(m / 2) * 2 - 5), 'triangle', 0.032, 0.055, mtof(Math.round(m / 2) * 2 - 7)));   // bloque de madera: grave y redondo
+    else if (V.kind === 'twin') parts.push(vblip(at, k % 4 < 2 ? f : f * 1.26, 'triangle', 0.07, 0.07));
     else if (V.kind === 'radio') {   // tono por una "radio": pasa-banda y un poco de estática
-      const p = blip(at, f, 'square', 0.035, 0.07); parts.push(p);
+      const p = vblip(at, f, 'square', 0.035, 0.07); parts.push(p);
       const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 3;
       p.g.disconnect(); p.g.connect(bp).connect(out); p.routed = true;
       onBus('voice', () => nz(at, { type: 'bandpass', freq: 3200, q: 1.5, vol: 0.012, dur: 0.05 }));
@@ -147,5 +147,5 @@
     voiceIdx = 0;
     const V = voiceOf(who);
     if (V.kind === 'radio') onBus('voice', () => nz(at, { type: 'bandpass', freq: 2400, q: 0.8, vol: 0.05, dur: 0.18 }));
-    else if (V.kind === 'digital') { const p = blip(at, mtof(V.base + 7), 'sine', 0.035, 0.12); p.g.connect(voiceOut()); p.o.start(at); p.o.stop(p.end); }
+    else if (V.kind === 'digital') { const p = vblip(at, mtof(V.base + 7), 'sine', 0.035, 0.12); p.g.connect(voiceOut()); p.o.start(at); p.o.stop(p.end); }
   }

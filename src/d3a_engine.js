@@ -350,7 +350,8 @@
     if (type !== 'O') for (let k = 0; k < rot % 4; k++) c = c.map(([x, y]) => [n - 1 - y, x]);
     return c;
   }
-  const LINE_PTS = [0, 2, 5, 9, 16];
+  // v0.5.1: Ensamble paga 2,5 veces más (antes rendía la mitad que Vía Pulso aun jugando perfecto)
+  const LINE_PTS = [0, 5, 12, 22, 40];
   function initStack(r) {
     const ch = r.ch;
     COLS = r.song.tut ? 6 : r.mods.narrow ? 8 : 10;
@@ -413,7 +414,8 @@
     }
     return best;
   }
-  const hintOn = () => run && (run.song.tut || run.di === 0);
+  // Sombra de recomendación: siempre en el tutorial; en el resto, con la mejora Plano guía (se puede apagar en Mecánicas)
+  const hintOn = () => run && (run.song.tut || E('e_d_hint') > 0);
   function hintFor(p) {
     if (!run.hint || run.hint.p !== p || run.hint.ver !== run.boardVer) run.hint = { p, ver: run.boardVer, spot: bestSpot(p) };
     return run.hint.spot;
@@ -427,7 +429,7 @@
       if (y < 0) { if (run.song.tut) { tutReset(); run.piece = null; spawn(); return; } run.failed = true; finishStack(); return; }
       run.board[y][x] = p.type;
     }
-    run.earned += stackBase() * 0.2 * rhythmMult() * run.mult;
+    run.earned += stackBase() * 0.5 * rhythmMult() * run.mult;
     const full = []; for (let y = 0; y < ROWS; y++) if (run.board[y].every(Boolean)) full.push(y);
     if (full.length) {
       for (const y of full) { run.board.splice(y, 1); run.board.unshift(Array(COLS).fill(null)); }

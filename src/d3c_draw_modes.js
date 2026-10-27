@@ -320,7 +320,7 @@
   function renderPads() {
     const pads = $('pads'), land = isLand();
     if (run.mode === 'path') {   // Compás: un solo botón grande (dos en el celular acostado)
-      const big = (id, side) => `<button class="pad pad-tap" id="${id}" data-l="0" aria-label="Tocar">TOCAR</button>`;
+      const big = (id, side) => `<button class="pad pad-tap" id="${id}" data-l="0" aria-label="Tocar">TOCAR<small class="tap-any">o tocá en cualquier parte de la pista</small></button>`;
       if (land) {
         pads.className = 'pads land-pads';
         pads.innerHTML = `<div class="pg side left">${PAUSE_GAP}<div class="pg-pads">${big('pad0')}</div></div><div class="pg side right">${PAUSE_PAD}<div class="pg-pads">${big('pad0b')}</div></div>`;
@@ -349,9 +349,11 @@
           </div>`).join('');
       } else {
         pads.className = 'pads' + (nb === 2 ? ' two' : '');
+        // Señal: rueda cardinal (arriba, izquierda, derecha y abajo en cruz), cómoda con una mano o con dos
+        const wheel = run.mode === 'signal' && nb === 1;
         pads.innerHTML = Array.from({ length: nb }, (_, b) => `<div class="pg">
             ${nb === 2 ? `<div class="pg-label">${GNAME[b ? S.keysR : S.keysL]}</div>` : ''}
-            <div class="pg-pads">${[0, 1, 2, 3].map(k => arrowPad(b * 4 + k)).join('')}</div>
+            <div class="pg-pads${wheel ? ' wheel' : ''}">${[0, 1, 2, 3].map(k => arrowPad(b * 4 + k)).join('')}${wheel ? '<span class="wheel-hub" aria-hidden="true"></span>' : ''}</div>
           </div>`).join('');
       }
     }

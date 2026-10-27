@@ -545,13 +545,17 @@ button.chip.mod:hover { border-color: var(--fg); }
 @keyframes rxtilt { 40% { transform: rotate(-6deg); } }
 @keyframes rxshake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
 @keyframes rxfever { 50% { transform: scale(1.12) rotate(4deg); } }
-/* Pantallas angostas: retrato chico sobre la pista, sin globo de texto */
+/* Pantallas angostas: el representante y su frase ocupan casi toda la fila de abajo; la pausa queda chica a la derecha */
+.q-ic { display: none; }
 @media (max-width: 899px) {
-  /* al lado del botón de pausa, para no tapar la pista */
-  .reactor { right: auto; top: auto; left: 0; bottom: 0; width: auto; }
-  .rx-face { width: 42px; height: 42px; }
-  .rx-txt { display: none; }
-  body:not(.land) #quitBtn { margin-left: 52px; }
+  .reactor { right: auto; top: auto; left: 0; bottom: 0; width: calc(86% - 8px); flex-direction: row; align-items: center; gap: 8px; text-align: left; }
+  .rx-face { width: 44px; height: 44px; flex: none; }
+  .rx-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .rx-name { display: none; }
+  .rx-say { font-size: 0.8rem; padding: 6px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body:not(.land) #quitBtn { width: 14%; min-width: 44px; min-height: 44px; margin-left: auto; padding: 0; display: grid; place-items: center; }
+  body:not(.land) #quitBtn .q-tx, body:not(.land) #quitBtn .kbd-hint { display: none; }
+  body:not(.land) #quitBtn .q-ic { display: inline; font-size: 0.9rem; letter-spacing: -0.1em; }
 }
 /* celular acostado: arriba del grupo de botones de la izquierda */
 body.land .reactor { right: auto; bottom: auto; left: 4px; top: 2px; }
@@ -712,6 +716,18 @@ body.land .rx-txt { display: none; }
 .vr-t small { font-size: 0.72rem; color: var(--muted); }
 .vol-row input { grid-area: r; width: 100%; accent-color: var(--acc); }
 .vol-row output { grid-area: o; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.8rem; font-weight: 800; }
+
+/* Señal: rueda cardinal */
+.pg-pads.wheel { position: relative; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); width: min(300px, 82vw); margin: 0 auto; gap: 6px; }
+.pg-pads.wheel .pad { padding: 12px 0; border-radius: 12px; }
+.pg-pads.wheel .pad[data-l="2"] { grid-area: 1 / 2; }
+.pg-pads.wheel .pad[data-l="0"] { grid-area: 2 / 1; }
+.pg-pads.wheel .pad[data-l="3"] { grid-area: 2 / 3; }
+.pg-pads.wheel .pad[data-l="1"] { grid-area: 3 / 2; }
+.wheel-hub { grid-area: 2 / 2; align-self: center; justify-self: center; width: 42%; aspect-ratio: 1; border-radius: 50%; border: 1px dashed var(--line); }
+/* Compás: aviso de que se puede tocar en cualquier parte (solo en pantallas táctiles) */
+.tap-any { display: none; }
+@media (pointer: coarse) { .tap-any { display: block; } }
 </style>
 </head>
 <body>
@@ -830,7 +846,7 @@ body.land .rx-txt { display: none; }
       </div>
     </div>
     <div class="pads" id="pads"></div>
-    <button class="ghost-btn" id="quitBtn">Pausa <span class="kbd-hint">Esc</span></button>
+    <button class="ghost-btn" id="quitBtn" aria-label="Pausa"><span class="q-ic" aria-hidden="true">❚❚</span><span class="q-tx">Pausa</span> <span class="kbd-hint">Esc</span></button>
     </div>
   </section>
 
@@ -1087,6 +1103,7 @@ body.land .rx-txt { display: none; }
         { id: 'e_life', br: 'core', parent: 'e_core', name: 'Casco', max: 5, cost: [180, 7.3], desc: 'Moverse fuera de tiempo daña menos la integridad del casco.', fx: lv => `Un error resta ${100 - LIFE_STEP * 100 * lv}% de lo normal` },
         { id: 'e_d_prev', br: 'ed', pos: [2, 1], root: true, name: 'Planos', max: 3, cost: [240, 8], req: [['e_core', 1]], desc: 'Ves más piezas siguientes en el panel lateral.', fx: lv => `Ves ${1 + lv} ${lv ? 'piezas' : 'pieza'}` },
         { id: 'e_d_ghost', br: 'ed', pos: [1, 2], name: 'Proyección', max: 1, cost: [90, 1], req: [['e_d_prev', 1]], desc: 'Muestra el contorno de dónde va a caer la pieza.', fx: lv => lv ? 'Contorno visible' : 'Sin contorno' },
+        { id: 'e_d_hint', br: 'ed', pos: [1, 3], name: 'Plano guía', max: 1, cost: [140, 1], req: [['e_d_ghost', 1]], desc: 'Un contorno punteado marca dónde conviene encastrar cada pieza para armar filas. En el tutorial está siempre activo.', fx: lv => lv ? 'Sombra de recomendación activa' : 'Solo en el tutorial' },
         { id: 'e_d_hold', br: 'ed', pos: [3, 2], name: 'Bodega', max: 1, cost: [150, 1], req: [['e_d_prev', 1]], desc: 'Podés guardar una pieza para usarla después (tecla C). Una vez por pieza.', fx: lv => lv ? 'Bodega disponible' : 'Sin bodega' },
         { id: 'e_c_root', br: 'ec', pos: [2, 1], root: true, name: 'Metrónomo', max: 1, cost: [80, 1], req: [['e_core', 1]], desc: 'Cada 8 movimientos seguidos a tiempo suben el multiplicador de ritmo en +0,25, hasta x1,5.', fx: lv => lv ? 'Ritmo hasta x1,5' : 'El ritmo no multiplica' },
         { id: 'e_c_rank', br: 'ec', pos: [1, 2], name: 'Turnos dobles', max: 4, cost: [560, 8.7], req: [['e_c_root', 1]], desc: 'Sube el tope del multiplicador de ritmo.', fx: lv => `Ritmo hasta x${dec(1.5 + 0.5 * lv)}` },
@@ -1988,7 +2005,7 @@ body.land .rx-txt { display: none; }
     return { kind: GAL_VOICE[gal], base: 57 + (h % 15) };   // cada representante con su propia altura
   };
   let voiceIdx = 0;
-  function blip(at, freq, type, vol, dur, toFreq) {
+  function vblip(at, freq, type, vol, dur, toFreq) {
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, at); if (toFreq) o.frequency.exponentialRampToValueAtTime(toFreq, at + dur);
     g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(vol, at + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
@@ -2009,19 +2026,19 @@ body.land .rx-txt { display: none; }
     const code = ch.toLowerCase().charCodeAt(0), vowel = 'aeiouáéíóú'.includes(ch.toLowerCase());
     const m = V.base + ((code * 7) % 5) - 2 + (vowel ? 2 : 0), f = mtof(m);
     let parts = [];
-    if (ch === '↑' || ch === '↗' || ch === '↖') parts.push(blip(at, f * 0.8, 'sine', 0.07, 0.09, f * 1.6));
-    else if (ch === '↓' || ch === '↘' || ch === '↙') parts.push(blip(at, f * 1.5, 'sine', 0.07, 0.09, f * 0.75));
-    else if (ch === '←' || ch === '→') parts.push(blip(at, f, 'triangle', 0.08, 0.07, f * (ch === '→' ? 1.25 : 0.8)));
-    else if (/[▀▄█▙▚▛▜▝▞▟▖▗▘]/.test(ch)) { parts.push(blip(at, f * 0.5, 'triangle', 0.028, 0.05, f * 0.45)); parts.push(blip(at + 0.035, f * 0.75, 'triangle', 0.02, 0.04)); }   // "toc-toc" de bloques, suave
-    else if (ch === '∿' || ch === '〰') { const p = blip(at, f, 'sine', 0.06, 0.16, f * 1.02); const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = 22; lg.gain.value = 40; l.connect(lg).connect(p.o.frequency); l.start(at); l.stop(p.end); parts.push(p); }
-    else if (ch === '◐' || ch === '◑' || ch === '◇') parts.push(blip(at, ch === '◑' ? f * 1.26 : f, 'triangle', 0.08, 0.08));
-    else if (V.kind === 'digital') { parts.push(blip(at, f, 'square', 0.025, 0.045)); parts.push(blip(at, f * 2, 'sine', 0.02, 0.03)); }
-    else if (V.kind === 'soft') parts.push(blip(at, f, 'triangle', 0.07, 0.07, f * 0.97));
-    else if (V.kind === 'chirp') parts.push(blip(at, f * 0.9, 'sine', 0.06, 0.06, f * 1.15));
-    else if (V.kind === 'block') parts.push(blip(at, mtof(Math.round(m / 2) * 2 - 5), 'triangle', 0.032, 0.055, mtof(Math.round(m / 2) * 2 - 7)));   // bloque de madera: grave y redondo
-    else if (V.kind === 'twin') parts.push(blip(at, k % 4 < 2 ? f : f * 1.26, 'triangle', 0.07, 0.07));
+    if (ch === '↑' || ch === '↗' || ch === '↖') parts.push(vblip(at, f * 0.8, 'sine', 0.07, 0.09, f * 1.6));
+    else if (ch === '↓' || ch === '↘' || ch === '↙') parts.push(vblip(at, f * 1.5, 'sine', 0.07, 0.09, f * 0.75));
+    else if (ch === '←' || ch === '→') parts.push(vblip(at, f, 'triangle', 0.08, 0.07, f * (ch === '→' ? 1.25 : 0.8)));
+    else if (/[▀▄█▙▚▛▜▝▞▟▖▗▘]/.test(ch)) { parts.push(vblip(at, f * 0.5, 'triangle', 0.028, 0.05, f * 0.45)); parts.push(vblip(at + 0.035, f * 0.75, 'triangle', 0.02, 0.04)); }   // "toc-toc" de bloques, suave
+    else if (ch === '∿' || ch === '〰') { const p = vblip(at, f, 'sine', 0.06, 0.16, f * 1.02); const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = 22; lg.gain.value = 40; l.connect(lg).connect(p.o.frequency); l.start(at); l.stop(p.end); parts.push(p); }
+    else if (ch === '◐' || ch === '◑' || ch === '◇') parts.push(vblip(at, ch === '◑' ? f * 1.26 : f, 'triangle', 0.08, 0.08));
+    else if (V.kind === 'digital') { parts.push(vblip(at, f, 'square', 0.025, 0.045)); parts.push(vblip(at, f * 2, 'sine', 0.02, 0.03)); }
+    else if (V.kind === 'soft') parts.push(vblip(at, f, 'triangle', 0.07, 0.07, f * 0.97));
+    else if (V.kind === 'chirp') parts.push(vblip(at, f * 0.9, 'sine', 0.06, 0.06, f * 1.15));
+    else if (V.kind === 'block') parts.push(vblip(at, mtof(Math.round(m / 2) * 2 - 5), 'triangle', 0.032, 0.055, mtof(Math.round(m / 2) * 2 - 7)));   // bloque de madera: grave y redondo
+    else if (V.kind === 'twin') parts.push(vblip(at, k % 4 < 2 ? f : f * 1.26, 'triangle', 0.07, 0.07));
     else if (V.kind === 'radio') {   // tono por una "radio": pasa-banda y un poco de estática
-      const p = blip(at, f, 'square', 0.035, 0.07); parts.push(p);
+      const p = vblip(at, f, 'square', 0.035, 0.07); parts.push(p);
       const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 3;
       p.g.disconnect(); p.g.connect(bp).connect(out); p.routed = true;
       onBus('voice', () => nz(at, { type: 'bandpass', freq: 3200, q: 1.5, vol: 0.012, dur: 0.05 }));
@@ -2035,7 +2052,7 @@ body.land .rx-txt { display: none; }
     voiceIdx = 0;
     const V = voiceOf(who);
     if (V.kind === 'radio') onBus('voice', () => nz(at, { type: 'bandpass', freq: 2400, q: 0.8, vol: 0.05, dur: 0.18 }));
-    else if (V.kind === 'digital') { const p = blip(at, mtof(V.base + 7), 'sine', 0.035, 0.12); p.g.connect(voiceOut()); p.o.start(at); p.o.stop(p.end); }
+    else if (V.kind === 'digital') { const p = vblip(at, mtof(V.base + 7), 'sine', 0.035, 0.12); p.g.connect(voiceOut()); p.o.start(at); p.o.stop(p.end); }
   }
 
   // ---------- Señal: llamada y respuesta ----------
@@ -2598,7 +2615,8 @@ body.land .rx-txt { display: none; }
     if (type !== 'O') for (let k = 0; k < rot % 4; k++) c = c.map(([x, y]) => [n - 1 - y, x]);
     return c;
   }
-  const LINE_PTS = [0, 2, 5, 9, 16];
+  // v0.5.1: Ensamble paga 2,5 veces más (antes rendía la mitad que Vía Pulso aun jugando perfecto)
+  const LINE_PTS = [0, 5, 12, 22, 40];
   function initStack(r) {
     const ch = r.ch;
     COLS = r.song.tut ? 6 : r.mods.narrow ? 8 : 10;
@@ -2661,7 +2679,8 @@ body.land .rx-txt { display: none; }
     }
     return best;
   }
-  const hintOn = () => run && (run.song.tut || run.di === 0);
+  // Sombra de recomendación: siempre en el tutorial; en el resto, con la mejora Plano guía (se puede apagar en Mecánicas)
+  const hintOn = () => run && (run.song.tut || E('e_d_hint') > 0);
   function hintFor(p) {
     if (!run.hint || run.hint.p !== p || run.hint.ver !== run.boardVer) run.hint = { p, ver: run.boardVer, spot: bestSpot(p) };
     return run.hint.spot;
@@ -2675,7 +2694,7 @@ body.land .rx-txt { display: none; }
       if (y < 0) { if (run.song.tut) { tutReset(); run.piece = null; spawn(); return; } run.failed = true; finishStack(); return; }
       run.board[y][x] = p.type;
     }
-    run.earned += stackBase() * 0.2 * rhythmMult() * run.mult;
+    run.earned += stackBase() * 0.5 * rhythmMult() * run.mult;
     const full = []; for (let y = 0; y < ROWS; y++) if (run.board[y].every(Boolean)) full.push(y);
     if (full.length) {
       for (const y of full) { run.board.splice(y, 1); run.board.unshift(Array(COLS).fill(null)); }
@@ -3257,7 +3276,7 @@ body.land .rx-txt { display: none; }
   function renderPads() {
     const pads = $('pads'), land = isLand();
     if (run.mode === 'path') {   // Compás: un solo botón grande (dos en el celular acostado)
-      const big = (id, side) => `<button class="pad pad-tap" id="${id}" data-l="0" aria-label="Tocar">TOCAR</button>`;
+      const big = (id, side) => `<button class="pad pad-tap" id="${id}" data-l="0" aria-label="Tocar">TOCAR<small class="tap-any">o tocá en cualquier parte de la pista</small></button>`;
       if (land) {
         pads.className = 'pads land-pads';
         pads.innerHTML = `<div class="pg side left">${PAUSE_GAP}<div class="pg-pads">${big('pad0')}</div></div><div class="pg side right">${PAUSE_PAD}<div class="pg-pads">${big('pad0b')}</div></div>`;
@@ -3286,9 +3305,11 @@ body.land .rx-txt { display: none; }
           </div>`).join('');
       } else {
         pads.className = 'pads' + (nb === 2 ? ' two' : '');
+        // Señal: rueda cardinal (arriba, izquierda, derecha y abajo en cruz), cómoda con una mano o con dos
+        const wheel = run.mode === 'signal' && nb === 1;
         pads.innerHTML = Array.from({ length: nb }, (_, b) => `<div class="pg">
             ${nb === 2 ? `<div class="pg-label">${GNAME[b ? S.keysR : S.keysL]}</div>` : ''}
-            <div class="pg-pads">${[0, 1, 2, 3].map(k => arrowPad(b * 4 + k)).join('')}</div>
+            <div class="pg-pads${wheel ? ' wheel' : ''}">${[0, 1, 2, 3].map(k => arrowPad(b * 4 + k)).join('')}${wheel ? '<span class="wheel-hub" aria-hidden="true"></span>' : ''}</div>
           </div>`).join('');
       }
     }
@@ -4357,7 +4378,7 @@ body.land .rx-txt { display: none; }
   };
   // Mecánicas que ya compraste en el árbol de cada galaxia (las de Vía Pulso se pueden apagar)
   const MECH_INFO = {
-    stack: [['e_d_ghost', 'Proyección', 'muestra dónde cae la pieza'], ['e_d_hold', 'Bodega', 'guardar una pieza con C'], ['e_d_prev', 'Planos', 'ver las piezas siguientes'], ['e_c_root', 'Metrónomo', 'el ritmo multiplica'], ['e_c_tetra', 'Ensamble perfecto', 'bonus por 4 filas']],
+    stack: [['e_d_hint', 'Plano guía', 'sombra de dónde conviene encastrar'], ['e_d_ghost', 'Proyección', 'muestra dónde cae la pieza'], ['e_d_hold', 'Bodega', 'guardar una pieza con C'], ['e_d_prev', 'Planos', 'ver las piezas siguientes'], ['e_c_root', 'Metrónomo', 'el ritmo multiplica'], ['e_c_tetra', 'Ensamble perfecto', 'bonus por 4 filas']],
     signal: [['s_m_root', 'Marcas de ritmo', 'puntos de cuándo tocar'], ['s_m_arrows', 'Eco visual', 'qué flecha va en cada punto'], ['s_t_metro', 'Metrónomo de respuesta', 'clic en cada corchea'], ['s_t_fix', 'Corrección de errores', 'patrones con algún fallo cuentan'], ['s_m_streak', 'Racha de señal', 'patrones seguidos suman']],
     path: [['p_r_root', 'Racha', 'baldosas seguidas multiplican'], ['p_c_root', 'Tramo perfecto', 'bonus por tramo sin fallas'], ['p_c_gold', 'Baldosas doradas', 'PERFECTO en dorada vale más'], ['p_r_safe', 'Red de seguridad', 'fallos que no cortan la racha']],
   };
@@ -4727,6 +4748,13 @@ body.land .rx-txt { display: none; }
       } else if (e.code === 'Enter' && !e.target.closest('button')) { e.preventDefault(); startRun(S.sel, S.diff); }
     }
   });
+  // Compás: en pantallas táctiles (y con el mouse) cualquier toque sobre la pista cuenta como TOCAR
+  $('stage').addEventListener('pointerdown', e => {
+    if (view !== 'play' || !run || run.mode !== 'path' || run.over || run.paused) return;
+    if (e.target.closest('button, .pause, .pad')) return;
+    e.preventDefault(); keyDown[0] = true; hit(0);
+  });
+  window.addEventListener('pointerup', () => { if (run && run.mode === 'path' && keyDown[0] && !$('pad0')?.classList.contains('on')) { keyDown[0] = false; release(0); } });
   window.addEventListener('keyup', e => {
     const l = mapKey(e.code); if (l === undefined) return;
     keyDown[l] = false; $('pad' + l)?.classList.remove('on'); release(l);

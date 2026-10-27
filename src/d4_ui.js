@@ -215,7 +215,7 @@
   };
   // Mecánicas que ya compraste en el árbol de cada galaxia (las de Vía Pulso se pueden apagar)
   const MECH_INFO = {
-    stack: [['e_d_ghost', 'Proyección', 'muestra dónde cae la pieza'], ['e_d_hold', 'Bodega', 'guardar una pieza con C'], ['e_d_prev', 'Planos', 'ver las piezas siguientes'], ['e_c_root', 'Metrónomo', 'el ritmo multiplica'], ['e_c_tetra', 'Ensamble perfecto', 'bonus por 4 filas']],
+    stack: [['e_d_hint', 'Plano guía', 'sombra de dónde conviene encastrar'], ['e_d_ghost', 'Proyección', 'muestra dónde cae la pieza'], ['e_d_hold', 'Bodega', 'guardar una pieza con C'], ['e_d_prev', 'Planos', 'ver las piezas siguientes'], ['e_c_root', 'Metrónomo', 'el ritmo multiplica'], ['e_c_tetra', 'Ensamble perfecto', 'bonus por 4 filas']],
     signal: [['s_m_root', 'Marcas de ritmo', 'puntos de cuándo tocar'], ['s_m_arrows', 'Eco visual', 'qué flecha va en cada punto'], ['s_t_metro', 'Metrónomo de respuesta', 'clic en cada corchea'], ['s_t_fix', 'Corrección de errores', 'patrones con algún fallo cuentan'], ['s_m_streak', 'Racha de señal', 'patrones seguidos suman']],
     path: [['p_r_root', 'Racha', 'baldosas seguidas multiplican'], ['p_c_root', 'Tramo perfecto', 'bonus por tramo sin fallas'], ['p_c_gold', 'Baldosas doradas', 'PERFECTO en dorada vale más'], ['p_r_safe', 'Red de seguridad', 'fallos que no cortan la racha']],
   };
@@ -585,6 +585,13 @@
       } else if (e.code === 'Enter' && !e.target.closest('button')) { e.preventDefault(); startRun(S.sel, S.diff); }
     }
   });
+  // Compás: en pantallas táctiles (y con el mouse) cualquier toque sobre la pista cuenta como TOCAR
+  $('stage').addEventListener('pointerdown', e => {
+    if (view !== 'play' || !run || run.mode !== 'path' || run.over || run.paused) return;
+    if (e.target.closest('button, .pause, .pad')) return;
+    e.preventDefault(); keyDown[0] = true; hit(0);
+  });
+  window.addEventListener('pointerup', () => { if (run && run.mode === 'path' && keyDown[0] && !$('pad0')?.classList.contains('on')) { keyDown[0] = false; release(0); } });
   window.addEventListener('keyup', e => {
     const l = mapKey(e.code); if (l === undefined) return;
     keyDown[l] = false; $('pad' + l)?.classList.remove('on'); release(l);
