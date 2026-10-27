@@ -11,7 +11,7 @@
     src.buffer = noiseBuf; src.loop = true; f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 0.8;
     g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.05, at + 0.03);
     g.gain.setValueAtTime(0.05, Math.max(at + 0.04, end - 0.07)); g.gain.linearRampToValueAtTime(0.0001, end - 0.02);
-    src.connect(f).connect(g).connect(ac.destination); src.start(at); src.stop(end);
+    src.connect(f).connect(g).connect(dest()); src.start(at); src.stop(end);
     tone(end - 0.04, 'square', 1100, 0.025, 0.03);
   }
   // Largo de la pausa en semicorcheas: un tiempo en canciones lentas, dos en las rápidas (así dura parecido en segundos)

@@ -452,4 +452,19 @@ body.land .rx-txt { display: none; }
 .rule-diffs li b { color: var(--fg); }
 .rule-diffs li.on { border-left-color: var(--acc); color: var(--fg); }
 .rule-diffs li.on b { color: var(--acc); }
-#soundBox { display: inline-flex; gap: 14px; flex-wrap: wrap; }
+
+/* ---------- Ajustes ---------- */
+.tab-set { margin-left: auto; flex: 0 0 auto !important; }
+.tab-set .long { margin-left: 6px; }
+.set-back { position: fixed; inset: 0; z-index: 70; background: rgba(0, 0, 0, 0.55); }
+.set-card { position: fixed; z-index: 71; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 14px 50px rgba(0, 0, 0, 0.6); }
+.set-card[hidden], .set-back[hidden] { display: none; }
+.set-h { margin: 0; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.vol-list { display: flex; flex-direction: column; gap: 14px; }
+.vol-row { display: grid; grid-template-columns: minmax(0, 1fr) 46px; grid-template-areas: 't t' 'r o'; gap: 4px 10px; align-items: center; }
+.vr-t { grid-area: t; display: flex; flex-direction: column; gap: 1px; }
+.vr-t b { font-size: 0.85rem; }
+.vr-t small { font-size: 0.72rem; color: var(--muted); }
+.vol-row input { grid-area: r; width: 100%; accent-color: var(--acc); }
+.vol-row output { grid-area: o; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.8rem; font-weight: 800; }

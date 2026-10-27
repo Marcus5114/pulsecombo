@@ -4,17 +4,18 @@
   // y "voces" de blips al estilo Animal Crossing para cada personaje mientras se escribe su línea.
 
   // Reverb barata: dos ecos con realimentación y filtro, compartidos por el ambiente y las voces
-  let fxBus = null;
-  function spaceVerb() {
+  let fxBus = null;   // una reverb por canal (ambiente y voces), para que respete el volumen de cada uno
+  function spaceVerb(k = 'amb') {
     if (!ac) return null;
-    if (fxBus && fxBus.ctx === ac) return fxBus.node;
-    const inp = ac.createGain(), out = ac.createGain(); out.gain.value = 0.7; out.connect(ac.destination);
+    if (!fxBus || fxBus.ctx !== ac) fxBus = { ctx: ac };
+    if (fxBus[k]) return fxBus[k];
+    const inp = ac.createGain(), out = ac.createGain(); out.gain.value = 0.7; out.connect(bus(k));
     for (const [t, fbv] of [[0.37, 0.62], [0.53, 0.58]]) {
       const d = ac.createDelay(2), fb = ac.createGain(), lp = ac.createBiquadFilter();
       d.delayTime.value = t; fb.gain.value = fbv; lp.type = 'lowpass'; lp.frequency.value = 1800;
       inp.connect(d); d.connect(lp); lp.connect(fb).connect(d); lp.connect(out);
     }
-    fxBus = { ctx: ac, node: inp };
+    fxBus[k] = inp;
     return inp;
   }
 
@@ -42,18 +43,19 @@
     for (const [dt, m] of AMB_STAR_AT) {
       const at = t0 + dt, o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.value = mtof(m);
       g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.022, at + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, at + 2.2);
-      o.connect(g); g.connect(cg); g.connect(spaceVerb()); o.start(at); o.stop(at + 2.3);
+      o.connect(g); g.connect(cg); g.connect(spaceVerb('amb')); o.start(at); o.stop(at + 2.3);
     }
   }
   function ambientTick() {
     if (!amb || !ac) return;
     while (amb.next < ac.currentTime + 3) { ambientCycle(amb.next); amb.next += AMB_CYCLE - AMB_FADE; }
   }
+  const ambBus = () => bus('amb');
   function ambientStart() {
     if (amb || !ac) return;
     const bus = ac.createGain(), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
     bus.gain.setValueAtTime(0.0001, ac.currentTime); bus.gain.linearRampToValueAtTime(0.55, ac.currentTime + 3);
-    bus.connect(lp).connect(ac.destination); lp.connect(spaceVerb());
+    bus.connect(lp).connect(ambBus()); lp.connect(spaceVerb('amb'));
     // viento: ruido filtrado que barre lentamente
     const n = ac.createBufferSource(), nb = ac.createBuffer(1, ac.sampleRate * 4, ac.sampleRate), d = nb.getChannelData(0);
     for (let k = 0; k < d.length; k++) d[k] = Math.random() * 2 - 1;
@@ -71,10 +73,10 @@
     a.bus.gain.cancelScheduledValues(ac.currentTime); a.bus.gain.setValueAtTime(a.bus.gain.value, ac.currentTime); a.bus.gain.linearRampToValueAtTime(0.0001, ac.currentTime + 1.5);
     setTimeout(() => { for (const s of a.stop) try { s.stop(); } catch (e) {} a.bus.disconnect(); }, 1700);
   }
-  // Suena fuera de las partidas, si está activada (S.ambient, por defecto sí)
+  // Suena fuera de las partidas, si su volumen no está en cero
   function ambientUpdate() {
     if (!ac) return;
-    const want = S.ambient !== false && view !== 'play';
+    const want = vol('amb') > 0 && view !== 'play';
     if (want) ambientStart(); else ambientStop();
   }
   // El navegador solo deja arrancar el audio después de un toque o una tecla
@@ -105,11 +107,11 @@
   }
   function voiceOut() {
     if (!ac) return null;
-    const g = ac.createGain(); g.gain.value = 1; g.connect(ac.destination); return g;
+    return bus('voice');
   }
   // Suena un carácter de la línea (se llama desde el cuadro de diálogo; las letras van de a una, se habla cada dos)
   function voiceChar(who, ch, at = ac && ac.currentTime) {
-    if (!ac || S.voices === false) return;
+    if (!ac || vol('voice') <= 0) return;
     const out = voiceOut(); if (!out) return;
     const V = voiceOf(who), k = voiceIdx++;
     const glyph = /[←↑→↓↖↗↘↙▀▄█▙▚▛▜▝▞▟▖▗▘∿〰◐◑◇]/.test(ch);
@@ -133,16 +135,16 @@
       const p = blip(at, f, 'square', 0.035, 0.07); parts.push(p);
       const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 3;
       p.g.disconnect(); p.g.connect(bp).connect(out); p.routed = true;
-      nz(at, { type: 'bandpass', freq: 3200, q: 1.5, vol: 0.012, dur: 0.05 });
+      onBus('voice', () => nz(at, { type: 'bandpass', freq: 3200, q: 1.5, vol: 0.012, dur: 0.05 }));
     }
     for (const p of parts) { if (!p.routed) p.g.connect(out); p.o.start(at); p.o.stop(p.end); }
-    if (V.kind !== 'digital' && V.kind !== 'radio' && !V.dry) { const s = ac.createGain(); s.gain.value = 0.25; parts.forEach(p => p.g.connect(s)); s.connect(spaceVerb()); }
+    if (V.kind !== 'digital' && V.kind !== 'radio' && !V.dry) { const s = ac.createGain(); s.gain.value = 0.25; parts.forEach(p => p.g.connect(s)); s.connect(spaceVerb('voice')); }
   }
   // Al abrir el cuadro: un chasquido de radio para los que hablan por radio, un pitido para CORA
   function voiceOpen(who, at = ac && ac.currentTime) {
-    if (!ac || S.voices === false) return;
+    if (!ac || vol('voice') <= 0) return;
     voiceIdx = 0;
     const V = voiceOf(who);
-    if (V.kind === 'radio') nz(at, { type: 'bandpass', freq: 2400, q: 0.8, vol: 0.05, dur: 0.18 });
+    if (V.kind === 'radio') onBus('voice', () => nz(at, { type: 'bandpass', freq: 2400, q: 0.8, vol: 0.05, dur: 0.18 }));
     else if (V.kind === 'digital') { const p = blip(at, mtof(V.base + 7), 'sine', 0.035, 0.12); p.g.connect(voiceOut()); p.o.start(at); p.o.stop(p.end); }
   }

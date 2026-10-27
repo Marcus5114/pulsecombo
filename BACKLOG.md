@@ -45,6 +45,24 @@ Notas que hay que **evitar** en vez de tocar. Va como un modificador más de la 
   - `hit()`: en la respuesta, un toque en una ventana bomba explota en vez de contar como golpe al aire.
   - `drawSignal`: flecha tachada en la línea de tiempo.
 
+## Tienda de paletas de colores
+Una tienda donde se compran, con Materia Oscura, paletas de colores para la interfaz y los colores del juego.
+- **Qué cambia una paleta:** el fondo y las superficies (los grises), el color de acento de cada galaxia, los colores de las flechas o notas y el de las notas extra o doradas. Opcionalmente, también el color de los íconos de las monedas.
+- **Ejemplos:**
+  - *Neón* (acentos saturados sobre negro puro).
+  - *Papel* (claro, para jugar de día).
+  - *Atardecer sintético* (magentas y naranjas).
+  - *Monocromo* (escala de grises, ideal para Oculto y Repentino).
+  - *Alto contraste* (accesibilidad, gratis).
+  - Una paleta por galaxia que se desbloquea al firmar el acuerdo con su embajador.
+- **Precio:** entre 3 y 10 de Materia Oscura, para que compita con el árbol global sin bloquearlo. La de alto contraste es gratis desde el principio, por accesibilidad.
+- **Dónde va:** una pestaña o sección "Tienda" dentro de Ajustes, con vista previa en vivo antes de comprar y un botón para volver a la paleta original.
+- **Cómo implementarlo:**
+  - Hoy los colores salen de variables CSS (`--bg`, `--surface`, `--fg`, `--muted`, `--line`, `--acc` por galaxia) y de constantes en el dibujo del canvas (colores de flechas y de `GX[g].color`).
+  - Una paleta sería un objeto `{ id, name, cost, css: {...}, gal: {...}, notes: [...] }`. Al activarla, se escriben las variables en `:root` y el canvas lee los colores desde una función `pal()` en vez de constantes.
+  - Se guarda en `S.pal` (activa) y `S.pals` (compradas).
+  - Cuidado con el contraste: cada paleta tiene que pasar una revisión de legibilidad del texto sobre las superficies.
+
 ## Vía Pulso: modificador "Brújula" (las flechas giran antes de llegar)
 Las flechas suben apuntando hacia otra dirección (una de las otras tres, elegida con la semilla de la canción) y giran a su dirección correcta un tiempo antes de llegar al indicador. Hay que esperar el giro para saber qué tecla tocar. El carril ya es el correcto desde el principio: lo que engaña es la forma.
 - **Estrellas:** +20% como referencia, igual que Oculto. Se habilita como los demás: con el nodo Modificadores y superando Difícil en un planeta de Vía Pulso.

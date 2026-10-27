@@ -6,20 +6,35 @@
   };
   const clock = () => ac ? ac.currentTime : performance.now() / 1000;
   const mtof = m => 440 * 2 ** ((m - 69) / 12);
+  // Volúmenes por canal (menú Ajustes): música de fondo, música de juego, voces y efectos. Cada canal es un nodo de ganancia.
+  const VOL_DEF = { amb: 0.7, music: 1, voice: 0.8, sfx: 1 };
+  const vol = k => (S.vol && S.vol[k] != null ? S.vol[k] : VOL_DEF[k]);
+  let busCtx = null, BUS = {};
+  function bus(k) {
+    if (!ac) return null;
+    if (busCtx !== ac) { busCtx = ac; BUS = {}; }
+    if (!BUS[k]) { const g = ac.createGain(); g.gain.value = vol(k); g.connect(ac.destination); BUS[k] = g; }
+    return BUS[k];
+  }
+  function setVol(k, v) { S.vol = { ...(S.vol || {}), [k]: v }; if (ac && BUS[k] && busCtx === ac) BUS[k].gain.setTargetAtTime(v, ac.currentTime, 0.03); }
+  // Canal de salida actual de los sonidos básicos (tone, kick, ruido, bajo): efectos, salvo cuando suena la música o una voz
+  let aOut = 'sfx';
+  const dest = () => bus(aOut);
+  const onBus = (k, fn) => { const prev = aOut; aOut = k; try { return fn(); } finally { aOut = prev; } };
   function tone(at, type, freq, vol, dur, toFreq) {
     if (!ac) return;
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, at);
     if (toFreq) o.frequency.exponentialRampToValueAtTime(toFreq, at + dur * 0.8);
     g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.001, at + dur);
-    o.connect(g).connect(ac.destination); o.start(at); o.stop(at + dur + 0.02);
+    o.connect(g).connect(dest()); o.start(at); o.stop(at + dur + 0.02);
   }
   function kick(at, accent, hard) {
     if (!ac) return;
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = 'sine'; o.frequency.setValueAtTime(accent || hard ? 165 : 120, at); o.frequency.exponentialRampToValueAtTime(42, at + 0.12);
     g.gain.setValueAtTime(hard ? 0.7 : accent ? 0.55 : 0.38, at); g.gain.exponentialRampToValueAtTime(0.001, at + (hard ? 0.22 : 0.16));
-    o.connect(g).connect(ac.destination); o.start(at); o.stop(at + 0.25);
+    o.connect(g).connect(dest()); o.start(at); o.stop(at + 0.25);
   }
   let noiseBuf = null;
   function nz(at, { type = 'highpass', freq = 7000, q = 0.7, vol = 0.1, dur = 0.05 } = {}) {
@@ -31,7 +46,7 @@
     const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
     src.buffer = noiseBuf; f.type = type; f.frequency.value = freq; f.Q.value = q;
     g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.001, at + dur);
-    src.connect(f).connect(g).connect(ac.destination); src.start(at); src.stop(at + dur + 0.02);
+    src.connect(f).connect(g).connect(dest()); src.start(at); src.stop(at + dur + 0.02);
   }
   const hat = (at, vol) => nz(at, { vol, dur: 0.045 });
   const ohat = (at, vol) => nz(at, { vol, dur: 0.22, freq: 6500 });
@@ -45,7 +60,7 @@
     osc.type = o.type ?? 'sawtooth'; osc.frequency.value = mtof(midi);
     f.type = 'lowpass'; f.frequency.setValueAtTime(cut, at); f.frequency.exponentialRampToValueAtTime(Math.max(120, cut * 0.22), at + dur);
     g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(o.vol ?? 0.13, at + 0.01); g.gain.exponentialRampToValueAtTime(0.001, at + dur);
-    osc.connect(f).connect(g).connect(ac.destination); osc.start(at); osc.stop(at + dur + 0.02);
+    osc.connect(f).connect(g).connect(dest()); osc.start(at); osc.stop(at + dur + 0.02);
   }
   function power(at, midi, dur) { bass(at, midi, dur, { cut: 1800, vol: 0.035 }); bass(at, midi + 7, dur, { cut: 1800, vol: 0.03 }); }
   const pluck = (at, midi, vol = 0.04, dur = 0.25) => tone(at, 'triangle', mtof(midi), vol, dur);
@@ -57,7 +72,7 @@
     o.type = gold ? 'sine' : 'triangle';
     o.frequency.value = LANE_NOW[lane % 4] * (lane >= 4 ? 0.75 : 1) * (j === 'perfect' ? 2 : 1) * (gold ? 1.5 : 1);
     g.gain.setValueAtTime(0.1, at); g.gain.exponentialRampToValueAtTime(0.001, at + 0.1);
-    o.connect(g).connect(ac.destination); o.start(at); o.stop(at + 0.12);
+    o.connect(g).connect(dest()); o.start(at); o.stop(at + 0.12);
   }
 
   // ---------- Generación de charts ----------

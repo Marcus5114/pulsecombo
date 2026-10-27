@@ -649,11 +649,38 @@
     else if (act === 'reset') { devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; resetAsk(); }
     else { $('devCode').value = ''; $('devCode').placeholder = 'Código incorrecto'; }
   });
-  // Sonido: música de fondo y voces de los diálogos (se pueden apagar)
-  function renderSound() { $('ambBtn').textContent = `Música de fondo: ${S.ambient === false ? 'no' : 'sí'}`; $('voiceBtn').textContent = `Voces: ${S.voices === false ? 'no' : 'sí'}`; }
-  $('ambBtn').addEventListener('click', () => { S.ambient = S.ambient === false; save(); renderSound(); ensureAudio(); ambientUpdate(); });
-  $('voiceBtn').addEventListener('click', () => { S.voices = S.voices === false; save(); renderSound(); });
-  renderSound();
+  // ---------- Ajustes: volumen por canal ----------
+  if (S.ambient === false || S.voices === false) { S.vol = { ...(S.vol || {}), ...(S.ambient === false ? { amb: 0 } : {}), ...(S.voices === false ? { voice: 0 } : {}) }; delete S.ambient; delete S.voices; }
+  const VOL_ROWS = [['amb', 'Música de fondo', 'El ambiente espacial de los menús y mapas'], ['music', 'Música de juego', 'Las canciones durante la partida'], ['voice', 'Voces', 'Los personajes al hablar'], ['sfx', 'Efectos de sonido', 'Aciertos, señales y avisos']];
+  function renderSettings() {
+    $('volList').innerHTML = VOL_ROWS.map(([k, name, what]) => `<label class="vol-row"><span class="vr-t"><b>${name}</b><small>${what}</small></span>
+      <input type="range" min="0" max="100" step="5" value="${Math.round(vol(k) * 100)}" data-vol="${k}" aria-label="${name}"><output>${Math.round(vol(k) * 100)}%</output></label>`).join('');
+  }
+  // Muestra corta del canal al mover la barra
+  let previewAt = 0;
+  function volPreview(k) {
+    ensureAudio(); if (!ac) return;
+    const now = performance.now(); if (now - previewAt < 180) return; previewAt = now;
+    const at = ac.currentTime + 0.02;
+    if (k === 'amb') ambientUpdate();
+    else if (k === 'music') onBus('music', () => { kick(at, true); for (const [d, m] of [[0, 48], [0.12, 55], [0.24, 60]]) bass(at + d, m, 0.3, { cut: 1600, vol: 0.1 }); });
+    else if (k === 'voice') [...'Hola, Lumen'].forEach((c, n) => voiceChar('cora', c, at + n * 0.045));
+    else onBus('sfx', () => { tone(at, 'triangle', 880, 0.12, 0.12); tone(at + 0.08, 'triangle', 1320, 0.1, 0.14); });
+  }
+  function settingsOpen(on) {
+    $('setCard').hidden = $('setBack').hidden = !on;
+    if (on) { renderSettings(); $('setClose').focus(); }
+  }
+  $('volList').addEventListener('input', e => {
+    const r = e.target.closest('input[data-vol]'); if (!r) return;
+    const k = r.dataset.vol, v = r.value / 100; setVol(k, v); r.nextElementSibling.textContent = r.value + '%';
+    save(); volPreview(k); if (k === 'amb') ambientUpdate();
+  });
+  $('tabSet').addEventListener('click', () => settingsOpen(true));
+  $('pauseSet').addEventListener('click', () => settingsOpen(true));
+  $('setClose').addEventListener('click', () => settingsOpen(false));
+  $('setBack').addEventListener('click', () => settingsOpen(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('setCard').hidden) { settingsOpen(false); e.stopPropagation(); e.preventDefault(); } }, true);
   const resetBox = $('resetBox');
   // Reinicio total: también vuelven la cinemática de inicio, la historia y la Sintonía
   const resetAsk = () => { resetBox.innerHTML = '<span class="confirm">¿Borrar todo (monedas, árboles, galaxias, récords, historia y Sintonía)? <button class="link" id="yes">Sí, borrar</button><button class="link" id="no">Cancelar</button></span>'; resetBox.querySelector('#no').focus(); };

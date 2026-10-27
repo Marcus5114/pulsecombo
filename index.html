@@ -694,7 +694,22 @@ body.land .rx-txt { display: none; }
 .rule-diffs li b { color: var(--fg); }
 .rule-diffs li.on { border-left-color: var(--acc); color: var(--fg); }
 .rule-diffs li.on b { color: var(--acc); }
-#soundBox { display: inline-flex; gap: 14px; flex-wrap: wrap; }
+
+/* ---------- Ajustes ---------- */
+.tab-set { margin-left: auto; flex: 0 0 auto !important; }
+.tab-set .long { margin-left: 6px; }
+.set-back { position: fixed; inset: 0; z-index: 70; background: rgba(0, 0, 0, 0.55); }
+.set-card { position: fixed; z-index: 71; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 14px 50px rgba(0, 0, 0, 0.6); }
+.set-card[hidden], .set-back[hidden] { display: none; }
+.set-h { margin: 0; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.vol-list { display: flex; flex-direction: column; gap: 14px; }
+.vol-row { display: grid; grid-template-columns: minmax(0, 1fr) 46px; grid-template-areas: 't t' 'r o'; gap: 4px 10px; align-items: center; }
+.vr-t { grid-area: t; display: flex; flex-direction: column; gap: 1px; }
+.vr-t b { font-size: 0.85rem; }
+.vr-t small { font-size: 0.72rem; color: var(--muted); }
+.vol-row input { grid-area: r; width: 100%; accent-color: var(--acc); }
+.vol-row output { grid-area: o; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.8rem; font-weight: 800; }
 </style>
 </head>
 <body>
@@ -716,7 +731,16 @@ body.land .rx-txt { display: none; }
   <button class="tab" id="tabMap" aria-pressed="true">Mapa</button>
   <button class="tab" id="tabTree" aria-pressed="false">Mejoras <span class="badge" id="badge" hidden></span></button>
   <button class="tab" id="tabGlobal" aria-pressed="false"><span class="long">Árbol global</span><span class="short">Global</span> <span class="badge" id="badgeG" hidden></span></button>
+  <button class="tab tab-set" id="tabSet" aria-label="Ajustes" aria-haspopup="dialog"><span aria-hidden="true">⚙</span><span class="long">Ajustes</span></button>
 </nav>
+<!-- Ajustes: volumen de cada canal de sonido -->
+<div class="set-back" id="setBack" hidden></div>
+<div class="set-card" id="setCard" role="dialog" aria-labelledby="setTitle" hidden>
+  <div class="sc-head"><h2 id="setTitle">Ajustes</h2><button class="ghost-btn" id="setClose" aria-label="Cerrar">✕</button></div>
+  <h3 class="set-h">Volumen</h3>
+  <div class="vol-list" id="volList"></div>
+  <p class="hint">Mové una barra para escuchar cómo suena. En cero, ese sonido se apaga.</p>
+</div>
 
 <div class="notice" id="notice" hidden><span id="noticeText"></span><button class="link" id="noticeClose">Cerrar</button></div>
 
@@ -797,6 +821,7 @@ body.land .rx-txt { display: none; }
           <button class="play-btn" id="resumeBtn">Continuar</button>
           <button class="ghost-btn" id="restartBtn">Reiniciar canción</button>
           <button class="ghost-btn" id="endBtn">Terminar canción</button>
+          <button class="ghost-btn" id="pauseSet">Ajustes de sonido</button>
           <p class="hint" id="endWarn">Si terminás ahora, no te quedás con lo ganado en esta canción.</p>
         </div>
         <div class="count" id="countNum" hidden></div>
@@ -869,7 +894,7 @@ body.land .rx-txt { display: none; }
 
 <footer class="foot">
   <span id="tot"></span>
-  <span class="foot-r"><span id="soundBox"><button class="link" id="ambBtn"></button><button class="link" id="voiceBtn"></button></span><span id="devBox"><button class="link" id="devOpen">Código</button></span><span id="resetBox"><button class="link" id="reset">Reiniciar progreso</button></span></span>
+  <span class="foot-r"><span id="devBox"><button class="link" id="devOpen">Código</button></span><span id="resetBox"><button class="link" id="reset">Reiniciar progreso</button></span></span>
 </footer>
 
 <script>
@@ -1298,20 +1323,35 @@ body.land .rx-txt { display: none; }
   };
   const clock = () => ac ? ac.currentTime : performance.now() / 1000;
   const mtof = m => 440 * 2 ** ((m - 69) / 12);
+  // Volúmenes por canal (menú Ajustes): música de fondo, música de juego, voces y efectos. Cada canal es un nodo de ganancia.
+  const VOL_DEF = { amb: 0.7, music: 1, voice: 0.8, sfx: 1 };
+  const vol = k => (S.vol && S.vol[k] != null ? S.vol[k] : VOL_DEF[k]);
+  let busCtx = null, BUS = {};
+  function bus(k) {
+    if (!ac) return null;
+    if (busCtx !== ac) { busCtx = ac; BUS = {}; }
+    if (!BUS[k]) { const g = ac.createGain(); g.gain.value = vol(k); g.connect(ac.destination); BUS[k] = g; }
+    return BUS[k];
+  }
+  function setVol(k, v) { S.vol = { ...(S.vol || {}), [k]: v }; if (ac && BUS[k] && busCtx === ac) BUS[k].gain.setTargetAtTime(v, ac.currentTime, 0.03); }
+  // Canal de salida actual de los sonidos básicos (tone, kick, ruido, bajo): efectos, salvo cuando suena la música o una voz
+  let aOut = 'sfx';
+  const dest = () => bus(aOut);
+  const onBus = (k, fn) => { const prev = aOut; aOut = k; try { return fn(); } finally { aOut = prev; } };
   function tone(at, type, freq, vol, dur, toFreq) {
     if (!ac) return;
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, at);
     if (toFreq) o.frequency.exponentialRampToValueAtTime(toFreq, at + dur * 0.8);
     g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.001, at + dur);
-    o.connect(g).connect(ac.destination); o.start(at); o.stop(at + dur + 0.02);
+    o.connect(g).connect(dest()); o.start(at); o.stop(at + dur + 0.02);
   }
   function kick(at, accent, hard) {
     if (!ac) return;
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = 'sine'; o.frequency.setValueAtTime(accent || hard ? 165 : 120, at); o.frequency.exponentialRampToValueAtTime(42, at + 0.12);
     g.gain.setValueAtTime(hard ? 0.7 : accent ? 0.55 : 0.38, at); g.gain.exponentialRampToValueAtTime(0.001, at + (hard ? 0.22 : 0.16));
-    o.connect(g).connect(ac.destination); o.start(at); o.stop(at + 0.25);
+    o.connect(g).connect(dest()); o.start(at); o.stop(at + 0.25);
   }
   let noiseBuf = null;
   function nz(at, { type = 'highpass', freq = 7000, q = 0.7, vol = 0.1, dur = 0.05 } = {}) {
@@ -1323,7 +1363,7 @@ body.land .rx-txt { display: none; }
     const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
     src.buffer = noiseBuf; f.type = type; f.frequency.value = freq; f.Q.value = q;
     g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.001, at + dur);
-    src.connect(f).connect(g).connect(ac.destination); src.start(at); src.stop(at + dur + 0.02);
+    src.connect(f).connect(g).connect(dest()); src.start(at); src.stop(at + dur + 0.02);
   }
   const hat = (at, vol) => nz(at, { vol, dur: 0.045 });
   const ohat = (at, vol) => nz(at, { vol, dur: 0.22, freq: 6500 });
@@ -1337,7 +1377,7 @@ body.land .rx-txt { display: none; }
     osc.type = o.type ?? 'sawtooth'; osc.frequency.value = mtof(midi);
     f.type = 'lowpass'; f.frequency.setValueAtTime(cut, at); f.frequency.exponentialRampToValueAtTime(Math.max(120, cut * 0.22), at + dur);
     g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(o.vol ?? 0.13, at + 0.01); g.gain.exponentialRampToValueAtTime(0.001, at + dur);
-    osc.connect(f).connect(g).connect(ac.destination); osc.start(at); osc.stop(at + dur + 0.02);
+    osc.connect(f).connect(g).connect(dest()); osc.start(at); osc.stop(at + dur + 0.02);
   }
   function power(at, midi, dur) { bass(at, midi, dur, { cut: 1800, vol: 0.035 }); bass(at, midi + 7, dur, { cut: 1800, vol: 0.03 }); }
   const pluck = (at, midi, vol = 0.04, dur = 0.25) => tone(at, 'triangle', mtof(midi), vol, dur);
@@ -1349,7 +1389,7 @@ body.land .rx-txt { display: none; }
     o.type = gold ? 'sine' : 'triangle';
     o.frequency.value = LANE_NOW[lane % 4] * (lane >= 4 ? 0.75 : 1) * (j === 'perfect' ? 2 : 1) * (gold ? 1.5 : 1);
     g.gain.setValueAtTime(0.1, at); g.gain.exponentialRampToValueAtTime(0.001, at + 0.1);
-    o.connect(g).connect(ac.destination); o.start(at); o.stop(at + 0.12);
+    o.connect(g).connect(dest()); o.start(at); o.stop(at + 0.12);
   }
 
   // ---------- Generación de charts ----------
@@ -1676,9 +1716,9 @@ body.land .rx-txt { display: none; }
   let mBus = null, mDelay = null;
   function musicBus() {
     if (!ac) return null;
-    if (!mBus) {
+    if (!mBus || mBus.context !== ac) {
       const comp = ac.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
-      mBus = ac.createGain(); mBus.connect(comp).connect(ac.destination);
+      mBus = ac.createGain(); mBus.connect(comp).connect(bus('music'));
       mDelay = ac.createDelay(1.5);
       const fb = ac.createGain(), lp = ac.createBiquadFilter(), wet = ac.createGain();
       fb.gain.value = 0.32; lp.type = 'lowpass'; lp.frequency.value = 2200; wet.gain.value = 0.5;
@@ -1791,7 +1831,9 @@ body.land .rx-txt { display: none; }
   function musicStart(st) { if (musicBus()) mDelay.delayTime.value = Math.min(1.4, st * 3); }
 
   // Toca el paso i (semicorchea) de la pieza. total: largo de la canción en pasos · signal: sin melodía ni arpegios
-  function playMusic(M, at, i, st, total, signal) {
+  // La música de la partida sale por su propio canal de volumen
+  function playMusic(M, at, i, st, total, signal) { onBus('music', () => playMusic0(M, at, i, st, total, signal)); }
+  function playMusic0(M, at, i, st, total, signal) {
     if (!ac) return;
     const fin = total - 8, bar = i >> 4, p = i & 15;
     if (i > fin) return;
@@ -1847,17 +1889,18 @@ body.land .rx-txt { display: none; }
   // y "voces" de blips al estilo Animal Crossing para cada personaje mientras se escribe su línea.
 
   // Reverb barata: dos ecos con realimentación y filtro, compartidos por el ambiente y las voces
-  let fxBus = null;
-  function spaceVerb() {
+  let fxBus = null;   // una reverb por canal (ambiente y voces), para que respete el volumen de cada uno
+  function spaceVerb(k = 'amb') {
     if (!ac) return null;
-    if (fxBus && fxBus.ctx === ac) return fxBus.node;
-    const inp = ac.createGain(), out = ac.createGain(); out.gain.value = 0.7; out.connect(ac.destination);
+    if (!fxBus || fxBus.ctx !== ac) fxBus = { ctx: ac };
+    if (fxBus[k]) return fxBus[k];
+    const inp = ac.createGain(), out = ac.createGain(); out.gain.value = 0.7; out.connect(bus(k));
     for (const [t, fbv] of [[0.37, 0.62], [0.53, 0.58]]) {
       const d = ac.createDelay(2), fb = ac.createGain(), lp = ac.createBiquadFilter();
       d.delayTime.value = t; fb.gain.value = fbv; lp.type = 'lowpass'; lp.frequency.value = 1800;
       inp.connect(d); d.connect(lp); lp.connect(fb).connect(d); lp.connect(out);
     }
-    fxBus = { ctx: ac, node: inp };
+    fxBus[k] = inp;
     return inp;
   }
 
@@ -1885,18 +1928,19 @@ body.land .rx-txt { display: none; }
     for (const [dt, m] of AMB_STAR_AT) {
       const at = t0 + dt, o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.value = mtof(m);
       g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.022, at + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, at + 2.2);
-      o.connect(g); g.connect(cg); g.connect(spaceVerb()); o.start(at); o.stop(at + 2.3);
+      o.connect(g); g.connect(cg); g.connect(spaceVerb('amb')); o.start(at); o.stop(at + 2.3);
     }
   }
   function ambientTick() {
     if (!amb || !ac) return;
     while (amb.next < ac.currentTime + 3) { ambientCycle(amb.next); amb.next += AMB_CYCLE - AMB_FADE; }
   }
+  const ambBus = () => bus('amb');
   function ambientStart() {
     if (amb || !ac) return;
     const bus = ac.createGain(), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
     bus.gain.setValueAtTime(0.0001, ac.currentTime); bus.gain.linearRampToValueAtTime(0.55, ac.currentTime + 3);
-    bus.connect(lp).connect(ac.destination); lp.connect(spaceVerb());
+    bus.connect(lp).connect(ambBus()); lp.connect(spaceVerb('amb'));
     // viento: ruido filtrado que barre lentamente
     const n = ac.createBufferSource(), nb = ac.createBuffer(1, ac.sampleRate * 4, ac.sampleRate), d = nb.getChannelData(0);
     for (let k = 0; k < d.length; k++) d[k] = Math.random() * 2 - 1;
@@ -1914,10 +1958,10 @@ body.land .rx-txt { display: none; }
     a.bus.gain.cancelScheduledValues(ac.currentTime); a.bus.gain.setValueAtTime(a.bus.gain.value, ac.currentTime); a.bus.gain.linearRampToValueAtTime(0.0001, ac.currentTime + 1.5);
     setTimeout(() => { for (const s of a.stop) try { s.stop(); } catch (e) {} a.bus.disconnect(); }, 1700);
   }
-  // Suena fuera de las partidas, si está activada (S.ambient, por defecto sí)
+  // Suena fuera de las partidas, si su volumen no está en cero
   function ambientUpdate() {
     if (!ac) return;
-    const want = S.ambient !== false && view !== 'play';
+    const want = vol('amb') > 0 && view !== 'play';
     if (want) ambientStart(); else ambientStop();
   }
   // El navegador solo deja arrancar el audio después de un toque o una tecla
@@ -1948,11 +1992,11 @@ body.land .rx-txt { display: none; }
   }
   function voiceOut() {
     if (!ac) return null;
-    const g = ac.createGain(); g.gain.value = 1; g.connect(ac.destination); return g;
+    return bus('voice');
   }
   // Suena un carácter de la línea (se llama desde el cuadro de diálogo; las letras van de a una, se habla cada dos)
   function voiceChar(who, ch, at = ac && ac.currentTime) {
-    if (!ac || S.voices === false) return;
+    if (!ac || vol('voice') <= 0) return;
     const out = voiceOut(); if (!out) return;
     const V = voiceOf(who), k = voiceIdx++;
     const glyph = /[←↑→↓↖↗↘↙▀▄█▙▚▛▜▝▞▟▖▗▘∿〰◐◑◇]/.test(ch);
@@ -1976,17 +2020,17 @@ body.land .rx-txt { display: none; }
       const p = blip(at, f, 'square', 0.035, 0.07); parts.push(p);
       const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 3;
       p.g.disconnect(); p.g.connect(bp).connect(out); p.routed = true;
-      nz(at, { type: 'bandpass', freq: 3200, q: 1.5, vol: 0.012, dur: 0.05 });
+      onBus('voice', () => nz(at, { type: 'bandpass', freq: 3200, q: 1.5, vol: 0.012, dur: 0.05 }));
     }
     for (const p of parts) { if (!p.routed) p.g.connect(out); p.o.start(at); p.o.stop(p.end); }
-    if (V.kind !== 'digital' && V.kind !== 'radio' && !V.dry) { const s = ac.createGain(); s.gain.value = 0.25; parts.forEach(p => p.g.connect(s)); s.connect(spaceVerb()); }
+    if (V.kind !== 'digital' && V.kind !== 'radio' && !V.dry) { const s = ac.createGain(); s.gain.value = 0.25; parts.forEach(p => p.g.connect(s)); s.connect(spaceVerb('voice')); }
   }
   // Al abrir el cuadro: un chasquido de radio para los que hablan por radio, un pitido para CORA
   function voiceOpen(who, at = ac && ac.currentTime) {
-    if (!ac || S.voices === false) return;
+    if (!ac || vol('voice') <= 0) return;
     voiceIdx = 0;
     const V = voiceOf(who);
-    if (V.kind === 'radio') nz(at, { type: 'bandpass', freq: 2400, q: 0.8, vol: 0.05, dur: 0.18 });
+    if (V.kind === 'radio') onBus('voice', () => nz(at, { type: 'bandpass', freq: 2400, q: 0.8, vol: 0.05, dur: 0.18 }));
     else if (V.kind === 'digital') { const p = blip(at, mtof(V.base + 7), 'sine', 0.035, 0.12); p.g.connect(voiceOut()); p.o.start(at); p.o.stop(p.end); }
   }
 
@@ -2002,7 +2046,7 @@ body.land .rx-txt { display: none; }
     src.buffer = noiseBuf; src.loop = true; f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 0.8;
     g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.05, at + 0.03);
     g.gain.setValueAtTime(0.05, Math.max(at + 0.04, end - 0.07)); g.gain.linearRampToValueAtTime(0.0001, end - 0.02);
-    src.connect(f).connect(g).connect(ac.destination); src.start(at); src.stop(end);
+    src.connect(f).connect(g).connect(dest()); src.start(at); src.stop(end);
     tone(end - 0.04, 'square', 1100, 0.025, 0.03);
   }
   // Largo de la pausa en semicorcheas: un tiempo en canciones lentas, dos en las rápidas (así dura parecido en segundos)
@@ -4733,11 +4777,38 @@ body.land .rx-txt { display: none; }
     else if (act === 'reset') { devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; resetAsk(); }
     else { $('devCode').value = ''; $('devCode').placeholder = 'Código incorrecto'; }
   });
-  // Sonido: música de fondo y voces de los diálogos (se pueden apagar)
-  function renderSound() { $('ambBtn').textContent = `Música de fondo: ${S.ambient === false ? 'no' : 'sí'}`; $('voiceBtn').textContent = `Voces: ${S.voices === false ? 'no' : 'sí'}`; }
-  $('ambBtn').addEventListener('click', () => { S.ambient = S.ambient === false; save(); renderSound(); ensureAudio(); ambientUpdate(); });
-  $('voiceBtn').addEventListener('click', () => { S.voices = S.voices === false; save(); renderSound(); });
-  renderSound();
+  // ---------- Ajustes: volumen por canal ----------
+  if (S.ambient === false || S.voices === false) { S.vol = { ...(S.vol || {}), ...(S.ambient === false ? { amb: 0 } : {}), ...(S.voices === false ? { voice: 0 } : {}) }; delete S.ambient; delete S.voices; }
+  const VOL_ROWS = [['amb', 'Música de fondo', 'El ambiente espacial de los menús y mapas'], ['music', 'Música de juego', 'Las canciones durante la partida'], ['voice', 'Voces', 'Los personajes al hablar'], ['sfx', 'Efectos de sonido', 'Aciertos, señales y avisos']];
+  function renderSettings() {
+    $('volList').innerHTML = VOL_ROWS.map(([k, name, what]) => `<label class="vol-row"><span class="vr-t"><b>${name}</b><small>${what}</small></span>
+      <input type="range" min="0" max="100" step="5" value="${Math.round(vol(k) * 100)}" data-vol="${k}" aria-label="${name}"><output>${Math.round(vol(k) * 100)}%</output></label>`).join('');
+  }
+  // Muestra corta del canal al mover la barra
+  let previewAt = 0;
+  function volPreview(k) {
+    ensureAudio(); if (!ac) return;
+    const now = performance.now(); if (now - previewAt < 180) return; previewAt = now;
+    const at = ac.currentTime + 0.02;
+    if (k === 'amb') ambientUpdate();
+    else if (k === 'music') onBus('music', () => { kick(at, true); for (const [d, m] of [[0, 48], [0.12, 55], [0.24, 60]]) bass(at + d, m, 0.3, { cut: 1600, vol: 0.1 }); });
+    else if (k === 'voice') [...'Hola, Lumen'].forEach((c, n) => voiceChar('cora', c, at + n * 0.045));
+    else onBus('sfx', () => { tone(at, 'triangle', 880, 0.12, 0.12); tone(at + 0.08, 'triangle', 1320, 0.1, 0.14); });
+  }
+  function settingsOpen(on) {
+    $('setCard').hidden = $('setBack').hidden = !on;
+    if (on) { renderSettings(); $('setClose').focus(); }
+  }
+  $('volList').addEventListener('input', e => {
+    const r = e.target.closest('input[data-vol]'); if (!r) return;
+    const k = r.dataset.vol, v = r.value / 100; setVol(k, v); r.nextElementSibling.textContent = r.value + '%';
+    save(); volPreview(k); if (k === 'amb') ambientUpdate();
+  });
+  $('tabSet').addEventListener('click', () => settingsOpen(true));
+  $('pauseSet').addEventListener('click', () => settingsOpen(true));
+  $('setClose').addEventListener('click', () => settingsOpen(false));
+  $('setBack').addEventListener('click', () => settingsOpen(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('setCard').hidden) { settingsOpen(false); e.stopPropagation(); e.preventDefault(); } }, true);
   const resetBox = $('resetBox');
   // Reinicio total: también vuelven la cinemática de inicio, la historia y la Sintonía
   const resetAsk = () => { resetBox.innerHTML = '<span class="confirm">¿Borrar todo (monedas, árboles, galaxias, récords, historia y Sintonía)? <button class="link" id="yes">Sí, borrar</button><button class="link" id="no">Cancelar</button></span>'; resetBox.querySelector('#no').focus(); };

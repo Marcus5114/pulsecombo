@@ -207,9 +207,9 @@
   let mBus = null, mDelay = null;
   function musicBus() {
     if (!ac) return null;
-    if (!mBus) {
+    if (!mBus || mBus.context !== ac) {
       const comp = ac.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
-      mBus = ac.createGain(); mBus.connect(comp).connect(ac.destination);
+      mBus = ac.createGain(); mBus.connect(comp).connect(bus('music'));
       mDelay = ac.createDelay(1.5);
       const fb = ac.createGain(), lp = ac.createBiquadFilter(), wet = ac.createGain();
       fb.gain.value = 0.32; lp.type = 'lowpass'; lp.frequency.value = 2200; wet.gain.value = 0.5;
@@ -322,7 +322,9 @@
   function musicStart(st) { if (musicBus()) mDelay.delayTime.value = Math.min(1.4, st * 3); }
 
   // Toca el paso i (semicorchea) de la pieza. total: largo de la canción en pasos · signal: sin melodía ni arpegios
-  function playMusic(M, at, i, st, total, signal) {
+  // La música de la partida sale por su propio canal de volumen
+  function playMusic(M, at, i, st, total, signal) { onBus('music', () => playMusic0(M, at, i, st, total, signal)); }
+  function playMusic0(M, at, i, st, total, signal) {
     if (!ac) return;
     const fin = total - 8, bar = i >> 4, p = i & 15;
     if (i > fin) return;

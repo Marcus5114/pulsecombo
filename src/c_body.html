@@ -16,7 +16,16 @@
   <button class="tab" id="tabMap" aria-pressed="true">Mapa</button>
   <button class="tab" id="tabTree" aria-pressed="false">Mejoras <span class="badge" id="badge" hidden></span></button>
   <button class="tab" id="tabGlobal" aria-pressed="false"><span class="long">Árbol global</span><span class="short">Global</span> <span class="badge" id="badgeG" hidden></span></button>
+  <button class="tab tab-set" id="tabSet" aria-label="Ajustes" aria-haspopup="dialog"><span aria-hidden="true">⚙</span><span class="long">Ajustes</span></button>
 </nav>
+<!-- Ajustes: volumen de cada canal de sonido -->
+<div class="set-back" id="setBack" hidden></div>
+<div class="set-card" id="setCard" role="dialog" aria-labelledby="setTitle" hidden>
+  <div class="sc-head"><h2 id="setTitle">Ajustes</h2><button class="ghost-btn" id="setClose" aria-label="Cerrar">✕</button></div>
+  <h3 class="set-h">Volumen</h3>
+  <div class="vol-list" id="volList"></div>
+  <p class="hint">Mové una barra para escuchar cómo suena. En cero, ese sonido se apaga.</p>
+</div>
 
 <div class="notice" id="notice" hidden><span id="noticeText"></span><button class="link" id="noticeClose">Cerrar</button></div>
 
@@ -97,6 +106,7 @@
           <button class="play-btn" id="resumeBtn">Continuar</button>
           <button class="ghost-btn" id="restartBtn">Reiniciar canción</button>
           <button class="ghost-btn" id="endBtn">Terminar canción</button>
+          <button class="ghost-btn" id="pauseSet">Ajustes de sonido</button>
           <p class="hint" id="endWarn">Si terminás ahora, no te quedás con lo ganado en esta canción.</p>
         </div>
         <div class="count" id="countNum" hidden></div>
@@ -169,5 +179,5 @@
 
 <footer class="foot">
   <span id="tot"></span>
-  <span class="foot-r"><span id="soundBox"><button class="link" id="ambBtn"></button><button class="link" id="voiceBtn"></button></span><span id="devBox"><button class="link" id="devOpen">Código</button></span><span id="resetBox"><button class="link" id="reset">Reiniciar progreso</button></span></span>
+  <span class="foot-r"><span id="devBox"><button class="link" id="devOpen">Código</button></span><span id="resetBox"><button class="link" id="reset">Reiniciar progreso</button></span></span>
 </footer>
