@@ -511,4 +511,13 @@ body.land .rx-txt { display: none; }
 .set-prog .dev { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .set-prog .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 body.playing .set-prog, body.playing .set-prog-h { display: none; }   /* en la partida no se reinicia ni se canjean códigos */
-body.playing { background-image: none !important; }   /* el patrón de la paleta no va en la partida */
+/* Patrón de la paleta: capa fija detrás de todo que se desliza en diagonal (una baldosa del patrón por ciclo, así no salta)
+   y se mece apenas (giro y escala). Sutil: acompaña, no distrae. No va en la partida. */
+body.has-pat::before { content: ""; position: fixed; inset: -30%; z-index: -1; pointer-events: none; background-image: var(--patbg); background-size: var(--ps) var(--ps);
+  animation: patdrift 14s linear infinite, patsway 23s ease-in-out infinite alternate; will-change: transform; }
+@keyframes patdrift { from { transform: translate(0, 0); } to { transform: translate(var(--ps), calc(var(--ps) * -1)); } }
+@keyframes patsway { from { rotate: -2.5deg; scale: 1; } to { rotate: 2.5deg; scale: 1.06; } }
+body.has-pat { background-color: transparent; }   /* el fondo lo pinta html; si no, el cuerpo tapa la capa del patrón */
+body.has-pat.playing::before { display: none; }
+body.pat-still::before { animation: none; }
+@media (prefers-reduced-motion: reduce) { body.has-pat::before { animation: none; } }

@@ -71,7 +71,12 @@
     else { document.body.style.removeProperty('--acc'); document.body.style.removeProperty('--acc-ink'); }
     // patrón del representante: solo de fondo en la interfaz (no en la partida ni en los mapas)
     const bs = document.body.style;
-    if (p && PATTERNS[p.id]) { bs.backgroundImage = patUrl(p.id, 0.16); bs.backgroundAttachment = 'fixed'; } else { bs.backgroundImage = ''; bs.backgroundAttachment = ''; }
+    // Va en una capa aparte (body::before) que se desliza y se mece despacio, al estilo de los fondos de Balatro.
+    // Se anima con transformaciones, que resuelve la placa de video sin repintar. Quieta en Modo rendimiento.
+    const hasPat = !!(p && PATTERNS[p.id]);
+    document.body.classList.toggle('has-pat', hasPat); document.body.classList.toggle('pat-still', !!S.lowGfx);
+    if (hasPat) { root.setProperty('--patbg', patUrl(p.id, 0.16)); root.setProperty('--ps', PATTERNS[p.id][0] + 'px'); } else { root.removeProperty('--patbg'); root.removeProperty('--ps'); }
+    bs.backgroundImage = ''; bs.backgroundAttachment = '';
     // en los mapas (galaxias y planetas) no hay patrón: solo el degradé toma los tonos de la paleta
     const mp = [['--map0', p ? P.s2 : ''], ['--map1', p ? P.bg : ''], ['--map2', p ? P.cv : '']];
     for (const [k, v] of mp) v ? root.setProperty(k, v) : root.removeProperty(k);

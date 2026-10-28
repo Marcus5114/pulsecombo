@@ -692,7 +692,7 @@
     $('setCard').hidden = $('setBack').hidden = !on;
     if (on) { renderSettings(); renderLook(); $('lowGfx').checked = !!S.lowGfx; $('setClose').focus(); }
   }
-  $('lowGfx').addEventListener('change', e => { S.lowGfx = e.target.checked; if (!S.lowGfx) gfxScale = 2; save(); resize(); if (view === 'play' && run) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)(); });
+  $('lowGfx').addEventListener('change', e => { S.lowGfx = e.target.checked; if (!S.lowGfx) gfxScale = 2; save(); lookApply(); resize(); if (view === 'play' && run) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)(); });
   $('volList').addEventListener('input', e => {
     const r = e.target.closest('input[data-vol]'); if (!r) return;
     const k = r.dataset.vol, v = r.value / 100; setVol(k, v); r.nextElementSibling.textContent = r.value + '%';
@@ -724,7 +724,7 @@
       frameEma = frameEma * 0.95 + dt * 1000 * 0.05;
       if (frameEma > 22 && gfxScale > 1 && now - gfxDrop > 2500 && Math.min(window.devicePixelRatio || 1, gfxMax()) > 1) { gfxScale = Math.max(1, Math.min(gfxScale, gfxMax()) - 0.5); gfxDrop = now; resize(); }
       else if (frameEma > 25 && !S.lowGfx && !S.lowGfxAsked && now - gfxDrop > 4000 && run.ch && gameT() > LEAD + 6) {
-        S.lowGfx = true; S.lowGfxAsked = true; lowGfxNote = true; save(); resize();   // el aviso se muestra al salir de la partida
+        S.lowGfx = true; S.lowGfxAsked = true; lowGfxNote = true; save(); resize(); lookApply();   // el aviso se muestra al salir de la partida
       }
     } else frameEma = 16;
     creditEcos(dt);

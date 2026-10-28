@@ -755,7 +755,16 @@ body.land .rx-txt { display: none; }
 .set-prog .dev { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .set-prog .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 body.playing .set-prog, body.playing .set-prog-h { display: none; }   /* en la partida no se reinicia ni se canjean códigos */
-body.playing { background-image: none !important; }   /* el patrón de la paleta no va en la partida */
+/* Patrón de la paleta: capa fija detrás de todo que se desliza en diagonal (una baldosa del patrón por ciclo, así no salta)
+   y se mece apenas (giro y escala). Sutil: acompaña, no distrae. No va en la partida. */
+body.has-pat::before { content: ""; position: fixed; inset: -30%; z-index: -1; pointer-events: none; background-image: var(--patbg); background-size: var(--ps) var(--ps);
+  animation: patdrift 14s linear infinite, patsway 23s ease-in-out infinite alternate; will-change: transform; }
+@keyframes patdrift { from { transform: translate(0, 0); } to { transform: translate(var(--ps), calc(var(--ps) * -1)); } }
+@keyframes patsway { from { rotate: -2.5deg; scale: 1; } to { rotate: 2.5deg; scale: 1.06; } }
+body.has-pat { background-color: transparent; }   /* el fondo lo pinta html; si no, el cuerpo tapa la capa del patrón */
+body.has-pat.playing::before { display: none; }
+body.pat-still::before { animation: none; }
+@media (prefers-reduced-motion: reduce) { body.has-pat::before { animation: none; } }
 </style>
 </head>
 <body>
@@ -4347,7 +4356,12 @@ body.playing { background-image: none !important; }   /* el patrón de la paleta
     else { document.body.style.removeProperty('--acc'); document.body.style.removeProperty('--acc-ink'); }
     // patrón del representante: solo de fondo en la interfaz (no en la partida ni en los mapas)
     const bs = document.body.style;
-    if (p && PATTERNS[p.id]) { bs.backgroundImage = patUrl(p.id, 0.16); bs.backgroundAttachment = 'fixed'; } else { bs.backgroundImage = ''; bs.backgroundAttachment = ''; }
+    // Va en una capa aparte (body::before) que se desliza y se mece despacio, al estilo de los fondos de Balatro.
+    // Se anima con transformaciones, que resuelve la placa de video sin repintar. Quieta en Modo rendimiento.
+    const hasPat = !!(p && PATTERNS[p.id]);
+    document.body.classList.toggle('has-pat', hasPat); document.body.classList.toggle('pat-still', !!S.lowGfx);
+    if (hasPat) { root.setProperty('--patbg', patUrl(p.id, 0.16)); root.setProperty('--ps', PATTERNS[p.id][0] + 'px'); } else { root.removeProperty('--patbg'); root.removeProperty('--ps'); }
+    bs.backgroundImage = ''; bs.backgroundAttachment = '';
     // en los mapas (galaxias y planetas) no hay patrón: solo el degradé toma los tonos de la paleta
     const mp = [['--map0', p ? P.s2 : ''], ['--map1', p ? P.bg : ''], ['--map2', p ? P.cv : '']];
     for (const [k, v] of mp) v ? root.setProperty(k, v) : root.removeProperty(k);
@@ -5100,7 +5114,7 @@ body.playing { background-image: none !important; }   /* el patrón de la paleta
     $('setCard').hidden = $('setBack').hidden = !on;
     if (on) { renderSettings(); renderLook(); $('lowGfx').checked = !!S.lowGfx; $('setClose').focus(); }
   }
-  $('lowGfx').addEventListener('change', e => { S.lowGfx = e.target.checked; if (!S.lowGfx) gfxScale = 2; save(); resize(); if (view === 'play' && run) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)(); });
+  $('lowGfx').addEventListener('change', e => { S.lowGfx = e.target.checked; if (!S.lowGfx) gfxScale = 2; save(); lookApply(); resize(); if (view === 'play' && run) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)(); });
   $('volList').addEventListener('input', e => {
     const r = e.target.closest('input[data-vol]'); if (!r) return;
     const k = r.dataset.vol, v = r.value / 100; setVol(k, v); r.nextElementSibling.textContent = r.value + '%';
@@ -5132,7 +5146,7 @@ body.playing { background-image: none !important; }   /* el patrón de la paleta
       frameEma = frameEma * 0.95 + dt * 1000 * 0.05;
       if (frameEma > 22 && gfxScale > 1 && now - gfxDrop > 2500 && Math.min(window.devicePixelRatio || 1, gfxMax()) > 1) { gfxScale = Math.max(1, Math.min(gfxScale, gfxMax()) - 0.5); gfxDrop = now; resize(); }
       else if (frameEma > 25 && !S.lowGfx && !S.lowGfxAsked && now - gfxDrop > 4000 && run.ch && gameT() > LEAD + 6) {
-        S.lowGfx = true; S.lowGfxAsked = true; lowGfxNote = true; save(); resize();   // el aviso se muestra al salir de la partida
+        S.lowGfx = true; S.lowGfxAsked = true; lowGfxNote = true; save(); resize(); lookApply();   // el aviso se muestra al salir de la partida
       }
     } else frameEma = 16;
     creditEcos(dt);
