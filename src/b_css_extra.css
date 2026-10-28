@@ -524,3 +524,4 @@ body.pat-still::before { animation: none; }
 .menu-keys { margin: -4px 0 8px; font-size: 0.68rem; color: var(--muted); }
 .menu-keys kbd { font-size: 0.64rem; padding: 0 4px; }
 @media (hover: none) and (pointer: coarse) { .menu-keys { display: none; } }   /* en el celular no hay teclado */
+.glyph, .tab-set, .side-btn { font-variant-emoji: text; }   /* símbolos como texto, no como emoji (iOS) */

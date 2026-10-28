@@ -133,5 +133,5 @@
   });
   function lookBeta() {
     S.beta = true; lookState(); save(); lookApply(); renderUI(true);
-    $('noticeText').textContent = 'Código de prueba: Apariencia activada. Abrí Ajustes (⚙) para elegir paletas, acentos y diseños.'; $('notice').hidden = false;
+    $('noticeText').textContent = 'Código de prueba: Apariencia activada. Abrí Ajustes (⚙\uFE0E) para elegir paletas, acentos y diseños.'; $('notice').hidden = false;
   }

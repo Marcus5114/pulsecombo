@@ -469,9 +469,12 @@
     dlgNext();
   }
   // Glifos de los idiomas alienígenas (flechas, bloques, ondas, órbitas): se pintan del color de la galaxia
-  const GLYPHS = /([←↑→↓↖↗↘↙]+|[▀▄█▙▚▛▜▝▞▟▖▗▘]+|[∿〰]+|[◐◑◇]+|kssh)/g;
+  const GLYPHS = /((?:[←↑→↓↖↗↘↙]\uFE0E?)+|[▀▄█▙▚▛▜▝▞▟▖▗▘]+|(?:[∿〰]\uFE0E?)+|[◐◑◇]+|kssh)/g;
   const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-  const paintGlyphs = t => esc(t).replace(GLYPHS, '<span class="glyph">$1</span>');
+  // iOS dibuja algunos símbolos como emoji (las flechas diagonales, 〰, ♥, ⚙…). El selector U+FE0E pide la versión de texto.
+  const EMOJI_TXT = /([\u2194-\u2199\u21A9\u21AA\u2665\u2699\u25B6\u25C0\u2B05-\u2B07\u27A1\u3030\u303D])(?!\uFE0E)/g;
+  const noEmoji = t => t.replace(EMOJI_TXT, '$1\uFE0E');
+  const paintGlyphs = t => noEmoji(esc(t)).replace(GLYPHS, '<span class="glyph">$1</span>');
   const dlgPaint = t => { $('dlgText').innerHTML = cur(paintGlyphs(t.replace(/\{[a-z]*$/, ''))); };   // fichas de moneda con ícono (sin mostrar una ficha a medio escribir)
   function dlgNext() {
     clearInterval(dlgTimer);

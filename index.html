@@ -768,6 +768,7 @@ body.pat-still::before { animation: none; }
 .menu-keys { margin: -4px 0 8px; font-size: 0.68rem; color: var(--muted); }
 .menu-keys kbd { font-size: 0.64rem; padding: 0 4px; }
 @media (hover: none) and (pointer: coarse) { .menu-keys { display: none; } }   /* en el celular no hay teclado */
+.glyph, .tab-set, .side-btn { font-variant-emoji: text; }   /* símbolos como texto, no como emoji (iOS) */
 </style>
 </head>
 <body>
@@ -789,7 +790,7 @@ body.pat-still::before { animation: none; }
   <button class="tab" id="tabMap" aria-pressed="true">Mapa</button>
   <button class="tab" id="tabTree" aria-pressed="false">Mejoras <span class="badge" id="badge" hidden></span></button>
   <button class="tab" id="tabGlobal" aria-pressed="false"><span class="long">Árbol global</span><span class="short">Global</span> <span class="badge" id="badgeG" hidden></span></button>
-  <button class="tab tab-set" id="tabSet" aria-label="Ajustes" aria-haspopup="dialog"><span aria-hidden="true">⚙</span><span class="long">Ajustes</span></button>
+  <button class="tab tab-set" id="tabSet" aria-label="Ajustes" aria-haspopup="dialog"><span aria-hidden="true">⚙&#xFE0E;</span><span class="long">Ajustes</span></button>
 </nav>
 <!-- Ajustes: volumen de cada canal de sonido -->
 <div class="set-back" id="setBack" hidden></div>
@@ -845,7 +846,7 @@ body.pat-still::before { animation: none; }
       <button class="side-btn" data-card="rules" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">?</span><span class="sb-tx">Reglas</span></button>
     </div>
     <div class="side-btns side-r">
-      <button class="side-btn" data-card="mech" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">⚙</span><span class="sb-tx">Mecánicas</span></button>
+      <button class="side-btn" data-card="mech" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">⚙&#xFE0E;</span><span class="sb-tx">Mecánicas</span></button>
       <button class="side-btn" data-card="mods" aria-haspopup="dialog"><span class="sb-ic" aria-hidden="true">±</span><span class="sb-tx">Modificadores</span><b class="sb-n" id="modCount" hidden></b></button>
     </div>
     </div>
@@ -3923,9 +3924,12 @@ body.pat-still::before { animation: none; }
     dlgNext();
   }
   // Glifos de los idiomas alienígenas (flechas, bloques, ondas, órbitas): se pintan del color de la galaxia
-  const GLYPHS = /([←↑→↓↖↗↘↙]+|[▀▄█▙▚▛▜▝▞▟▖▗▘]+|[∿〰]+|[◐◑◇]+|kssh)/g;
+  const GLYPHS = /((?:[←↑→↓↖↗↘↙]\uFE0E?)+|[▀▄█▙▚▛▜▝▞▟▖▗▘]+|(?:[∿〰]\uFE0E?)+|[◐◑◇]+|kssh)/g;
   const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-  const paintGlyphs = t => esc(t).replace(GLYPHS, '<span class="glyph">$1</span>');
+  // iOS dibuja algunos símbolos como emoji (las flechas diagonales, 〰, ♥, ⚙…). El selector U+FE0E pide la versión de texto.
+  const EMOJI_TXT = /([\u2194-\u2199\u21A9\u21AA\u2665\u2699\u25B6\u25C0\u2B05-\u2B07\u27A1\u3030\u303D])(?!\uFE0E)/g;
+  const noEmoji = t => t.replace(EMOJI_TXT, '$1\uFE0E');
+  const paintGlyphs = t => noEmoji(esc(t)).replace(GLYPHS, '<span class="glyph">$1</span>');
   const dlgPaint = t => { $('dlgText').innerHTML = cur(paintGlyphs(t.replace(/\{[a-z]*$/, ''))); };   // fichas de moneda con ícono (sin mostrar una ficha a medio escribir)
   function dlgNext() {
     clearInterval(dlgTimer);
@@ -4425,7 +4429,7 @@ body.pat-still::before { animation: none; }
   });
   function lookBeta() {
     S.beta = true; lookState(); save(); lookApply(); renderUI(true);
-    $('noticeText').textContent = 'Código de prueba: Apariencia activada. Abrí Ajustes (⚙) para elegir paletas, acentos y diseños.'; $('notice').hidden = false;
+    $('noticeText').textContent = 'Código de prueba: Apariencia activada. Abrí Ajustes (⚙\uFE0E) para elegir paletas, acentos y diseños.'; $('notice').hidden = false;
   }
 
   // ---------- Vistas ----------
