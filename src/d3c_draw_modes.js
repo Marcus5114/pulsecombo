@@ -36,7 +36,7 @@
     const al = 1 - age, sc = 1 + 0.15 * Math.max(0, 1 - age * 4);
     ctx.save(); ctx.translate(W / 2, y); ctx.scale(sc, sc);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = F(900, U * (['dec', 'lost', 'tetra', 'off', 'carrier'].includes(judge) ? 0.065 : 0.08));
+    ctx.font = F(900, U * (['dec', 'lost', 'tetra', 'off', 'carrier', 'saved', 'fork'].includes(judge) ? 0.065 : 0.08));
     const col = judge === 'carrier' ? CARRIER_RGB[run.lastCarrier] : judgeGold ? XC() : { miss: '95,95,100', drop: '95,95,100', early: '120,120,126', spam: '120,120,126', lost: '110,110,116', off: '120,120,126', soft: '170,170,176', great: '210,210,214', good: '150,150,156' }[judge] || '255,255,255';
     ctx.fillStyle = `rgba(${col},${al})`; ctx.fillText(JTXT[judge], 0, 0);
     ctx.restore();

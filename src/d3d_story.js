@@ -232,7 +232,7 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('repCard').classList.contains('open')) { repToggle(false); e.stopPropagation(); } }, true);
 
   // Reacciones en la partida: animación del retrato y una frase según el juicio
-  const REACT = { perfect: 'perfect', great: 'great', good: 'good', ok: 'great', on: 'great', line: 'great', dec: 'perfect', carrier: 'perfect', tetra: 'perfect', tramo: 'perfect',
+  const REACT = { perfect: 'perfect', great: 'great', good: 'good', ok: 'great', on: 'great', line: 'great', dec: 'perfect', carrier: 'perfect', saved: 'great', fork: 'perfect', tetra: 'perfect', tramo: 'perfect',
     miss: 'miss', early: 'miss', drop: 'miss', spam: 'miss', off: 'miss', lost: 'miss' };
   let rxId = null, rxSayAt = 0, rxKind = '';
   function reactorStart(song) {

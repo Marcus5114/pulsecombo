@@ -20,7 +20,7 @@
     if (v !== 'menu') sideCard(null);
     if (v !== 'play' && lowGfxNote) { lowGfxNote = false; $('noticeText').textContent = 'El juego iba lento en este dispositivo, así que se activó el Modo rendimiento (menos resolución, efectos y capas de sonido). Podés apagarlo en Ajustes.'; $('notice').hidden = false; }
     ambientUpdate();
-    const g = GX[S.galaxy];
+    const g = GX[v === 'play' && run ? run.song.gal : S.galaxy];
     $('keysHint').innerHTML = g.mode === 'stack'
       ? '<kbd>←</kbd><kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> bajar · <kbd>Espacio</kbd> soltar · <kbd>Esc</kbd> pausa'
       : g.mode === 'path' ? 'Cualquier tecla: <kbd>Espacio</kbd>, flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa'
@@ -79,7 +79,7 @@
       return `<div class="gi-recs"><b>Recomendaciones: ${got.length}/${recNeed(g.id)}</b> · te recomiendan los representantes de ${src.map(x => GX[x].name).join(' y ')} cuando llegan a Confianza.
         <div class="gi-reclist">${cands.map(id => `<span class="gi-rec${got.includes(id) ? ' ok' : ''}" title="${AFF_TIERS[affTier(affState(id).pts)][1]}"><span class="pf">${faceSvg(id)}</span>${SPK[id][0]}</span>`).join('')}</div></div>`;
     })();
-    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}${recHtml}<p>${g.desc}</p>
+    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div>${S.galOpen[g.id] ? `<div class="gi-aff">Sintonía: <b>${AFF_TIERS[affTier(ambPts(g.id))][1]}</b> · ${Math.floor(ambPts(g.id))}/100 <small>(promedio de sus representantes)</small></div>` : ''}</div></div>${btn}${recHtml}<p>${g.desc}</p>
       <div class="gi-stats" id="galStats"></div>`;
     $('galInfo').innerHTML = cur($('galInfo').innerHTML);
     renderGalStats();
@@ -228,13 +228,16 @@
     path: [['p_r_root', 'Racha', 'baldosas seguidas multiplican'], ['p_c_root', 'Tramo perfecto', 'bonus por tramo sin fallas'], ['p_c_gold', 'Baldosas doradas', 'PERFECTO en dorada vale más'], ['p_r_safe', 'Red de seguridad', 'fallos que no cortan la racha']],
   };
   function renderSongs() {
-    const W0 = WORLDS[S.world], mode = GX[W0.gal].mode, unit = GX[W0.gal].unit;
-    if (SONGS[S.sel].wi !== S.world) S.sel = W0.idx[0];
+    const W0 = WORLDS[S.world];
+    if (!songList(S.world, S.sel).includes(S.sel)) S.sel = W0.idx[0];
+    const list = songList(S.world, S.sel);
+    const mode = modeOf(SONGS[S.sel]);   // con una remezcla elegida, las reglas y mecánicas son las de su modo
     { const cur = SONGS[S.sel], ok = diffsOf(cur).filter(d => diffOpen(cur, d));
       if (!ok.includes(S.diff)) S.diff = ok[ok.length - 1]; }
     $('whOrb').dataset.w = W0.id; $('whGenre').textContent = W0.genre; $('whName').textContent = W0.name; $('whDesc').textContent = W0.desc;
-    $('songs').innerHTML = W0.idx.map(i => {
-      const s = SONGS[i], ds = diffsOf(s);
+    $('songs').innerHTML = list.map((i, pos) => {
+      const s = SONGS[i], ds = diffsOf(s), unit = GX[s.gal].unit;
+      const head = '';
       const charts = Object.fromEntries(ds.map(d => [d, getChart(i, d)]));
       const st = ds.map(d => charts[d].stars), lo = Math.min(...st), hi = Math.max(...st);
       const grades = ds.map(d => recOf(s, d)).filter(r => r && r.grade).map(r => r.grade);
@@ -243,10 +246,10 @@
       // Eco por minuto: la barra se llena cada 60 s (sincronizada con el reloj) y al completarse destella y muestra lo ganado
       const perMin = ecoPerCycle(s) / iv * 60;
       const eco = eb > 0 ? `<span class="eco" style="--delay:-${((Date.now() / 1000) % 60).toFixed(2)}s"><i><u></u></i>Eco: +${fmtRate(perMin)} ${unit}/min<b class="eco-pop" aria-hidden="true">+${fmtRate(perMin)}</b></span>` : '';
-      let h = `<div class="songwrap${sel ? ' sel' : ''}">
+      let h = `${head}<div class="songwrap${sel ? ' sel' : ''}${s.remix ? ' remix' : ''}">
         <button class="song" data-i="${i}" aria-expanded="${sel}">
-          <span class="num">${String(s.k + 1).padStart(2, '0')}</span>
-          <span class="title">${s.name}${reqs.length ? ` <span class="req-tag" title="${reqs.map(q => q.text).join(' · ')}">◆ ${reqs.length > 1 ? reqs.length + ' pedidos' : 'Pedido'}</span>` : ''}</span>
+          <span class="num">${s.remix ? '↳' : String(s.k + 1).padStart(2, '0')}</span>
+          <span class="title">${s.name}${s.remix ? ` <span class="remix-tag" style="--gc:${GX[s.gal].color}">en ${GX[s.gal].name}</span>` : ''}${reqs.length ? ` <span class="req-tag" title="${reqs.map(q => q.text).join(' · ')}">◆ ${reqs.length > 1 ? reqs.length + ' pedidos' : 'Pedido'}</span>` : ''}</span>
           <span class="grade">${best}</span>
           <span class="meta">${s.bpm} BPM · ${s.tut ? 'Tutorial · ' + dec1(lo) + '★' : dec1(lo) + '–' + dec1(hi) + '★'} · ${ds.filter(d => diffOpen(s, d)).length}/${ds.length} abiertas</span>
           ${eco}
@@ -295,7 +298,7 @@
     });
     if (mode === 'arrows') chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
     $('mech').innerHTML = chips.join('');
-    renderMods(W0.gal);
+    renderMods(SONGS[S.sel].gal);
     renderRep(S.world);
     $('mechHint').innerHTML = mode === 'arrows'
       ? 'Tocá una mecánica para apagarla o encenderla. Apagada baja la dificultad, las estrellas y el multiplicador; la mejora sigue comprada. Las grises se desbloquean en el árbol de Vía Pulso.'
@@ -469,7 +472,7 @@
     btn.hidden = false;
     if (isMax) { btn.disabled = true; btn.textContent = 'Al máximo'; }
     else if (!reqMet(n)) { btn.disabled = true; btn.textContent = 'Bloqueado'; }
-    else if (capped(n)) { btn.disabled = true; btn.textContent = 'Abrí otro planeta'; }
+    else if (capped(n)) { btn.disabled = true; btn.textContent = n.capText || 'Abrí otro planeta'; }
     else { const c = nodeCost(n, lv); btn.disabled = S[T.wallet] < c; btn.innerHTML = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)} ${curIcon(n.tree === 'global' ? 'mo' : GX[n.tree].cur)}`; }
   }
   // Modificadores de la galaxia: chips que se encienden y muestran cuántas estrellas suman o restan
@@ -592,7 +595,7 @@
       if (e.code === 'Escape') { e.preventDefault(); setView('map'); return; }
       if (e.code === 'ArrowDown' || e.code === 'ArrowUp') {
         e.preventDefault();
-        const list = WORLDS[S.world].idx, k = list.indexOf(S.sel) + (e.code === 'ArrowDown' ? 1 : -1);
+        const list = songList(S.world, S.sel), k = list.indexOf(S.sel) + (e.code === 'ArrowDown' ? 1 : -1);
         if (k >= 0 && k < list.length) { S.sel = list[k]; renderSongs(); scrollSel(); }
       } else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
         e.preventDefault();

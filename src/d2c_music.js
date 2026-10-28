@@ -293,6 +293,7 @@
 
   const MUSIC = {};
   function getMusic(si) {
+    if (SONGS[si].base != null) return getMusic(SONGS[si].base);   // remezcla: la misma música que la original
     if (MUSIC[si]) return MUSIC[si];
     const s = SONGS[si], w = WORLDS[s.wi], G = GEN[w.style] || GEN.base, R = rng(77 + si * 1013);
     const pk = a => a[Math.floor(R() * a.length)];

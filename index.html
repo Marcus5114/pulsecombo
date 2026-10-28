@@ -775,6 +775,12 @@ body.pat-still::before { animation: none; }
 /* Compás: botón de freno al lado de TOCAR */
 .pg-pads.one.with-brake { grid-template-columns: 1fr auto; display: grid; gap: 8px; }
 .pad-brake { font-size: 0.8rem; padding-inline: 14px; }
+/* Remezclas en el menú de canciones */
+.remix-h { margin: 10px 0 2px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.remix-tag { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 8px; border: 1px solid var(--gc); color: var(--gc); vertical-align: 1px; }
+.gi-aff { font-size: 0.75rem; color: var(--muted); margin-top: 2px; } .gi-aff b { color: var(--fg); } .gi-aff small { font-size: 0.68rem; }
+.songwrap.remix { margin-left: 18px; }
+.songwrap.remix .num { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -1080,6 +1086,14 @@ body.pat-still::before { animation: none; }
         });
     });
   });
+  // Remezclas: cada canción (menos los tutoriales) también existe en el modo de las otras galaxias.
+  // Comparten la música de la original (base) y se abren con el nodo Remezcla del árbol global y mucha Sintonía
+  // (ver remixOpen). Ganan la moneda de la galaxia del modo en que se juegan.
+  const REMIX_FROM = SONGS.length;
+  for (let si = 0; si < REMIX_FROM; si++) {
+    const s = SONGS[si]; if (s.tut) continue;
+    for (const g of GALAXIES) if (g.id !== s.gal) SONGS.push({ ...s, id: `${s.id}_${g.id}`, gal: g.id, remix: s.gal, base: si });
+  }
   const modeOf = s => GX[s.gal].mode;
   const songMeasures = s => Math.round(s.bpm * 0.8 / 4);
   const songDur = s => songMeasures(s) * 4 * 60 / s.bpm;
@@ -1234,6 +1248,8 @@ body.pat-still::before { animation: none; }
         { id: 'ga', name: 'Amplificadores', tag: 'Multiplicadores para la moneda de cada galaxia (en partidas y en ecos).' },
         { id: 'ge', name: 'Ecos', tag: 'Tus mejores resultados se repiten solos. Hacelos rendir más y más seguido.' },
         { id: 'gm', name: 'Desafíos', tag: 'Modificadores que cambian cómo se juega una canción y suben o bajan sus estrellas.' },
+        { id: 'gr', name: 'Remezclas', tag: 'Las canciones de un planeta, en el modo de otra galaxia. Piden mucha Sintonía.' },
+        { id: 'gs', name: 'Sellos', tag: 'Un sello por embajador: un efecto propio de su galaxia. Piden Sintonía alta con el embajador y el tratado firmado.' },
       ],
       nodes: [
         { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con {mo}.', fx: () => 'Activo' },
@@ -1251,6 +1267,12 @@ body.pat-still::before { animation: none; }
         { id: 'g_eco_speed', br: 'ge', pos: [1, 2], name: 'Bucle temporal', max: 2, cost: [12, 2], req: [['g_eco_eff', 1]], desc: 'Los ecos se repiten más seguido.', fx: lv => `${pct(1 / (1 + 0.5 * lv))} del tiempo` },
         { id: 'g_eco_off', br: 'ge', pos: [3, 2], name: 'Memoria del vacío', max: 3, cost: [6, 1.8], req: [['g_eco_eff', 1]], desc: 'Los ecos siguen sonando más horas con el juego cerrado.', fx: lv => `Hasta ${2 + 4 * lv} h sin jugar` },
         { id: 'g_eco_all', br: 'ge', pos: [2, 3], name: 'Eco total', max: 1, cost: [60, 1], req: [['g_eco_eff', 3]], desc: 'Cada canción repite el mejor resultado de cada dificultad, no solo el más alto.', fx: lv => lv ? 'Suma todas las dificultades' : 'Solo la mejor dificultad' },
+        { id: 'g_remix', br: 'gr', pos: [2, 1], root: true, name: 'Remezcla', max: 1, cost: [100, 1], req: [['g_sym', 1]], desc: 'En el menú de cada planeta aparecen sus canciones en el modo de otras galaxias (por ejemplo, un tema de Prisma jugado como camino de Compás). Cada remezcla se abre con su representante en Complicidad y el embajador de la otra galaxia en Complicidad (promedio de sus representantes). Ganan la moneda de la galaxia del modo.', fx: lv => lv ? 'Remezclas activas' : 'Sin remezclas' },
+        { id: 'g_remix_amp', br: 'gr', pos: [2, 2], name: 'Mezcla maestra', max: 3, cost: [30, 1.7], req: [['g_remix', 1]], desc: 'Las remezclas rinden más.', fx: lv => `+${lv * 25}% en remezclas` },
+        { id: 'g_seal_pulso', br: 'gs', pos: [1, 1], root: true, name: 'Sello de Kadenza', max: 1, cost: [45, 1], req: [['g_core', 1]], cap: () => sealOk('pulso') ? 1 : 0, capText: 'Falta Sintonía con Kadenza', desc: 'Fiebre cardinal: en Vía Pulso, cada 50 de combo se activa la fiebre (todo vale el doble) por 4 segundos, aunque no tengas la rama de notas extra. Pide a Kadenza en Complicidad (promedio de sus representantes) y el tratado firmado.', fx: lv => lv ? 'Fiebre cada 50 de combo' : 'Sin sello' },
+        { id: 'g_seal_ens', br: 'gs', pos: [3, 1], root: true, name: 'Sello de Tesela', max: 1, cost: [45, 1], req: [['g_core', 1]], cap: () => sealOk('ens') ? 1 : 0, capText: 'Falta Sintonía con Tesela', desc: 'Plano maestro: en Ensamble, cada Ensamble perfecto (4 filas) pone un bloque ×2 en la pieza siguiente. Pide a Tesela en Complicidad (promedio de sus representantes) y el tratado firmado.', fx: lv => lv ? '×2 después de cada 4 filas' : 'Sin sello' },
+        { id: 'g_seal_sen', br: 'gs', pos: [1, 2], root: true, name: 'Sello de Eco-7', max: 1, cost: [45, 1], req: [['g_core', 1]], cap: () => sealOk('sen') ? 1 : 0, capText: 'Falta Sintonía con Eco-7', desc: 'Segunda transmisión: en Señal, una vez por canción, un patrón perdido cuenta como decodificado y no corta la racha. Pide a Eco-7 en Complicidad (promedio de sus representantes) y el tratado firmado.', fx: lv => lv ? '1 patrón salvado por canción' : 'Sin sello' },
+        { id: 'g_seal_com', br: 'gs', pos: [3, 2], root: true, name: 'Sello de los Vaivén', max: 1, cost: [45, 1], req: [['g_core', 1]], cap: () => sealOk('com') ? 1 : 0, capText: 'Falta Sintonía con los Vaivén', desc: 'Órbita compartida: en Compás, cada tramo perfecto recupera 15 de equilibrio y, con Freno de péndulo, te devuelve un freno. Pide a los Gemelos Vaivén en Complicidad (promedio de sus representantes) y el tratado firmado.', fx: lv => lv ? 'Tramos que curan y recargan el freno' : 'Sin sello' },
       ],
     },
   };
@@ -1911,6 +1933,7 @@ body.pat-still::before { animation: none; }
 
   const MUSIC = {};
   function getMusic(si) {
+    if (SONGS[si].base != null) return getMusic(SONGS[si].base);   // remezcla: la misma música que la original
     if (MUSIC[si]) return MUSIC[si];
     const s = SONGS[si], w = WORLDS[s.wi], G = GEN[w.style] || GEN.base, R = rng(77 + si * 1013);
     const pk = a => a[Math.floor(R() * a.length)];
@@ -2461,7 +2484,7 @@ body.pat-still::before { animation: none; }
   const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
   const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
   const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
-    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA', fork: 'CAMINO DIFÍCIL', brake: 'FRENO' };
+    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA', fork: 'CAMINO DIFÍCIL', brake: 'FRENO', saved: 'SEÑAL SALVADA' };
   // Portadoras de Señal: dorada (x2) y rosa (x3)
   const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
@@ -2476,6 +2499,7 @@ body.pat-still::before { animation: none; }
     run = { si, di, song: s, mode, ch, boards: ch.boards, stars: ch.stars, mult: ch.mult, audioStep: 0, t0: clock() + 0.1,
       life: 100, earned: 0, combo: 0, maxCombo: 0, rank: 0, failed: false, over: false, callIdx: 0, music,
       mods: Object.fromEntries(ch.mods.map(id => [id, true])), vlife: 100, vfail: false };
+    if (s.remix) run.mult *= 1 + 0.25 * L('g_remix_amp');   // Mezcla maestra
     if (mode === 'stack') initStack(run);
     else {
       Object.assign(run, { notes: ch.notes.map(n => ({ ...n })), active: [], counts: { perfect: 0, great: 0, good: 0, miss: 0 },
@@ -2530,6 +2554,7 @@ body.pat-still::before { animation: none; }
     run.combo += k;
     if (run.combo > run.maxCombo) run.maxCombo = run.combo;
     if (run.mode !== 'arrows') return;
+    if (L('g_seal_pulso') && run.combo >= 50 && run.combo % 50 < k) { run.feverUntil = Math.max(run.feverUntil, gameT()) + 4; feverAt = performance.now(); run.fevers = (run.fevers || 0) + 1; reactTo('fever'); }
     const r = rankOf(run.combo);
     if (r > run.rank) { run.rank = r; rankAt = performance.now(); }
   }
@@ -2567,6 +2592,8 @@ body.pat-still::before { animation: none; }
       // Portadora: todo lo que dio el patrón (notas y bonus de decodificar) se multiplica
       if (r.carrier) { const m = r.carrier + 0.5 * L('s_p_amp'); run.earned += r.raw * (m - 1); run.carriers++; r.paid = m; JTXT.carrier = `DECODIFICADO x${dec(m)}`; run.lastCarrier = r.carrier; }
       run.streak++; setJudge(r.carrier ? 'carrier' : 'dec');
+    } else if (L('g_seal_sen') && !run.sealUsed) {   // Sello de Eco-7: una vez por canción, el patrón perdido se salva
+      run.sealUsed = true; run.decoded++; run.streak++; setJudge('saved');
     } else { run.streak = 0; setJudge('lost'); }
   }
 
@@ -2669,6 +2696,7 @@ body.pat-still::before { animation: none; }
   function closeSection() {
     if (run.secMiss === 0 && run.secEarn > 0 && L('p_c_root')) {
       run.earned += run.secEarn * (0.25 + 0.25 * L('p_c_sec')); run.tramos++; setJudge('tramo');
+      if (L('g_seal_com')) { run.life = Math.min(100, run.life + 15); if (L('p_o_brake')) run.brakes++; }
     }
     run.secMiss = 0; run.secEarn = 0;
   }
@@ -2947,7 +2975,7 @@ body.pat-still::before { animation: none; }
       if (broken) { run.earned += stackBase() * broken * rhythmMult() * run.mult; run.fx.push({ boom: bombs, at: performance.now() }); if (ac) { tone(ac.currentTime, 'sawtooth', 70, 0.25, 0.25, 40); } }
       if (slow) slowMo(4 + 2 * L('e_t_slow') * slow, 0.7);
       if (rowMult > n) run.fx.push({ mult: rowMult / n, rows: full, at: performance.now() });
-      if (n === 4) { v *= 1 + 0.5 * L('e_c_tetra'); run.tetras++; setJudge('tetra'); } else setJudge('line');
+      if (n === 4) { v *= 1 + 0.5 * L('e_c_tetra'); run.tetras++; setJudge('tetra'); if (L('g_seal_ens') && !run.qspec[0]) run.qspec[0] = { i: Math.floor(run.rs() * 4), k: 'x2' }; } else setJudge('line');
       run.earned += v; run.lines += n; run.life = Math.min(100, run.life + 4 * n);
       run.fx.push({ rows: full, at: performance.now() });
       if (ac) for (let k = 0; k < n; k++) pluck(ac.currentTime + k * 0.05, run.song.root + 36 + [0, 4, 7, 12][k], 0.06, 0.3);
@@ -3254,7 +3282,7 @@ body.pat-still::before { animation: none; }
     const al = 1 - age, sc = 1 + 0.15 * Math.max(0, 1 - age * 4);
     ctx.save(); ctx.translate(W / 2, y); ctx.scale(sc, sc);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = F(900, U * (['dec', 'lost', 'tetra', 'off', 'carrier'].includes(judge) ? 0.065 : 0.08));
+    ctx.font = F(900, U * (['dec', 'lost', 'tetra', 'off', 'carrier', 'saved', 'fork'].includes(judge) ? 0.065 : 0.08));
     const col = judge === 'carrier' ? CARRIER_RGB[run.lastCarrier] : judgeGold ? XC() : { miss: '95,95,100', drop: '95,95,100', early: '120,120,126', spam: '120,120,126', lost: '110,110,116', off: '120,120,126', soft: '170,170,176', great: '210,210,214', good: '150,150,156' }[judge] || '255,255,255';
     ctx.fillStyle = `rgba(${col},${al})`; ctx.fillText(JTXT[judge], 0, 0);
     ctx.restore();
@@ -3953,7 +3981,7 @@ body.pat-still::before { animation: none; }
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('repCard').classList.contains('open')) { repToggle(false); e.stopPropagation(); } }, true);
 
   // Reacciones en la partida: animación del retrato y una frase según el juicio
-  const REACT = { perfect: 'perfect', great: 'great', good: 'good', ok: 'great', on: 'great', line: 'great', dec: 'perfect', carrier: 'perfect', tetra: 'perfect', tramo: 'perfect',
+  const REACT = { perfect: 'perfect', great: 'great', good: 'good', ok: 'great', on: 'great', line: 'great', dec: 'perfect', carrier: 'perfect', saved: 'great', fork: 'perfect', tetra: 'perfect', tramo: 'perfect',
     miss: 'miss', early: 'miss', drop: 'miss', spam: 'miss', off: 'miss', lost: 'miss' };
   let rxId = null, rxSayAt = 0, rxKind = '';
   function reactorStart(song) {
@@ -4312,6 +4340,18 @@ body.pat-still::before { animation: none; }
   const AFF_TUTORIALS = false;
   const affOn = id => !!AFF_CHARS[id] && (AFF_TUTORIALS || !WORLDS[WI[AFF_CHARS[id].world]].tutorial);
   const affCharOfWorld = wid => Object.keys(AFF_CHARS).find(id => AFF_CHARS[id].world === wid && affOn(id));
+  // Sintonía con un embajador: el promedio de la de los representantes de su galaxia (los embajadores no tienen medidor propio)
+  const ambPts = gal => { const ids = Object.keys(AFF_CHARS).filter(id => affOn(id) && WORLDS[WI[AFF_CHARS[id].world]].gal === gal);
+    return ids.length ? ids.reduce((a, id) => a + (S.aff?.[id]?.pts || 0), 0) / ids.length : 0; };
+  const SEAL_PTS = 70, REMIX_TIER = 3;   // Complicidad
+  const sealOk = gal => !!S.galOpen[gal] && ambPts(gal) >= SEAL_PTS && !!S.story?.['treaty_' + gal];
+  // Una remezcla se abre con el nodo Remezcla, el representante de su planeta en Complicidad y el embajador de la otra galaxia en Complicidad
+  const remixOpen = si => { const s = SONGS[si]; if (!s || !s.remix || !L('g_remix') || !S.galOpen[s.gal]) return false;
+    const rep = affCharOfWorld(WORLDS[s.wi].id); return !!rep && affTier(S.aff?.[rep]?.pts || 0) >= REMIX_TIER && ambPts(s.gal) >= SEAL_PTS; };
+  // Canciones del menú de un planeta: las suyas y, debajo de la elegida, sus remezclas abiertas
+  const songList = (wi, sel) => { const b = SONGS[sel]?.base ?? sel, own = WORLDS[wi].idx; if (!own.includes(b)) return own;
+    const k = own.indexOf(b), rx = SONGS.map((s, i) => i).filter(i => SONGS[i].base === b && remixOpen(i));
+    return [...own.slice(0, k + 1), ...rx, ...own.slice(k + 1)]; };
   const affState = id => { S.aff = S.aff || {}; const a = S.aff[id] = S.aff[id] || { pts: 0, reqs: [], reqDone: 0 }; a.reqs = a.reqs || []; return a; };
 
   // Pedidos: cada personaje tiene hasta 3 activos, sacados de un pool común de plantillas.
@@ -4719,7 +4759,7 @@ body.pat-still::before { animation: none; }
     if (v !== 'menu') sideCard(null);
     if (v !== 'play' && lowGfxNote) { lowGfxNote = false; $('noticeText').textContent = 'El juego iba lento en este dispositivo, así que se activó el Modo rendimiento (menos resolución, efectos y capas de sonido). Podés apagarlo en Ajustes.'; $('notice').hidden = false; }
     ambientUpdate();
-    const g = GX[S.galaxy];
+    const g = GX[v === 'play' && run ? run.song.gal : S.galaxy];
     $('keysHint').innerHTML = g.mode === 'stack'
       ? '<kbd>←</kbd><kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> bajar · <kbd>Espacio</kbd> soltar · <kbd>Esc</kbd> pausa'
       : g.mode === 'path' ? 'Cualquier tecla: <kbd>Espacio</kbd>, flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa'
@@ -4778,7 +4818,7 @@ body.pat-still::before { animation: none; }
       return `<div class="gi-recs"><b>Recomendaciones: ${got.length}/${recNeed(g.id)}</b> · te recomiendan los representantes de ${src.map(x => GX[x].name).join(' y ')} cuando llegan a Confianza.
         <div class="gi-reclist">${cands.map(id => `<span class="gi-rec${got.includes(id) ? ' ok' : ''}" title="${AFF_TIERS[affTier(affState(id).pts)][1]}"><span class="pf">${faceSvg(id)}</span>${SPK[id][0]}</span>`).join('')}</div></div>`;
     })();
-    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div></div></div>${btn}${recHtml}<p>${g.desc}</p>
+    $('galInfo').innerHTML = `<div class="gi-head"><div class="gi-amb pf">${faceSvg(amb)}</div><div><div class="gi-mode">${g.modeName}</div><h3>${g.name}</h3><div class="gi-ambn">${ambRole.split(' de ')[0]}: <b>${ambName}</b></div>${S.galOpen[g.id] ? `<div class="gi-aff">Sintonía: <b>${AFF_TIERS[affTier(ambPts(g.id))][1]}</b> · ${Math.floor(ambPts(g.id))}/100 <small>(promedio de sus representantes)</small></div>` : ''}</div></div>${btn}${recHtml}<p>${g.desc}</p>
       <div class="gi-stats" id="galStats"></div>`;
     $('galInfo').innerHTML = cur($('galInfo').innerHTML);
     renderGalStats();
@@ -4927,13 +4967,16 @@ body.pat-still::before { animation: none; }
     path: [['p_r_root', 'Racha', 'baldosas seguidas multiplican'], ['p_c_root', 'Tramo perfecto', 'bonus por tramo sin fallas'], ['p_c_gold', 'Baldosas doradas', 'PERFECTO en dorada vale más'], ['p_r_safe', 'Red de seguridad', 'fallos que no cortan la racha']],
   };
   function renderSongs() {
-    const W0 = WORLDS[S.world], mode = GX[W0.gal].mode, unit = GX[W0.gal].unit;
-    if (SONGS[S.sel].wi !== S.world) S.sel = W0.idx[0];
+    const W0 = WORLDS[S.world];
+    if (!songList(S.world, S.sel).includes(S.sel)) S.sel = W0.idx[0];
+    const list = songList(S.world, S.sel);
+    const mode = modeOf(SONGS[S.sel]);   // con una remezcla elegida, las reglas y mecánicas son las de su modo
     { const cur = SONGS[S.sel], ok = diffsOf(cur).filter(d => diffOpen(cur, d));
       if (!ok.includes(S.diff)) S.diff = ok[ok.length - 1]; }
     $('whOrb').dataset.w = W0.id; $('whGenre').textContent = W0.genre; $('whName').textContent = W0.name; $('whDesc').textContent = W0.desc;
-    $('songs').innerHTML = W0.idx.map(i => {
-      const s = SONGS[i], ds = diffsOf(s);
+    $('songs').innerHTML = list.map((i, pos) => {
+      const s = SONGS[i], ds = diffsOf(s), unit = GX[s.gal].unit;
+      const head = '';
       const charts = Object.fromEntries(ds.map(d => [d, getChart(i, d)]));
       const st = ds.map(d => charts[d].stars), lo = Math.min(...st), hi = Math.max(...st);
       const grades = ds.map(d => recOf(s, d)).filter(r => r && r.grade).map(r => r.grade);
@@ -4942,10 +4985,10 @@ body.pat-still::before { animation: none; }
       // Eco por minuto: la barra se llena cada 60 s (sincronizada con el reloj) y al completarse destella y muestra lo ganado
       const perMin = ecoPerCycle(s) / iv * 60;
       const eco = eb > 0 ? `<span class="eco" style="--delay:-${((Date.now() / 1000) % 60).toFixed(2)}s"><i><u></u></i>Eco: +${fmtRate(perMin)} ${unit}/min<b class="eco-pop" aria-hidden="true">+${fmtRate(perMin)}</b></span>` : '';
-      let h = `<div class="songwrap${sel ? ' sel' : ''}">
+      let h = `${head}<div class="songwrap${sel ? ' sel' : ''}${s.remix ? ' remix' : ''}">
         <button class="song" data-i="${i}" aria-expanded="${sel}">
-          <span class="num">${String(s.k + 1).padStart(2, '0')}</span>
-          <span class="title">${s.name}${reqs.length ? ` <span class="req-tag" title="${reqs.map(q => q.text).join(' · ')}">◆ ${reqs.length > 1 ? reqs.length + ' pedidos' : 'Pedido'}</span>` : ''}</span>
+          <span class="num">${s.remix ? '↳' : String(s.k + 1).padStart(2, '0')}</span>
+          <span class="title">${s.name}${s.remix ? ` <span class="remix-tag" style="--gc:${GX[s.gal].color}">en ${GX[s.gal].name}</span>` : ''}${reqs.length ? ` <span class="req-tag" title="${reqs.map(q => q.text).join(' · ')}">◆ ${reqs.length > 1 ? reqs.length + ' pedidos' : 'Pedido'}</span>` : ''}</span>
           <span class="grade">${best}</span>
           <span class="meta">${s.bpm} BPM · ${s.tut ? 'Tutorial · ' + dec1(lo) + '★' : dec1(lo) + '–' + dec1(hi) + '★'} · ${ds.filter(d => diffOpen(s, d)).length}/${ds.length} abiertas</span>
           ${eco}
@@ -4994,7 +5037,7 @@ body.pat-still::before { animation: none; }
     });
     if (mode === 'arrows') chips.push(`<span class="chip${L('c_root') ? ' on' : ' locked'}">Combo hasta x${dec(L('c_root') ? RANKS[L('c_rank')][1] : 1)}</span>`);
     $('mech').innerHTML = chips.join('');
-    renderMods(W0.gal);
+    renderMods(SONGS[S.sel].gal);
     renderRep(S.world);
     $('mechHint').innerHTML = mode === 'arrows'
       ? 'Tocá una mecánica para apagarla o encenderla. Apagada baja la dificultad, las estrellas y el multiplicador; la mejora sigue comprada. Las grises se desbloquean en el árbol de Vía Pulso.'
@@ -5168,7 +5211,7 @@ body.pat-still::before { animation: none; }
     btn.hidden = false;
     if (isMax) { btn.disabled = true; btn.textContent = 'Al máximo'; }
     else if (!reqMet(n)) { btn.disabled = true; btn.textContent = 'Bloqueado'; }
-    else if (capped(n)) { btn.disabled = true; btn.textContent = 'Abrí otro planeta'; }
+    else if (capped(n)) { btn.disabled = true; btn.textContent = n.capText || 'Abrí otro planeta'; }
     else { const c = nodeCost(n, lv); btn.disabled = S[T.wallet] < c; btn.innerHTML = `${lv ? 'Mejorar' : 'Desbloquear'} · ${fmt(c)} ${curIcon(n.tree === 'global' ? 'mo' : GX[n.tree].cur)}`; }
   }
   // Modificadores de la galaxia: chips que se encienden y muestran cuántas estrellas suman o restan
@@ -5291,7 +5334,7 @@ body.pat-still::before { animation: none; }
       if (e.code === 'Escape') { e.preventDefault(); setView('map'); return; }
       if (e.code === 'ArrowDown' || e.code === 'ArrowUp') {
         e.preventDefault();
-        const list = WORLDS[S.world].idx, k = list.indexOf(S.sel) + (e.code === 'ArrowDown' ? 1 : -1);
+        const list = songList(S.world, S.sel), k = list.indexOf(S.sel) + (e.code === 'ArrowDown' ? 1 : -1);
         if (k >= 0 && k < list.length) { S.sel = list[k]; renderSongs(); scrollSel(); }
       } else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
         e.preventDefault();

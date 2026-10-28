@@ -80,6 +80,18 @@
   const AFF_TUTORIALS = false;
   const affOn = id => !!AFF_CHARS[id] && (AFF_TUTORIALS || !WORLDS[WI[AFF_CHARS[id].world]].tutorial);
   const affCharOfWorld = wid => Object.keys(AFF_CHARS).find(id => AFF_CHARS[id].world === wid && affOn(id));
+  // Sintonía con un embajador: el promedio de la de los representantes de su galaxia (los embajadores no tienen medidor propio)
+  const ambPts = gal => { const ids = Object.keys(AFF_CHARS).filter(id => affOn(id) && WORLDS[WI[AFF_CHARS[id].world]].gal === gal);
+    return ids.length ? ids.reduce((a, id) => a + (S.aff?.[id]?.pts || 0), 0) / ids.length : 0; };
+  const SEAL_PTS = 70, REMIX_TIER = 3;   // Complicidad
+  const sealOk = gal => !!S.galOpen[gal] && ambPts(gal) >= SEAL_PTS && !!S.story?.['treaty_' + gal];
+  // Una remezcla se abre con el nodo Remezcla, el representante de su planeta en Complicidad y el embajador de la otra galaxia en Complicidad
+  const remixOpen = si => { const s = SONGS[si]; if (!s || !s.remix || !L('g_remix') || !S.galOpen[s.gal]) return false;
+    const rep = affCharOfWorld(WORLDS[s.wi].id); return !!rep && affTier(S.aff?.[rep]?.pts || 0) >= REMIX_TIER && ambPts(s.gal) >= SEAL_PTS; };
+  // Canciones del menú de un planeta: las suyas y, debajo de la elegida, sus remezclas abiertas
+  const songList = (wi, sel) => { const b = SONGS[sel]?.base ?? sel, own = WORLDS[wi].idx; if (!own.includes(b)) return own;
+    const k = own.indexOf(b), rx = SONGS.map((s, i) => i).filter(i => SONGS[i].base === b && remixOpen(i));
+    return [...own.slice(0, k + 1), ...rx, ...own.slice(k + 1)]; };
   const affState = id => { S.aff = S.aff || {}; const a = S.aff[id] = S.aff[id] || { pts: 0, reqs: [], reqDone: 0 }; a.reqs = a.reqs || []; return a; };
 
   // Pedidos: cada personaje tiene hasta 3 activos, sacados de un pool común de plantillas.

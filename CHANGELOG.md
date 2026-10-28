@@ -12,6 +12,17 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.5.3
 
 ### Agregado
+- **Árbol global: rama Remezclas** (al final del árbol, pide Sinfonía).
+  - **Remezcla:** las canciones de un planeta también se pueden jugar en el modo de otra galaxia, con la misma música. Por ejemplo, un tema de Prisma como piezas de Ensamble, patrones de Señal o camino de Compás.
+  - Al elegir una canción, sus remezclas aparecen debajo, con la etiqueta de la galaxia. Ganan la moneda de esa galaxia y cada dificultad se abre como siempre.
+  - Cada remezcla pide al representante del planeta en Complicidad y al embajador de la otra galaxia en Complicidad.
+  - **Mezcla maestra** (3 niveles): las remezclas rinden +25% por nivel.
+- **Árbol global: rama Sellos.** Un sello por embajador, cada uno con un efecto propio de su galaxia. Se compran con el embajador en Complicidad y el tratado de su galaxia firmado; hasta entonces el botón dice qué falta.
+  - **Kadenza:** en Vía Pulso, cada 50 de combo se activa la fiebre 4 segundos.
+  - **Tesela:** en Ensamble, cada Ensamble perfecto pone un bloque ×2 en la pieza siguiente.
+  - **Eco-7:** en Señal, una vez por canción, un patrón perdido se salva y no corta la racha.
+  - **Gemelos Vaivén:** en Compás, cada tramo perfecto recupera 15 de equilibrio y devuelve un freno.
+- **Sintonía con los embajadores.** Es el promedio de la de los representantes de su galaxia y se ve en el panel de cada galaxia.
 - **Modificador Canon (Señal, +45% de estrellas).** La llamada siguiente suena mientras repetís la anterior: escuchás y respondés al mismo tiempo, como en un canon. Entran más patrones por canción y la pantalla dice "REPETÍ · ESCUCHÁ".
 - **Modificador Tercer cuerpo (Compás, +15% de estrellas).** Un tercer planeta se suma a la cadena y descansa en la baldosa anterior. Los tres se turnan para girar, así que el que gira cambia de color. Con el diseño Eclipse, el tercero es un planeta con anillo.
 - **Compás: rama nueva Órbitas.**

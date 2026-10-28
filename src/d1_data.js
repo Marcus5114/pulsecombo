@@ -111,6 +111,14 @@
         });
     });
   });
+  // Remezclas: cada canción (menos los tutoriales) también existe en el modo de las otras galaxias.
+  // Comparten la música de la original (base) y se abren con el nodo Remezcla del árbol global y mucha Sintonía
+  // (ver remixOpen). Ganan la moneda de la galaxia del modo en que se juegan.
+  const REMIX_FROM = SONGS.length;
+  for (let si = 0; si < REMIX_FROM; si++) {
+    const s = SONGS[si]; if (s.tut) continue;
+    for (const g of GALAXIES) if (g.id !== s.gal) SONGS.push({ ...s, id: `${s.id}_${g.id}`, gal: g.id, remix: s.gal, base: si });
+  }
   const modeOf = s => GX[s.gal].mode;
   const songMeasures = s => Math.round(s.bpm * 0.8 / 4);
   const songDur = s => songMeasures(s) * 4 * 60 / s.bpm;
@@ -265,6 +273,8 @@
         { id: 'ga', name: 'Amplificadores', tag: 'Multiplicadores para la moneda de cada galaxia (en partidas y en ecos).' },
         { id: 'ge', name: 'Ecos', tag: 'Tus mejores resultados se repiten solos. Hacelos rendir más y más seguido.' },
         { id: 'gm', name: 'Desafíos', tag: 'Modificadores que cambian cómo se juega una canción y suben o bajan sus estrellas.' },
+        { id: 'gr', name: 'Remezclas', tag: 'Las canciones de un planeta, en el modo de otra galaxia. Piden mucha Sintonía.' },
+        { id: 'gs', name: 'Sellos', tag: 'Un sello por embajador: un efecto propio de su galaxia. Piden Sintonía alta con el embajador y el tratado firmado.' },
       ],
       nodes: [
         { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con {mo}.', fx: () => 'Activo' },
@@ -282,6 +292,12 @@
         { id: 'g_eco_speed', br: 'ge', pos: [1, 2], name: 'Bucle temporal', max: 2, cost: [12, 2], req: [['g_eco_eff', 1]], desc: 'Los ecos se repiten más seguido.', fx: lv => `${pct(1 / (1 + 0.5 * lv))} del tiempo` },
         { id: 'g_eco_off', br: 'ge', pos: [3, 2], name: 'Memoria del vacío', max: 3, cost: [6, 1.8], req: [['g_eco_eff', 1]], desc: 'Los ecos siguen sonando más horas con el juego cerrado.', fx: lv => `Hasta ${2 + 4 * lv} h sin jugar` },
         { id: 'g_eco_all', br: 'ge', pos: [2, 3], name: 'Eco total', max: 1, cost: [60, 1], req: [['g_eco_eff', 3]], desc: 'Cada canción repite el mejor resultado de cada dificultad, no solo el más alto.', fx: lv => lv ? 'Suma todas las dificultades' : 'Solo la mejor dificultad' },
+        { id: 'g_remix', br: 'gr', pos: [2, 1], root: true, name: 'Remezcla', max: 1, cost: [100, 1], req: [['g_sym', 1]], desc: 'En el menú de cada planeta aparecen sus canciones en el modo de otras galaxias (por ejemplo, un tema de Prisma jugado como camino de Compás). Cada remezcla se abre con su representante en Complicidad y el embajador de la otra galaxia en Complicidad (promedio de sus representantes). Ganan la moneda de la galaxia del modo.', fx: lv => lv ? 'Remezclas activas' : 'Sin remezclas' },
+        { id: 'g_remix_amp', br: 'gr', pos: [2, 2], name: 'Mezcla maestra', max: 3, cost: [30, 1.7], req: [['g_remix', 1]], desc: 'Las remezclas rinden más.', fx: lv => `+${lv * 25}% en remezclas` },
+        { id: 'g_seal_pulso', br: 'gs', pos: [1, 1], root: true, name: 'Sello de Kadenza', max: 1, cost: [45, 1], req: [['g_core', 1]], cap: () => sealOk('pulso') ? 1 : 0, capText: 'Falta Sintonía con Kadenza', desc: 'Fiebre cardinal: en Vía Pulso, cada 50 de combo se activa la fiebre (todo vale el doble) por 4 segundos, aunque no tengas la rama de notas extra. Pide a Kadenza en Complicidad (promedio de sus representantes) y el tratado firmado.', fx: lv => lv ? 'Fiebre cada 50 de combo' : 'Sin sello' },
+        { id: 'g_seal_ens', br: 'gs', pos: [3, 1], root: true, name: 'Sello de Tesela', max: 1, cost: [45, 1], req: [['g_core', 1]], cap: () => sealOk('ens') ? 1 : 0, capText: 'Falta Sintonía con Tesela', desc: 'Plano maestro: en Ensamble, cada Ensamble perfecto (4 filas) pone un bloque ×2 en la pieza siguiente. Pide a Tesela en Complicidad (promedio de sus representantes) y el tratado firmado.', fx: lv => lv ? '×2 después de cada 4 filas' : 'Sin sello' },
+        { id: 'g_seal_sen', br: 'gs', pos: [1, 2], root: true, name: 'Sello de Eco-7', max: 1, cost: [45, 1], req: [['g_core', 1]], cap: () => sealOk('sen') ? 1 : 0, capText: 'Falta Sintonía con Eco-7', desc: 'Segunda transmisión: en Señal, una vez por canción, un patrón perdido cuenta como decodificado y no corta la racha. Pide a Eco-7 en Complicidad (promedio de sus representantes) y el tratado firmado.', fx: lv => lv ? '1 patrón salvado por canción' : 'Sin sello' },
+        { id: 'g_seal_com', br: 'gs', pos: [3, 2], root: true, name: 'Sello de los Vaivén', max: 1, cost: [45, 1], req: [['g_core', 1]], cap: () => sealOk('com') ? 1 : 0, capText: 'Falta Sintonía con los Vaivén', desc: 'Órbita compartida: en Compás, cada tramo perfecto recupera 15 de equilibrio y, con Freno de péndulo, te devuelve un freno. Pide a los Gemelos Vaivén en Complicidad (promedio de sus representantes) y el tratado firmado.', fx: lv => lv ? 'Tramos que curan y recargan el freno' : 'Sin sello' },
       ],
     },
   };

@@ -531,3 +531,9 @@ body.pat-still::before { animation: none; }
 /* Compás: botón de freno al lado de TOCAR */
 .pg-pads.one.with-brake { grid-template-columns: 1fr auto; display: grid; gap: 8px; }
 .pad-brake { font-size: 0.8rem; padding-inline: 14px; }
+/* Remezclas en el menú de canciones */
+.remix-h { margin: 10px 0 2px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.remix-tag { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 8px; border: 1px solid var(--gc); color: var(--gc); vertical-align: 1px; }
+.gi-aff { font-size: 0.75rem; color: var(--muted); margin-top: 2px; } .gi-aff b { color: var(--fg); } .gi-aff small { font-size: 0.68rem; }
+.songwrap.remix { margin-left: 18px; }
+.songwrap.remix .num { color: var(--muted); }

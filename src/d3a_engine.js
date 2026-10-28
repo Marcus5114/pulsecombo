@@ -50,7 +50,7 @@
   const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
   const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
   const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
-    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA', fork: 'CAMINO DIFÍCIL', brake: 'FRENO' };
+    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA', fork: 'CAMINO DIFÍCIL', brake: 'FRENO', saved: 'SEÑAL SALVADA' };
   // Portadoras de Señal: dorada (x2) y rosa (x3)
   const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
@@ -65,6 +65,7 @@
     run = { si, di, song: s, mode, ch, boards: ch.boards, stars: ch.stars, mult: ch.mult, audioStep: 0, t0: clock() + 0.1,
       life: 100, earned: 0, combo: 0, maxCombo: 0, rank: 0, failed: false, over: false, callIdx: 0, music,
       mods: Object.fromEntries(ch.mods.map(id => [id, true])), vlife: 100, vfail: false };
+    if (s.remix) run.mult *= 1 + 0.25 * L('g_remix_amp');   // Mezcla maestra
     if (mode === 'stack') initStack(run);
     else {
       Object.assign(run, { notes: ch.notes.map(n => ({ ...n })), active: [], counts: { perfect: 0, great: 0, good: 0, miss: 0 },
@@ -119,6 +120,7 @@
     run.combo += k;
     if (run.combo > run.maxCombo) run.maxCombo = run.combo;
     if (run.mode !== 'arrows') return;
+    if (L('g_seal_pulso') && run.combo >= 50 && run.combo % 50 < k) { run.feverUntil = Math.max(run.feverUntil, gameT()) + 4; feverAt = performance.now(); run.fevers = (run.fevers || 0) + 1; reactTo('fever'); }
     const r = rankOf(run.combo);
     if (r > run.rank) { run.rank = r; rankAt = performance.now(); }
   }
@@ -156,6 +158,8 @@
       // Portadora: todo lo que dio el patrón (notas y bonus de decodificar) se multiplica
       if (r.carrier) { const m = r.carrier + 0.5 * L('s_p_amp'); run.earned += r.raw * (m - 1); run.carriers++; r.paid = m; JTXT.carrier = `DECODIFICADO x${dec(m)}`; run.lastCarrier = r.carrier; }
       run.streak++; setJudge(r.carrier ? 'carrier' : 'dec');
+    } else if (L('g_seal_sen') && !run.sealUsed) {   // Sello de Eco-7: una vez por canción, el patrón perdido se salva
+      run.sealUsed = true; run.decoded++; run.streak++; setJudge('saved');
     } else { run.streak = 0; setJudge('lost'); }
   }
 
@@ -258,6 +262,7 @@
   function closeSection() {
     if (run.secMiss === 0 && run.secEarn > 0 && L('p_c_root')) {
       run.earned += run.secEarn * (0.25 + 0.25 * L('p_c_sec')); run.tramos++; setJudge('tramo');
+      if (L('g_seal_com')) { run.life = Math.min(100, run.life + 15); if (L('p_o_brake')) run.brakes++; }
     }
     run.secMiss = 0; run.secEarn = 0;
   }
@@ -536,7 +541,7 @@
       if (broken) { run.earned += stackBase() * broken * rhythmMult() * run.mult; run.fx.push({ boom: bombs, at: performance.now() }); if (ac) { tone(ac.currentTime, 'sawtooth', 70, 0.25, 0.25, 40); } }
       if (slow) slowMo(4 + 2 * L('e_t_slow') * slow, 0.7);
       if (rowMult > n) run.fx.push({ mult: rowMult / n, rows: full, at: performance.now() });
-      if (n === 4) { v *= 1 + 0.5 * L('e_c_tetra'); run.tetras++; setJudge('tetra'); } else setJudge('line');
+      if (n === 4) { v *= 1 + 0.5 * L('e_c_tetra'); run.tetras++; setJudge('tetra'); if (L('g_seal_ens') && !run.qspec[0]) run.qspec[0] = { i: Math.floor(run.rs() * 4), k: 'x2' }; } else setJudge('line');
       run.earned += v; run.lines += n; run.life = Math.min(100, run.life + 4 * n);
       run.fx.push({ rows: full, at: performance.now() });
       if (ac) for (let k = 0; k < n; k++) pluck(ac.currentTime + k * 0.05, run.song.root + 36 + [0, 4, 7, 12][k], 0.06, 0.3);
