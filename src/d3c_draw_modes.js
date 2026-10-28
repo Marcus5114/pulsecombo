@@ -278,7 +278,7 @@
   function drawPath() {
     if (!run || !W) return;
     const now = performance.now(), t = gameT(), ch = run.ch, st = ch.step, U = Math.min(W, H * 0.68), MD = run.mods;
-    const tiles = ch.tiles, n = tiles.length, acc = XC();
+    const tiles = run.tiles || ch.tiles, n = tiles.length, acc = XC();
     drawSky(t);
     while (run.pk + 1 < n && tiles[run.pk + 1].t <= t) run.pk++;
     const k = run.pk, P = tiles[k], N1 = tiles[k + 1], sg = N1 ? N1.s : P.s || 1;
@@ -308,6 +308,15 @@
       ctx.lineWidth = q === k + 1 ? 3 : 1.5;
       ctx.strokeStyle = q === k + 1 ? `rgb(${acc})` : T.gold ? `rgba(${acc},0.9)` : 'rgba(255,255,255,0.35)'; ctx.stroke();
       const ink = hitOk || !nt ? 'rgba(13,13,14,0.75)' : 'rgba(255,255,255,0.85)';
+      if (nt && nt.kind === 'h' && !judged) {   // sostenida: anillo doble (mantené apretado mientras gira)
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, rr * 0.62, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, rr * 0.48, 0, Math.PI * 2); ctx.stroke();
+      }
+      const fk = run.forks && run.forks.find(f => !f.done && f.pre === T.i);
+      if (fk) {   // bifurcación: una Y en la baldosa (después de tocarla, reaccioná rápido para el camino difícil)
+        ctx.strokeStyle = `rgb(${acc})`; ctx.lineWidth = 3; ctx.beginPath();
+        ctx.moveTo(x, y + rr * 0.45); ctx.lineTo(x, y); ctx.lineTo(x - rr * 0.38, y - rr * 0.42); ctx.moveTo(x, y); ctx.lineTo(x + rr * 0.38, y - rr * 0.42); ctx.stroke();
+      }
       if (q < n - 1 && T.u !== 2) {
         ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 2;
         if (T.u === 1) { ctx.beginPath(); for (let j = 0; j < 3; j++) { const a = -Math.PI / 2 + j * 2 * Math.PI / 3; j ? ctx.lineTo(x + rr * 0.42 * Math.cos(a), y + rr * 0.42 * Math.sin(a)) : ctx.moveTo(x + rr * 0.42 * Math.cos(a), y + rr * 0.42 * Math.sin(a)); } ctx.closePath(); ctx.fill(); }
@@ -363,8 +372,23 @@
         ctx.fillStyle = col(!pivA); ctx.beginPath(); ctx.arc(mx, my, pr, 0, Math.PI * 2); ctx.fill();
       }
     }
+    // Sostenida en curso: arco alrededor del pivote que se llena hasta soltar
+    const hold = run.active.find(h => h.holding);
+    if (hold) {
+      const pr2 = Math.max(0, Math.min(1, (t - hold.t) / (hold.end - hold.t))), on = hold.relAt == null;
+      ctx.strokeStyle = `rgba(${acc},${on ? 0.9 : 0.35})`; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(px, py, R * 0.4, -Math.PI / 2, -Math.PI / 2 + pr2 * Math.PI * 2); ctx.stroke();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = F(800, U * 0.032); ctx.fillStyle = `rgba(${acc},0.9)`; ctx.fillText(on ? 'MANTENÉ' : 'SOLTASTE', px, py - R * 0.62);
+    }
     drawHud(U);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    // Bifurcación abierta: ¡reaccioná!
+    if (run.forkWin && t <= run.forkWin.to) {
+      const fw = run.forkWin, p3 = Math.max(0, (fw.to - t) / (fw.to - fw.from + 0.001));
+      ctx.font = F(900, U * 0.06); ctx.fillStyle = `rgb(${acc})`; ctx.fillText('¡TOCÁ YA!', W / 2, H * 0.24);
+      ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText('para el camino difícil', W / 2, H * 0.24 + U * 0.05);
+      ctx.strokeStyle = `rgba(${acc},0.9)`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(px, py, R * (0.45 + 0.6 * p3), 0, Math.PI * 2); ctx.stroke();
+    }
+    if (run.brakes > 0 && t > LEAD) { ctx.textAlign = 'left'; ctx.font = F(700, U * 0.028); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText(`FRENO (F) x${run.brakes}`, 10, 58); ctx.textAlign = 'center'; }
     if (run.combo >= 4) {
       ctx.font = F(900, U * 0.09); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillText(run.combo, W / 2, H * 0.17);
       ctx.font = F(600, U * 0.032); ctx.fillStyle = 'rgba(255,255,255,0.5)';
@@ -404,10 +428,11 @@
     const pads = $('pads'), land = isLand();
     if (run.mode === 'path') {   // Compás: un solo botón grande (dos en el celular acostado)
       const big = (id, side) => `<button class="pad pad-tap" id="${id}" data-l="0" aria-label="Tocar">TOCAR<small class="tap-any">o tocá en cualquier parte de la pista</small></button>`;
+      const brk = L('p_o_brake') ? '<button class="pad pad-brake" data-act="B" aria-label="Freno">FRENO<small>cámara lenta</small></button>' : '';
       if (land) {
         pads.className = 'pads land-pads';
-        pads.innerHTML = `<div class="pg side left">${PAUSE_GAP}<div class="pg-pads">${big('pad0')}</div></div><div class="pg side right">${PAUSE_PAD}<div class="pg-pads">${big('pad0b')}</div></div>`;
-      } else { pads.className = 'pads'; pads.innerHTML = `<div class="pg"><div class="pg-pads one">${big('pad0')}</div></div>`; }
+        pads.innerHTML = `<div class="pg side left">${PAUSE_GAP}<div class="pg-pads">${big('pad0')}${brk}</div></div><div class="pg side right">${PAUSE_PAD}<div class="pg-pads">${big('pad0b')}</div></div>`;
+      } else { pads.className = 'pads'; pads.innerHTML = `<div class="pg"><div class="pg-pads one${brk ? ' with-brake' : ''}">${big('pad0')}${brk}</div></div>`; }
     } else if (run.mode === 'stack') {
       const acts = [['L', ARROWS[0], 'Mover'], ['U', icon('turn'), 'Girar'], ['R', ARROWS[3], 'Mover'], ['D', ARROWS[1], 'Bajar'], ['H', icon('drop'), 'Soltar']];
       if (L('e_d_hold')) acts.push(['C', icon('swap'), 'Bodega']);
@@ -457,6 +482,6 @@
     });
     pads.querySelectorAll('.pad[data-act]').forEach(p => p.addEventListener('pointerdown', e => {
       e.preventDefault(); p.classList.add('on'); setTimeout(() => p.classList.remove('on'), 120);
-      if (p.dataset.act === 'P') pause(); else stackInput(p.dataset.act);
+      if (p.dataset.act === 'P') pause(); else if (p.dataset.act === 'B') brake(); else stackInput(p.dataset.act);
     }));
   }

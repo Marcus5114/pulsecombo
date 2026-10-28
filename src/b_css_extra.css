@@ -528,3 +528,6 @@ body.pat-still::before { animation: none; }
 /* Íconos de los botones táctiles: mismo trazo y tamaño en todas las direcciones */
 .pad-ic { width: 1.1em; height: 1.1em; display: block; margin: 0 auto; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .pad small .pad-ic, .pad .pad-ic + small { margin-top: 2px; }
+/* Compás: botón de freno al lado de TOCAR */
+.pg-pads.one.with-brake { grid-template-columns: 1fr auto; display: grid; gap: 8px; }
+.pad-brake { font-size: 0.8rem; padding-inline: 14px; }

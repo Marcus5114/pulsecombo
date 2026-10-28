@@ -107,12 +107,13 @@
   }
   // Tutorial: frases de dos compases con curvas (negras), medias notas, rectas (negra con puntillo) y corcheas
   const TUT_PHRASES = [[4, 4, 4, 4, 4, 4, 4, 4], [8, 8, 8, 8], [6, 2, 4, 4, 6, 2, 4, 4], [4, 4, 8, 4, 4, 8], [2, 2, 4, 8, 2, 2, 4, 8], [8, 4, 4, 6, 6, 4]];
-  function buildPath(si, di) {
-    const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16, M = getMusic(si), R = rng(11000 + si * 53 + di * 7);
+  // Pasos (semicorcheas) donde se toca, según la densidad: 0 Fácil, 1 Normal, 2 Difícil, 3 camino difícil de una bifurcación en Difícil
+  function pathTaps(s, M, lvl, R) {
+    const total = songMeasures(s) * 16, end = total - 8, fast = s.bpm > 140;
     // Fácil: negras y más largas · Normal: corcheas · Difícil: semicorcheas (en canciones rápidas, solo de a pares) y baldosas triángulo
-    const grid = di === 2 ? 1 : 2, minGap = di === 0 ? 4 : di === 1 ? 2 : 1, maxGap = di === 0 ? 16 : 12, end = total - 8, fast = s.bpm > 140;
-    const units = di === 2 ? [2, 1, 4] : [2, 4];
-    const DRUMS = di === 2 ? 'kKsc' : 'kK';   // Fácil y Normal suman el bombo (Fácil solo en los tiempos 1 y 3)
+    const grid = lvl >= 2 ? 1 : 2, minGap = lvl === 0 ? 4 : lvl === 1 ? 2 : 1, maxGap = lvl === 0 ? 16 : 12;
+    const units = lvl >= 2 ? [2, 1, 4] : [2, 4];
+    const DRUMS = lvl === 3 ? 'kKshc' : lvl === 2 ? 'kKsc' : 'kK';   // Fácil y Normal suman el bombo (Fácil solo en los tiempos 1 y 3)
     let taps = [];
     if (s.tut) {
       let i = 16, ph = 0;
@@ -124,21 +125,21 @@
         const bar = i >> 4, p = i & 15;
         let on;
         if (bar < 2) on = p % 4 === 0;
-        else { const sec = secAt(M, bar), S = M.sec[sec], drums = di === 1 && sec !== 'B' ? '' : DRUMS; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || ((di !== 0 || p % 8 === 0) && S.dr[p].some(([d]) => drums.includes(d)))); }
+        else { const sec = secAt(M, bar), S = M.sec[sec], drums = lvl === 1 && sec !== 'B' ? '' : DRUMS; on = p % grid === 0 && (S.mel.has((bar % 8) * 16 + p) || ((lvl !== 0 || p % 8 === 0) && S.dr[p].some(([d]) => drums.includes(d)))); }
         if (on) cand.push(i);
       }
       // 2. Separación mínima, sin rachas de semicorcheas, y huecos largos rellenados con negras
       let last = cand[0] - 4;
       for (const c of cand) {
         if (c - last < minGap) continue;
-        if (c - last === 1 && taps.length > 1 && last - taps[taps.length - 2] < (fast ? 4 : 2)) continue;
+        if (c - last === 1 && taps.length > 1 && last - taps[taps.length - 2] < (fast && lvl < 3 ? 4 : 2)) continue;
         while (c - last > maxGap) { last += 4; taps.push(last); }
         if (c - last < minGap) continue;
         taps.push(c); last = c;
       }
     }
     // 2a. Fácil: si hay muchas negras seguidas, cada tanto se saltea una (queda una media nota) para que el camino no sea una recta
-    if (di === 0 && !s.tut) {
+    if (lvl === 0 && !s.tut) {
       const out = []; let run = 0;
       for (let k = 0; k < taps.length; k++) {
         const g = k ? taps[k] - taps[k - 1] : 0;
@@ -150,57 +151,95 @@
     }
     // 2b. Cada hueco tiene que poder contarse en lados (1 a 5 lados de semicorchea, corchea o negra).
     //     Si no se puede (por ejemplo 14 semicorcheas), se agrega una baldosa intermedia cada negra hasta que entre.
-    {
-      const fixed = []; let lastI = taps[0] - 4;
-      for (const i of taps) {
-        while (!hexSplit(i - lastI, 2, units) && !hexSplit(i - lastI, 2, [1, 2, 4])) { lastI += i - lastI > 8 ? 4 : 2; fixed.push(lastI); }
-        fixed.push(i); lastI = i;
-      }
-      taps = fixed;
+    const fixed = []; let lastI = taps[0] - 4;
+    for (const i of taps) {
+      while (!hexSplit(i - lastI, 2, units) && !hexSplit(i - lastI, 2, [1, 2, 4])) { lastI += i - lastI > 8 ? 4 : 2; fixed.push(lastI); }
+      fixed.push(i); lastI = i;
     }
-    // 3. Baldosas en la grilla hexagonal. Si una cae sobre otra reciente, el giro cambia de sentido.
-    const golds = L('p_c_gold') && !s.tut;
-    const first = { q: 0, r: 0, D: 0, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, u: 2, m: 2, s: 1 };
-    [first.x, first.y] = hexXY(0, 0);
-    const tiles = [first], notes = [];
-    let twirls = 0, uchg = 0, quick = 0, prevU = 2;
-    const busy = (q, r) => tiles.slice(-8).some(T => T.q === q && T.r === r);   // solo las recientes: las viejas ya se apagaron
-    for (let k = 0; k < taps.length; k++) {
-      const prev = tiles[tiles.length - 1], i = taps[k];
+    return fixed;
+  }
+  const pathUnits = di => di === 2 ? [2, 1, 4] : [2, 4];
+  // 3. Baldosas en la grilla hexagonal, a continuación de las que ya hay en 'hist'. Si una cae sobre otra reciente, el giro
+  //    cambia de sentido. Devuelve las notas (una por baldosa nueva). Se usa al armar la canción y, en la partida,
+  //    al tomar el camino difícil de una bifurcación.
+  //    o: { R, step, di, tut, golds, holdP, st (estadísticas para las estrellas) }
+  function pathChain(hist, taps, o) {
+    const notes = [], st = o.st || { twirls: 0, uchg: 0, quick: 0 }, units = o.tut ? [2, 4] : pathUnits(o.di), R = o.R;
+    let prevU = hist[hist.length - 1].u;
+    const busy = (q, r) => hist.slice(-8).some(T => T.q === q && T.r === r);   // solo las recientes: las viejas ya se apagaron
+    for (const i of taps) {
+      const prev = hist[hist.length - 1], k = hist.length - 1;
       let gap = i - prev.i, sp = hexSplit(gap, prevU, units);
       if (!sp) { sp = hexSplit(gap, prevU, [1, 2, 4]); }
       if (!sp) continue;   // no se puede expresar (no debería pasar)
       const [u, m] = sp;
       const secStart = (i >> 7) !== (prev.i >> 7);
-      let twirl = !!(s.tut ? k > 0 && k % 7 === 0 : secStart && (di === 2 ? R() < 0.6 : di === 1 ? R() < 0.35 : false));
+      let twirl = !!(o.tut ? k > 0 && k % 7 === 0 : secStart && (o.di === 2 ? R() < 0.6 : o.di === 1 ? R() < 0.35 : false));
       let sign = twirl ? prev.s : -prev.s;
       const go = sg => { const D = (((prev.D + 3 + sg * m) % 6) + 6) % 6; return [D, prev.q + HEX[D][0], prev.r + HEX[D][1]]; };
       let [D, q, r] = go(sign);
       if (busy(q, r)) { const [D2, q2, r2] = go(-sign); if (!busy(q2, r2)) { sign = -sign; twirl = !twirl; [D, q, r] = [D2, q2, r2]; } }
-      if (twirl) twirls++;
-      if (u !== prevU) uchg++;
-      if (gap <= 2) quick++;
+      if (twirl) st.twirls++;
+      if (u !== prevU) st.uchg++;
+      if (gap <= 2) st.quick++;
       prev.u = u;   // la forma de la baldosa en la que estás dice cuánto vale cada lado de la órbita
       prevU = u;
-      const gold = golds && k > 4 && R() < 0.12;
+      const gold = o.golds && k > 4 && R() < 0.12;
       const [x, y] = hexXY(q, r);
-      tiles.push({ q, r, x, y, D, i, t: LEAD + i * step, u: 2, m, s: sign, gap, twirl, gold });
-      notes.push({ t: LEAD + i * step, i, lane: 0, kind: 'q', k: tiles.length - 1, gold, pl: k % 4 });
+      hist.push({ q, r, x, y, D, i, t: LEAD + i * o.step, u: 2, m, s: sign, gap, twirl, gold });
+      notes.push({ t: LEAD + i * o.step, i, lane: 0, kind: 'q', k: hist.length - 1, gold, pl: k % 4 });
     }
-    // la baldosa de llegada (de la nota k) guarda cuántos lados y en qué sentido se recorrieron hasta ella
+    // Baldosas sostenidas: en huecos de media nota o más, se mantiene apretado mientras el planeta da la vuelta
+    // y se suelta (o termina sola) una corchea antes de la baldosa siguiente
+    if (o.holdP) for (let j = 0; j + 1 < notes.length; j++) {
+      const n = notes[j], g = notes[j + 1].i - n.i;
+      if (g >= 8 && !n.gold && R() < o.holdP) { n.kind = 'h'; n.end = n.t + (g - 2) * o.step; }
+    }
+    return notes;
+  }
+  function buildPath(si, di) {
+    const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16, M = getMusic(si), R = rng(11000 + si * 53 + di * 7);
+    const taps = pathTaps(s, M, s.tut ? 0 : di, R);
+    const first = { q: 0, r: 0, D: 0, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, u: 2, m: 2, s: 1 };
+    [first.x, first.y] = hexXY(0, 0);
+    const tiles = [first], st = { twirls: 0, uchg: 0, quick: 0 };
+    const holdP = s.tut || !L('p_o_hold') ? 0 : 0.3 + 0.12 * L('p_o_freq');
+    const notes = pathChain(tiles, taps, { R, step, di, tut: s.tut, golds: L('p_c_gold') && !s.tut, holdP, st });
+    // Bifurcaciones: en algunos tramos de 8 compases hay un camino difícil (la densidad de la dificultad siguiente).
+    // Se toma reaccionando rápido al llegar a la baldosa anterior al tramo; si no, se sigue por el normal.
+    const forks = [], nf = s.tut ? 0 : L('p_c_fork') ? 1 + L('p_c_forkn') : 0;
+    if (nf) {
+      // tramos de 4 compases; la bifurcación arranca en la primera baldosa del primer compás que venga después de un hueco de una negra o más
+      const R2 = rng(13000 + si * 41 + di * 3), hardAll = pathTaps(s, M, Math.min(3, di + 1), R2), nseg = Math.floor(total / 64);
+      const cands = [];
+      for (let sg = 1; sg < nseg - 1; sg++) {
+        const k = taps.findIndex((i, j) => j > 0 && i >= sg * 64 && i < sg * 64 + 16 && i - taps[j - 1] >= 4); if (k < 0) continue;
+        const a = taps[k], pre = taps[k - 1], b = sg * 64 + 64;
+        const norm = taps.filter(i => i >= a && i < b), hard = hardAll.filter(i => i >= pre + 4 && i < b);
+        if (hard.length < norm.length + 2) continue;
+        cands.push({ a, b, pre, hard });
+      }
+      // repartidas a lo largo de la canción
+      // (sin pisarse: la baldosa de una bifurcación tiene que estar después del final de la anterior)
+      for (let f = 0; f < nf && cands.length; f++) {
+        const pick = cands[Math.min(cands.length - 1, Math.floor((f + 0.5) / nf * cands.length))], last = forks[forks.length - 1];
+        if (!forks.includes(pick) && (!last || pick.pre >= last.b)) forks.push(pick);
+        else { const alt = cands.find(c => !forks.includes(c) && (!last || c.pre >= last.b)); if (alt) forks.push(alt); }
+      }
+    }
     const dur = total * step, secs = new Set(notes.map(n => n.i >> 7)).size, nGold = notes.filter(n => n.gold).length;
     // variedad: cuántas veces cambia la cantidad de lados de una baldosa a la siguiente (un camino parejo es más fácil de leer)
     let vary = 0; for (let q = 2; q < tiles.length; q++) if (tiles[q].m !== tiles[q - 1].m) vary++;
-    let stars = 0.3 + 1.2 * notes.length / dur + 1.4 * quick / dur + 1.5 * uchg / dur + 0.9 * vary / dur + 0.012 * twirls;
+    let stars = 0.3 + 1.2 * notes.length / dur + 1.4 * st.quick / dur + 1.5 * st.uchg / dur + 0.9 * vary / dur + 0.012 * st.twirls;
     stars = Math.round(stars * 10) / 10;
-    return { notes, tiles, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, golds: nGold, secs };
+    return { notes, tiles, taps, forks, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: notes.filter(n => n.kind === 'h').length, extras: 0, golds: nGold, secs, holdP };
   }
 
   const chartCache = new Map();
   const sig = () => ['x_root', 'x_dens', 'x_semi', 'l_root', 'l_freq', 'l_len'].map(id => E(id)).join('');
   function getChart(si, di) {
     const s = SONGS[si], m = modeOf(s), mods = activeMods(s);
-    const k = `${si}-${di}-${m === 'arrows' ? sig() : m === 'path' ? L('p_c_gold') : ''}-${mods.join('.')}-${L('g_mod_amp')}`;
+    const k = `${si}-${di}-${m === 'arrows' ? sig() : m === 'path' ? ['p_c_gold', 'p_o_hold', 'p_o_freq', 'p_c_fork', 'p_c_forkn'].map(id => L(id)).join('') : ''}-${mods.join('.')}-${L('g_mod_amp')}`;
     if (!chartCache.has(k)) {
       const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : m === 'path' ? buildPath(si, di) : buildStack(si, di);
       c.baseStars = c.stars; c.mods = mods;

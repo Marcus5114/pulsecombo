@@ -50,7 +50,7 @@
   const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
   const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
   const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
-    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA' };
+    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA', fork: 'CAMINO DIFÍCIL', brake: 'FRENO' };
   // Portadoras de Señal: dorada (x2) y rosa (x3)
   const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
@@ -69,7 +69,11 @@
     else {
       Object.assign(run, { notes: ch.notes.map(n => ({ ...n })), active: [], counts: { perfect: 0, great: 0, good: 0, miss: 0 },
         xHit: 0, xStreak: 0, feverUntil: -1, holdsDone: 0, drops: 0, ghost: 0, ghostTimes: [], shields: mode === 'arrows' ? L('c_shield') : mode === 'path' ? L('p_r_safe') : 0 });
-      if (mode === 'path') Object.assign(run, { secIdx: 0, secMiss: 0, secEarn: 0, tramos: 0, goldHit: 0, pk: 0 });
+      if (mode === 'path') {
+        Object.assign(run, { secIdx: 0, secMiss: 0, secEarn: 0, tramos: 0, goldHit: 0, pk: 0, hardTaken: 0, hardHit: 0,
+          tiles: ch.tiles.map(T => ({ ...T })),   // copia: una bifurcación reemplaza las baldosas de esta partida
+          forks: ch.forks.map(f => ({ ...f, done: false })), forkWin: null, brakes: L('p_o_brake') ? 1 + L('p_o_brakeuse') : 0 });
+      }
       if (mode === 'signal') {
         run.rounds = ch.rounds.map(r => ({ ...r, raw: 0 })); run.streak = 0; run.decoded = 0; run.sigR = null; run.carriers = 0;
         // Portadoras: se sortean al empezar (dependen de las mejoras, no de la canción). Se marca un momento del patrón (cOff)
@@ -189,15 +193,41 @@
     }
     run.counts[j]++; addCombo(1);
     if (run.mode === 'signal') run.sigR = best.r;
-    award(basePts() * JVAL[j] * (best.multi && L('s_t_mux') ? 1 + 0.5 * L('s_t_mux') : 1), j);
+    if (best.hard) run.hardHit++;
+    award(basePts() * JVAL[j] * (best.multi && L('s_t_mux') ? 1 + 0.5 * L('s_t_mux') : 1) * (best.hard ? 1.5 + 0.25 * L('p_c_forkv') : 1), j);
     run.sigR = null;
     run.life = Math.min(100, run.life + (j === 'perfect' ? 1.2 : j === 'great' ? 0.6 : 0));
     if (best.gold && j === 'perfect') { award(basePts() * (2 + L('p_c_goldv')), j); run.goldHit++; setJudge(j, true); blip(best.pl, j, true); }
     else { setJudge(j); blip(run.mode === 'path' ? best.pl : lane, j); }
     roundNote(best, true);
+    if (run.mode === 'path') forkOpen(best, t);
     if (best.kind === 'h') { best.holding = true; best.relAt = null; best.nextTick = best.t + run.ch.step; run.active.push(best); }
   }
+  // Bifurcaciones de Compás: al acertar la baldosa anterior a un tramo con bifurcación se abre una ventana corta.
+  // Un toque extra dentro de esa ventana (reaccionar rápido) toma el camino difícil; si no, se sigue por el normal.
+  // Freno de péndulo (Compás): cámara lenta a pedido, unas veces por canción
+  function brake() {
+    if (view !== 'play' || !run || run.over || run.paused || run.mode !== 'path' || run.brakes <= 0) return;
+    const t = gameT(); if (t < LEAD || (run.slowUntil && t < run.slowUntil)) return;
+    run.brakes--; slowMo(4 + 2 * L('p_o_brakelen'), 0.65); setJudge('brake');
+    if (ac) tone(ac.currentTime, 'sine', 330, 0.25, 0.12, 165);
+  }
+  function forkOpen(n, t) {
+    const f = run.forks.find(f => !f.done && f.pre === n.i); if (!f) return;
+    const next = run.notes.find(x => x.t > n.t), room = next ? next.t - t - WIN.good * modeWin() - 0.04 : 0.4;
+    f.done = true; if (room < 0.08) return;
+    run.forkWin = { f, from: t + 0.04, to: t + Math.min(0.45, room), k0: n.k };
+  }
+  function takeFork() {
+    const { f, k0 } = run.forkWin; run.forkWin = null;
+    const hist = run.tiles.slice(0, k0 + 1), taps = [...f.hard, ...run.ch.taps.filter(i => i >= f.b)];
+    const notes = pathChain(hist, taps, { R: rng(17000 + run.si * 29 + f.a), step: run.ch.step, di: Math.min(2, run.di + 1), tut: false, golds: L('p_c_gold'), holdP: run.ch.holdP });
+    for (const n of notes) if (n.i < f.b) n.hard = true;
+    run.tiles = hist; run.notes = run.notes.slice(0, k0).concat(notes); run.hardTaken++;
+    setJudge('fork'); if (ac) { const at = ac.currentTime; tone(at, 'triangle', 660, 0.08, 0.1); tone(at + 0.06, 'triangle', 990, 0.1, 0.12); }
+  }
   function ghostTap(t) {
+    if (run.forkWin) { if (t >= run.forkWin.from && t <= run.forkWin.to) { takeFork(); return; } if (t > run.forkWin.to) run.forkWin = null; }
     const first = run.notes.length ? run.notes[0].t : 0;
     if (t < first - 0.6 || t > run.ch.end) return;
     if (run.mode === 'signal' && !inResponse((t - LEAD) / run.ch.step)) return;   // en la llamada se puede tocar libremente
@@ -214,7 +244,7 @@
   }
   function completeHold(n) {
     n.holding = false; n.completed = true; run.holdsDone++;
-    if (L('l_end')) award(basePts() * 2 * L('l_end'), null);
+    if (run.mode === 'path') award(basePts() * (1 + 0.5 * L('p_o_tick')), null); else if (L('l_end')) award(basePts() * 2 * L('l_end'), null);
     setJudge('ok'); flash[n.lane] = performance.now(); blip(n.lane, 'perfect');
   }
   function dropHold(n) {
@@ -231,7 +261,7 @@
   }
   function update(t) {
     scheduleAudio(t);
-    if (run.mode === 'path') { const sec = Math.floor((t - LEAD - WIN.good * 2) / (128 * run.ch.step)); if (sec > run.secIdx) { closeSection(); run.secIdx = sec; } }
+    if (run.mode === 'path') { const sec = Math.floor((t - LEAD - WIN.good * 2) / (128 * run.ch.step)); if (sec > run.secIdx) { closeSection(); run.secIdx = sec; } if (run.forkWin && t > run.forkWin.to) run.forkWin = null; }
     const lim = WIN.good * modeWin();
     for (const n of run.notes) {
       if (n.t > t) break;
@@ -242,7 +272,7 @@
       if (run.over) return;
     }
     // 60 ms de margen base: un dedo que se despega apenas no corta la flecha larga
-    const grace = 0.06 + 0.1 * L('l_grip'), tickVal = basePts() * (0.3 + 0.15 * L('l_tick'));
+    const path = run.mode === 'path', grace = path ? 0.09 : 0.06 + 0.1 * L('l_grip'), tickVal = basePts() * (path ? 0.3 + 0.15 * L('p_o_tick') : 0.3 + 0.15 * L('l_tick'));
     for (const n of run.active) {
       if (!n.holding) continue;
       if (n.relAt != null && t - n.relAt > grace) {
@@ -251,7 +281,7 @@
         continue;
       }
       while (n.nextTick <= Math.min(t, n.end)) {
-        if (n.relAt == null) { if (L('l_cross')) addCombo(1); award(tickVal, null); }
+        if (n.relAt == null) { if (L('l_cross') && !path) addCombo(1); award(tickVal, null); }
         n.nextTick += run.ch.step;
       }
       if (t >= n.end && n.relAt == null) completeHold(n);
@@ -281,7 +311,7 @@
     const rows = [['Perfecto', c.perfect], ['Genial', c.great], ['Bien', c.good], ['Fallo', c.miss], ['Combo máx.', run.maxCombo], ['Precisión', Math.round(acc) + '%']];
     if (run.mode === 'signal') rows.push(['Patrones', `${run.decoded}/${run.rounds.length}`]);
     if (run.mode === 'signal' && run.rounds.some(r => r.carrier)) rows.push(['Portadoras', `${run.carriers}/${run.rounds.filter(r => r.carrier).length}`]);
-    if (run.mode === 'path') { rows.push(['Tramos perfectos', `${run.tramos}/${ch.secs}`]); if (ch.golds) rows.push(['Doradas', `${run.goldHit}/${ch.golds}`]); }
+    if (run.mode === 'path') { rows.push(['Tramos perfectos', `${run.tramos}/${ch.secs}`]); if (ch.golds) rows.push(['Doradas', `${run.goldHit}/${ch.golds}`]); if (ch.forks.length) rows.push(['Caminos difíciles', `${run.hardTaken}/${ch.forks.length}`]); if (run.holdsDone || ch.holds) rows.push(['Sostenidas', `${run.holdsDone}/${ch.holds}`]); }
     if (ch.extras) rows.push(['Notas extra', `${run.xHit}/${ch.extras}`]);
     if (ch.holds) rows.push(['Largas', `${run.holdsDone}/${ch.holds}`]);
     rows.push(['Golpes al aire', run.ghost]);

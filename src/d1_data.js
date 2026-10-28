@@ -233,6 +233,7 @@
       branches: [
         { id: 'pr', name: 'Ritmo', tag: 'Tocar seguido y preciso multiplica lo que ganás por baldosa.' },
         { id: 'pc', name: 'Camino', tag: 'Premios por tramos sin fallas y baldosas doradas.' },
+        { id: 'po', name: 'Órbitas', tag: 'Nuevas formas de moverse: baldosas que se sostienen y un freno para el péndulo.' },
       ],
       nodes: [
         { id: 'p_core', br: 'core', name: 'Eje', max: 1, desc: 'El eje que une a los dos planetas. De acá salen todas las mejoras de Compás.', fx: () => 'Activo' },
@@ -247,6 +248,15 @@
         { id: 'p_c_sec', br: 'pc', pos: [1, 2], name: 'Tramo brillante', max: 4, cost: [400, 8.7], req: [['p_c_root', 1]], desc: 'Los tramos perfectos dan un bonus más grande.', fx: lv => `Bonus de ${25 + 25 * lv}% por tramo` },
         { id: 'p_c_gold', br: 'pc', pos: [3, 2], name: 'Baldosas doradas', max: 1, cost: [300, 1], req: [['p_c_root', 1]], desc: 'Aparecen baldosas doradas en el camino. Un PERFECTO sobre una dorada vale mucho más.', fx: lv => lv ? 'Doradas activas' : 'Sin doradas' },
         { id: 'p_c_goldv', br: 'pc', pos: [3, 3], name: 'Oro fundido', max: 3, cost: [600, 9.4], req: [['p_c_gold', 1]], desc: 'Las baldosas doradas valen más.', fx: lv => `Un PERFECTO en dorada vale x${3 + lv}` },
+        { id: 'p_c_fork', br: 'pc', pos: [1, 3], name: 'Bifurcaciones', max: 1, cost: [520, 1], req: [['p_c_sec', 1]], desc: 'Un tramo de cada canción se bifurca. La baldosa anterior lleva una Y: al tocarla, si reaccionás rápido con un toque extra, vas por el camino difícil (más denso, cada baldosa vale x1,5). Si no, seguís por el normal sin perder nada.', fx: lv => lv ? '1 bifurcación por canción' : 'Sin bifurcaciones' },
+        { id: 'p_c_forkn', br: 'pc', pos: [1, 4], name: 'Encrucijada', max: 2, cost: [700, 10.1], req: [['p_c_fork', 1]], desc: 'Más tramos con bifurcación en cada canción.', fx: lv => `${1 + lv} bifurcaciones por canción` },
+        { id: 'p_c_forkv', br: 'pc', pos: [2, 4], name: 'Camino empinado', max: 3, cost: [800, 10.1], req: [['p_c_fork', 1]], desc: 'Las baldosas del camino difícil valen más {giros}.', fx: lv => `x${dec(1.5 + 0.25 * lv)} por baldosa del camino difícil` },
+        { id: 'p_o_hold', br: 'po', pos: [2, 1], root: true, name: 'Baldosa sostenida', max: 1, cost: [260, 1], req: [['p_core', 1]], desc: 'En los huecos largos (media nota o más) aparecen baldosas con anillo doble: tocá y mantené apretado mientras el planeta da la vuelta. Se suelta sola una corchea antes de la baldosa siguiente. Cada corchea sostenida suma {giros}.', fx: lv => lv ? 'Sostenidas activas' : 'Sin sostenidas' },
+        { id: 'p_o_tick', br: 'po', pos: [1, 2], name: 'Sostén', max: 4, cost: [420, 8], req: [['p_o_hold', 1]], desc: 'Cada corchea sostenida y cada sostenida completa valen más.', fx: lv => `${Math.round((0.3 + 0.15 * lv) * 100)}% de una baldosa por corchea` },
+        { id: 'p_o_freq', br: 'po', pos: [3, 2], name: 'Gravedad', max: 3, cost: [460, 8.7], req: [['p_o_hold', 1]], desc: 'Más huecos largos se vuelven baldosas sostenidas.', fx: lv => `${30 + 12 * lv}% de los huecos largos` },
+        { id: 'p_o_brake', br: 'po', pos: [2, 2], name: 'Freno de péndulo', max: 1, cost: [600, 1], req: [['p_o_hold', 1]], desc: 'Una vez por canción, con F o Shift (o el botón FRENO en pantalla táctil), la canción entera pasa al 65% de velocidad unos tiempos: más tiempo para leer las curvas difíciles.', fx: lv => lv ? '4 tiempos, 1 vez por canción' : 'Sin freno' },
+        { id: 'p_o_brakelen', br: 'po', pos: [2, 3], name: 'Péndulo largo', max: 3, cost: [700, 9.4], req: [['p_o_brake', 1]], desc: 'El freno dura más.', fx: lv => `${4 + 2 * lv} tiempos de freno` },
+        { id: 'p_o_brakeuse', br: 'po', pos: [3, 3], name: 'Contrapeso', max: 2, cost: [900, 11.5], req: [['p_o_brake', 1]], desc: 'Más frenos por canción.', fx: lv => `${1 + lv} frenos por canción` },
       ],
     },
     global: {

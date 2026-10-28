@@ -579,6 +579,7 @@
     if (view === 'play') {
       if (e.code === 'Escape' || e.code === 'KeyP') { e.preventDefault(); if (run && run.paused) resume(); else pause(); return; }
       if (!run || run.paused) return;
+      if (run.mode === 'path' && (e.code === 'KeyF' || e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { e.preventDefault(); if (!e.repeat) brake(); return; }
       if (run.mode === 'stack') {
         const act = STACK_KEYS[e.code]; if (!act) return;
         e.preventDefault(); if (!e.repeat) stackInput(act); return;
