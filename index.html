@@ -765,12 +765,15 @@ body.has-pat { background-color: transparent; }   /* el fondo lo pinta html; si 
 body.has-pat.playing::before { display: none; }
 body.pat-still::before { animation: none; }
 @media (prefers-reduced-motion: reduce) { body.has-pat::before { animation: none; } }
+.menu-keys { margin: -4px 0 8px; font-size: 0.68rem; color: var(--muted); }
+.menu-keys kbd { font-size: 0.64rem; padding: 0 4px; }
+@media (hover: none) and (pointer: coarse) { .menu-keys { display: none; } }   /* en el celular no hay teclado */
 </style>
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <h1>Combo Pulso <span>v0.5.2</span></h1>
+    <h1>Combo Pulso <span>v0.5.3</span></h1>
     <div class="keys" id="keysHint">Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa</div>
   </div>
   <div class="bank">
@@ -847,6 +850,7 @@ body.pat-still::before { animation: none; }
     </div>
     </div>
     <h2>Elegí canción y dificultad</h2>
+    <p class="menu-keys" aria-hidden="true"><kbd>↑</kbd><kbd>↓</kbd> canción · <kbd>←</kbd><kbd>→</kbd> dificultad · <kbd>Enter</kbd> jugar · <kbd>Esc</kbd> mapa · <kbd>Tab</kbd> recorrer</p>
     <div class="songs" id="songs"></div>
     <div class="keycfg" id="keycfg" hidden>
       <h2>Teclas en Doble</h2>
@@ -3670,7 +3674,7 @@ body.pat-still::before { animation: none; }
   // Volver a charlar: repite lo que ya te dijo, ahora con lo que entendés según la Sintonía
   const repTalkLines = wi => { const wid = WORLDS[wi].id; return ['meet_' + wid, 'done_' + wid].filter(k => STORY[k] && (k[0] === 'm' || S.story?.[k])).flatMap(k => STORY[k]); };
   // Abrir y cerrar el detalle del representante
-  const repToggle = on => { const c = $('repCard'); c.classList.toggle('open', on); $('repStrip')?.setAttribute('aria-expanded', on); };
+  const repToggle = on => { const c = $('repCard'), was = c.classList.contains('open'); c.classList.toggle('open', on); $('repStrip')?.setAttribute('aria-expanded', on); if (was !== on) modalFocus('rep', on, '#repClose'); };
   $('repCard').addEventListener('click', e => {
     if (e.target.closest('#repStrip')) repToggle(!$('repCard').classList.contains('open'));
     else if (e.target.closest('#repClose') || e.target.id === 'repBack') repToggle(false);
@@ -3924,7 +3928,7 @@ body.pat-still::before { animation: none; }
     clearInterval(dlgTimer);
     dlgLine = dlgQueue.shift();
     while (typeof dlgLine === 'function') { $('dlg').hidden = true; dlgLine(); if (dlgOpen()) return; dlgLine = dlgQueue.shift(); }
-    if (!dlgLine) { $('dlg').hidden = true; return; }
+    if (!dlgLine) { $('dlg').hidden = true; viewFocus(view); return; }   // al terminar la charla, el foco vuelve a la pantalla
     const [who, raw] = dlgLine, [name, role] = SPK[who], text = speak(who, raw);
     dlgLine = [who, text];
     $('dlg').hidden = false;
@@ -4449,6 +4453,7 @@ body.pat-still::before { animation: none; }
       : 'Flechas, <kbd>WASD</kbd> o <kbd>IJKL</kbd> · <kbd>Esc</kbd> pausa';
     renderUI(true);
     if (v === 'map' || v === 'menu' || v === 'gal') storyCheck(v);
+    viewFocus(v);
   }
   function travel(gal) {
     S.galaxy = gal; S.world = WORLDS.findIndex(w => w.gal === gal && w.tutorial); S.sel = WORLDS[S.world].idx[0]; S.diff = 0;
@@ -4731,6 +4736,7 @@ body.pat-still::before { animation: none; }
     card.classList.toggle('open', on); $('sideBack').classList.toggle('open', on); $('sideBack').classList.toggle('pop', pop);
     document.querySelectorAll('.side-btn').forEach(b => b.setAttribute('aria-expanded', String(b.dataset.card === name)));
     card.style.left = card.style.top = '';
+    modalFocus('side', on, '#scClose');
     if (!on) return;
     card.dataset.side = name === 'rules' ? 'l' : 'pop'; $('scTitle').textContent = CARD_TITLE[name];
     card.querySelectorAll('.sc-body').forEach(b => { b.hidden = b.dataset.card !== name; });
@@ -5007,6 +5013,8 @@ body.pat-still::before { animation: none; }
       e.preventDefault(); if (e.repeat) return;
       keyDown[l] = true; hit(l); $('pad' + l)?.classList.add('on');
     } else if (view === 'menu' && !e.repeat) {
+      if (openModal() || dlgOpen() || e.target.closest?.('input, select, textarea')) return;   // las flechas son del control o de la ventana abierta
+      if (e.code === 'Escape') { e.preventDefault(); setView('map'); return; }
       if (e.code === 'ArrowDown' || e.code === 'ArrowUp') {
         e.preventDefault();
         const list = WORLDS[S.world].idx, k = list.indexOf(S.sel) + (e.code === 'ArrowDown' ? 1 : -1);
@@ -5112,7 +5120,8 @@ body.pat-still::before { animation: none; }
   }
   function settingsOpen(on) {
     $('setCard').hidden = $('setBack').hidden = !on;
-    if (on) { renderSettings(); renderLook(); $('lowGfx').checked = !!S.lowGfx; $('setClose').focus(); }
+    if (on) { renderSettings(); renderLook(); $('lowGfx').checked = !!S.lowGfx; }
+    modalFocus('set', on, '#setClose');
   }
   $('lowGfx').addEventListener('change', e => { S.lowGfx = e.target.checked; if (!S.lowGfx) gfxScale = 2; save(); lookApply(); resize(); if (view === 'play' && run) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)(); });
   $('volList').addEventListener('input', e => {
@@ -5135,6 +5144,85 @@ body.pat-still::before { animation: none; }
       resetBox.innerHTML = '<button class="link" id="reset">Reiniciar progreso</button>';
     }
   });
+
+  // ---------- Teclado: recorrer menús y ventanas sin mouse ----------
+  // 1) El foco no se pierde cuando una lista se vuelve a dibujar (canciones, galaxias, apariencia, retrato…):
+  //    se recuerda qué botón tenía el foco y se lo devuelve al nuevo botón equivalente (mismo id o mismos data-*).
+  // 2) Al cambiar de pantalla, el foco va al elemento principal de esa pantalla.
+  // 3) Las ventanas (Ajustes, tarjetas laterales, ficha del representante, pausa) atrapan el Tab y, al cerrarse,
+  //    devuelven el foco a quien las abrió.
+  const FOCUSABLE = 'button:not([disabled]):not([hidden]), a[href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
+  const shown = el => !!el && el.isConnected && el.getClientRects().length > 0 && !el.closest('[hidden]');
+  const focusKey = el => {
+    if (el.id) return '#' + CSS.escape(el.id);
+    const data = [...el.attributes].filter(a => a.name.startsWith('data-')).map(a => `[${a.name}="${CSS.escape(a.value)}"]`).join('');
+    return data ? el.tagName.toLowerCase() + (el.classList[0] ? '.' + CSS.escape(el.classList[0]) : '') + data : null;
+  };
+  let lastFocus = null;   // { el, key, boxes: ids de los contenedores }
+  document.addEventListener('focusin', e => {
+    const el = e.target; if (!(el instanceof Element)) return;
+    const boxes = []; for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) if (p.id) boxes.push(p.id);
+    lastFocus = { el, key: focusKey(el), boxes };
+  });
+  const focusSoft = el => { if (el) el.focus({ preventScroll: true }); };
+  new MutationObserver(() => {
+    if (!lastFocus || lastFocus.el.isConnected || view === 'play') return;
+    const a = document.activeElement; if (a && a !== document.body) return;
+    const lf = lastFocus;
+    let t = lf.key && document.querySelector(lf.key);
+    if (!shown(t)) t = null;
+    for (const id of lf.boxes) { if (t) break; const box = $(id); if (shown(box)) t = [...box.querySelectorAll(FOCUSABLE)].find(shown) || null; }
+    if (t) focusSoft(t);
+  }).observe(document.body, { childList: true, subtree: true });
+
+  // Ventanas abiertas, de la de más arriba a la de más abajo
+  const openModal = () => [
+    !$('setCard').hidden && $('setCard'),
+    $('sideCard').classList.contains('open') && $('sideCard'),
+    $('repCard').classList.contains('open') && $('repMore'),
+    view === 'play' && !$('pauseBox').hidden && !$('pauseCard').hidden && $('pauseCard'),
+  ].find(Boolean) || null;
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || dlgOpen()) return;
+    const m = openModal(); if (!m) return;
+    const els = [...m.querySelectorAll(FOCUSABLE)].filter(shown); if (!els.length) return;
+    const first = els[0], last = els[els.length - 1], a = document.activeElement;
+    if (!m.contains(a)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
+    else if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); }
+  }, true);
+  // Abrir una ventana: se guarda quién tenía el foco; cerrarla: se le devuelve
+  const opener = {};
+  function modalFocus(name, on, firstSel) {
+    if (on) { const a = document.activeElement; if (a && a !== document.body && !opener[name]) opener[name] = a; requestAnimationFrame(() => focusSoft(document.querySelector(firstSel))); }
+    else { const back = opener[name]; delete opener[name]; if (shown(back)) focusSoft(back); }
+  }
+
+  // Foco al entrar a cada pantalla (solo si el foco quedó en algo que ya no se ve)
+  function viewFocus(v) {
+    if (v === 'play') { document.activeElement?.blur?.(); return; }
+    requestAnimationFrame(() => {
+      if (view !== v || dlgOpen() || openModal()) return;
+      const a = document.activeElement; if (a && a !== document.body && shown(a)) return;
+      const t = v === 'gal' ? document.querySelector(`.gxbtn[data-g="${galSel}"]`)
+        : v === 'map' ? document.querySelector(`.pl[data-wi="${S.world}"]:not([disabled])`) || document.querySelector('.pl:not([disabled])')
+        : v === 'menu' ? document.querySelector(`.song[data-i="${S.sel}"]`) || $('playBtn')
+        : v === 'tree' ? document.querySelector('#tree .node')
+        : v === 'result' ? $('worldBtn') : null;
+      focusSoft(t);
+    });
+  }
+
+  // Árbol: con el teclado, el detalle de la mejora aparece al llegar con Tab; Enter pasa al botón Comprar
+  // y Escape vuelve a la mejora.
+  let tipQuiet = false;   // al volver con Escape no se reabre el detalle
+  tree.addEventListener('focusin', e => { const b = e.target.closest('.node'); if (tipQuiet) { tipQuiet = false; return; } if (b && b.matches(':focus-visible') && !(tipOpen && selNode === b.dataset.id)) openTip(b.dataset.id); });
+  tree.addEventListener('click', e => {
+    if (e.detail || !e.target.closest('.node')) return;   // e.detail = 0: lo activó el teclado
+    requestAnimationFrame(() => { const t = [$('buyBtn'), $('togBtn')].find(b => shown(b) && !b.disabled); if (t) t.focus(); });
+  });
+  $('detail').addEventListener('keydown', e => { if (e.key === 'Escape' && tipOpen) { const n = $('n-' + selNode); closeTip(); tipQuiet = true; focusSoft(n); e.stopPropagation(); } });
+  $('detail').addEventListener('focusout', e => { if (tipOpen && !e.relatedTarget?.closest?.('#detail, .node') && e.relatedTarget) closeTip(); });
 
   // ---------- Loop ----------
   let lastFrame = performance.now(), lastSave = 0;

@@ -521,3 +521,6 @@ body.has-pat { background-color: transparent; }   /* el fondo lo pinta html; si 
 body.has-pat.playing::before { display: none; }
 body.pat-still::before { animation: none; }
 @media (prefers-reduced-motion: reduce) { body.has-pat::before { animation: none; } }
+.menu-keys { margin: -4px 0 8px; font-size: 0.68rem; color: var(--muted); }
+.menu-keys kbd { font-size: 0.64rem; padding: 0 4px; }
+@media (hover: none) and (pointer: coarse) { .menu-keys { display: none; } }   /* en el celular no hay teclado */

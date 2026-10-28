@@ -9,6 +9,19 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
+## Sin publicar — próxima versión: v0.5.3
+
+### Agregado
+- **Todo el juego se puede usar solo con el teclado.**
+  - Al cambiar de pantalla, el foco va al elemento principal: la galaxia elegida, el planeta donde estás, la canción seleccionada, la primera mejora del árbol o "Volver al mundo" en el resultado. Al terminar una charla, el foco vuelve a la pantalla.
+  - El foco ya no se pierde cuando una lista se vuelve a dibujar (por ejemplo al elegir otra canción o dificultad, o al tocar una paleta): pasa al botón equivalente.
+  - Ajustes, las tarjetas de Reglas, Mecánicas y Modificadores, la ficha del representante y la pausa mantienen el Tab adentro mientras están abiertas, y al cerrarlas el foco vuelve al botón que las abrió.
+  - Árbol de mejoras: al llegar a una mejora con Tab aparece su detalle; Enter pasa al botón Comprar (Enter de nuevo compra otro nivel) y Escape vuelve a la mejora.
+  - Menú de canciones: Escape vuelve al mapa, y una línea arriba de la lista recuerda las teclas (no aparece en pantallas táctiles).
+
+### Corregido
+- En el menú de canciones, con Ajustes abierto, las flechas cambiaban la canción o la dificultad en vez de mover la barra de volumen. Ahora las flechas son del control que tiene el foco o de la ventana abierta.
+
 ## v0.5.2
 
 ### Corregido

@@ -223,7 +223,7 @@
   // Volver a charlar: repite lo que ya te dijo, ahora con lo que entendés según la Sintonía
   const repTalkLines = wi => { const wid = WORLDS[wi].id; return ['meet_' + wid, 'done_' + wid].filter(k => STORY[k] && (k[0] === 'm' || S.story?.[k])).flatMap(k => STORY[k]); };
   // Abrir y cerrar el detalle del representante
-  const repToggle = on => { const c = $('repCard'); c.classList.toggle('open', on); $('repStrip')?.setAttribute('aria-expanded', on); };
+  const repToggle = on => { const c = $('repCard'), was = c.classList.contains('open'); c.classList.toggle('open', on); $('repStrip')?.setAttribute('aria-expanded', on); if (was !== on) modalFocus('rep', on, '#repClose'); };
   $('repCard').addEventListener('click', e => {
     if (e.target.closest('#repStrip')) repToggle(!$('repCard').classList.contains('open'));
     else if (e.target.closest('#repClose') || e.target.id === 'repBack') repToggle(false);
@@ -477,7 +477,7 @@
     clearInterval(dlgTimer);
     dlgLine = dlgQueue.shift();
     while (typeof dlgLine === 'function') { $('dlg').hidden = true; dlgLine(); if (dlgOpen()) return; dlgLine = dlgQueue.shift(); }
-    if (!dlgLine) { $('dlg').hidden = true; return; }
+    if (!dlgLine) { $('dlg').hidden = true; viewFocus(view); return; }   // al terminar la charla, el foco vuelve a la pantalla
     const [who, raw] = dlgLine, [name, role] = SPK[who], text = speak(who, raw);
     dlgLine = [who, text];
     $('dlg').hidden = false;
