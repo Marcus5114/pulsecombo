@@ -33,7 +33,7 @@
     const U = Math.min(W, H * 0.68);
     const rY = H * 0.16, size = Math.min(lw * 0.72, 64), speed = (H - rY) / TRAVEL;
     const fever = t < run.feverUntil;
-    ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = LK.cv; ctx.fillRect(0, 0, W, H);
     if (!S.lowGfx) { ctx.fillStyle = '#fff'; for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
       ctx.globalAlpha = st.a; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
@@ -82,10 +82,12 @@
     // receptores
     let beatPulse = 0;
     if (t > LEAD) { const bl = 60 / run.song.bpm; beatPulse = Math.max(0, 1 - (((t - LEAD) % bl) / bl) * 3); }
+    const LC = LK.des.pulso ? XC() : '';   // Luz cardinal (diseño de Kadenza): halo en los receptores y estela en las flechas
     for (let i = 0; i < nb * 4 && !run.mods.dark; i++) {   // Sin indicadores: no se dibujan
       const f = Math.max(0, 1 - (now - flash[i]) / 220);
       arrow(laneX(i), rY, size * (1 + 0.06 * beatPulse + 0.12 * f), ANG[i % 4]);
-      ctx.lineWidth = 3; ctx.strokeStyle = `rgba(255,255,255,${0.35 + 0.3 * beatPulse + 0.35 * f})`; ctx.stroke();
+      if (LC) { ctx.lineWidth = 10 + 6 * f; ctx.strokeStyle = `rgba(${LC},${0.12 + 0.1 * beatPulse + 0.25 * f})`; ctx.stroke(); ctx.fillStyle = `rgba(${LC},${0.08 + 0.08 * beatPulse})`; ctx.fill(); }
+      ctx.lineWidth = 3; ctx.strokeStyle = LC ? `rgba(${LC},${0.7 + 0.3 * Math.max(beatPulse, f)})` : `rgba(255,255,255,${0.35 + 0.3 * beatPulse + 0.35 * f})`; ctx.stroke();
       if (f > 0) { ctx.fillStyle = `rgba(255,255,255,${0.5 * f})`; ctx.fill(); }
     }
 
@@ -115,20 +117,27 @@
           ctx.fillRect(x - bwid / 2 - 5, yEnd - 3, bwid + 10, 6);
         }
         arrow(x, yHead, size, a);
-        ctx.fillStyle = dead ? 'rgba(80,80,86,0.6)' : '#ffffff'; ctx.fill();
-        ctx.lineWidth = 2; ctx.strokeStyle = '#0d0d0e'; ctx.stroke();
+        ctx.fillStyle = dead ? 'rgba(80,80,86,0.6)' : LK.note; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = LK.ink; ctx.stroke();
         continue;
       }
       if (y < -size || (n.judged && !n.missed)) continue;
       if (n.kind === 'x') {
         arrow(x, y, size * (n.semi ? 0.78 : 0.92), a);
         ctx.fillStyle = n.missed ? `rgba(${XC()},0.2)` : `rgb(${XC()})`; ctx.fill();
-        ctx.lineWidth = 2; ctx.strokeStyle = '#0d0d0e'; ctx.stroke();
+        ctx.lineWidth = 2; ctx.strokeStyle = LK.ink; ctx.stroke();
         continue;
       }
+      if (LC && !n.missed) {   // estela: dos conos de luz que se afinan hacia atrás (abajo), en el color de la galaxia
+        const al = ctx.globalAlpha; ctx.fillStyle = `rgb(${LC})`;
+        for (const [w, len, op] of [[0.46, 2.2, 0.22], [0.22, 1.5, 0.45]]) {
+          ctx.globalAlpha = al * op; ctx.beginPath(); ctx.moveTo(x - size * w, y + size * 0.1); ctx.lineTo(x + size * w, y + size * 0.1); ctx.lineTo(x, y + size * len); ctx.closePath(); ctx.fill();
+        }
+        ctx.globalAlpha = al;
+      }
       arrow(x, y, size, a);
-      ctx.fillStyle = n.missed ? 'rgba(80,80,86,0.45)' : '#f2f2f4'; ctx.fill();
-      if (!n.missed) { ctx.lineWidth = 2; ctx.strokeStyle = '#0d0d0e'; ctx.stroke(); }
+      ctx.fillStyle = n.missed ? 'rgba(80,80,86,0.45)' : LK.note; ctx.fill();
+      if (!n.missed) { ctx.lineWidth = 2; ctx.strokeStyle = LK.ink; ctx.stroke(); }
     }
 
     ctx.globalAlpha = 1;

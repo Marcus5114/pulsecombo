@@ -238,6 +238,7 @@
     const tier1 = affTier(a.pts);
     if (tier1 > tier0) {
       out.push(`${name} y vos: ${AFF_TIERS[tier1][1]}`);
+      for (let k = tier0 + 1; k <= tier1; k++) { const ln = lookTierNote(id, k); if (ln) out.push(ln); }
       if (tier0 < REC_TIER && tier1 >= REC_TIER) out.push(`${name} te recomienda ante las galaxias vecinas`);
       for (const h of AFF_HOOKS.tierUp) h(id, tier1);
       const scene = AFF_SCENES[id]?.[tier1]; if (scene) dlgQueue.push(...scene);

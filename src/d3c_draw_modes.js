@@ -1,7 +1,7 @@
 
   // Fondo común: estrellas que suben despacio
   function drawSky(t) {
-    ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = LK.cv; ctx.fillRect(0, 0, W, H);
     if (!S.lowGfx) { ctx.fillStyle = '#fff'; for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
       ctx.globalAlpha = st.a; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
@@ -91,7 +91,14 @@
 
     // Línea de tiempo del compás actual (llamada o respuesta)
     const tx0 = W * 0.08, tx1 = W * 0.92, ty = H * 0.68, tw = tx1 - tx0;
-    ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(tx0, ty - 1, tw, 2);
+    if (LK.des.sen) {   // Osciloscopio (diseño de Eco-7): la línea es una onda que se agita con la llamada y con tus toques
+      let en = Math.max(0, 0.6 - callAge * 2) / 0.6;
+      for (let l = 0; l < 4; l++) en = Math.max(en, 1 - (now - flash[l]) / 260, 0.6 * (1 - (now - press[l]) / 200));
+      const amp = U * (0.008 + 0.035 * Math.min(1, en)), ph = now / 110, acc = XC();
+      ctx.strokeStyle = `rgba(${acc},0.25)`; ctx.lineWidth = 6; ctx.beginPath();
+      for (let s = 0; s <= 96; s++) { const u = s / 96, yy = ty + Math.sin(u * Math.PI * 14 + ph) * amp * Math.sin(u * Math.PI); s ? ctx.lineTo(tx0 + tw * u, yy) : ctx.moveTo(tx0, yy); }
+      ctx.stroke(); ctx.strokeStyle = `rgba(${acc},0.9)`; ctx.lineWidth = 1.6; ctx.stroke();
+    } else { ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(tx0, ty - 1, tw, 2); }
     for (let k = 0; k <= ch.len; k += 2) {
       const x = tx0 + tw * k / ch.len, big = k % 4 === 0;
       ctx.fillStyle = `rgba(255,255,255,${big ? 0.4 : 0.15})`; ctx.fillRect(x - 1, ty - (big ? 8 : 4), 2, big ? 16 : 8);
@@ -146,6 +153,12 @@
     ctx.fillStyle = color; ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
     ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(x + 1, y + 1, cs - 2, 2);
     ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x + 1, y + cs - 3, cs - 2, 2);
+    if (LK.des.ens && cs >= 8) {   // Mosaico (diseño de Tesela): cuatro teselas con junta y un brillo en cada una
+      const h = cs / 2;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(x + h - 1, y + 1, 2, cs - 2); ctx.fillRect(x + 1, y + h - 1, cs - 2, 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      for (const [dx, dy] of [[0, 0], [h, 0], [0, h], [h, h]]) ctx.fillRect(x + dx + h * 0.3, y + dy + h * 0.3, h * 0.22, h * 0.22);
+    }
     ctx.globalAlpha = 1;
   }
   function drawMini(type, x, y, cs) {
@@ -288,9 +301,23 @@
       if (t >= P.t) { for (let j = 1; j <= Math.floor(Math.abs(v - start)); j++) { const [hx, hy] = vx(start + sg * j); ctx.lineTo(px + hx * R, py + hy * R); } ctx.lineTo(mx, my); ctx.stroke(); }
       for (let j = 0; j < 6; j++) { const [hx, hy] = vx(j); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(px + hx * R, py + hy * R, 2.5, 0, Math.PI * 2); ctx.fill(); }
       const pivA = k % 2 === 0, fl = Math.max(0, 1 - (now - flash[0]) / 220);
-      const col = A => A ? '#f2f2f4' : `rgb(${acc})`;
-      ctx.fillStyle = col(pivA); ctx.beginPath(); ctx.arc(px, py, pr * (1 + 0.25 * fl), 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = col(!pivA); ctx.beginPath(); ctx.arc(mx, my, pr, 0, Math.PI * 2); ctx.fill();
+      if (LK.des.com) {   // Eclipse (diseño de los Gemelos Vaivén): uno es un sol con rayos y el otro una luna creciente
+        const body = (A, x, y, r) => {
+          if (A) {
+            ctx.strokeStyle = '#ffcf5c'; ctx.lineWidth = Math.max(1.5, r * 0.16);
+            ctx.beginPath(); for (let j = 0; j < 8; j++) { const a = j * Math.PI / 4 + now / 900; ctx.moveTo(x + Math.cos(a) * r * 1.3, y + Math.sin(a) * r * 1.3); ctx.lineTo(x + Math.cos(a) * r * 1.65, y + Math.sin(a) * r * 1.65); } ctx.stroke();
+            ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+          } else {
+            ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = '#e6ebf5'; ctx.fill(); ctx.clip();
+            ctx.fillStyle = 'rgba(20,22,34,0.88)'; ctx.beginPath(); ctx.arc(x + r * 0.5, y - r * 0.35, r * 0.85, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+          }
+        };
+        body(pivA, px, py, pr * (1 + 0.25 * fl)); body(!pivA, mx, my, pr);
+      } else {
+        const col = A => A ? LK.note : `rgb(${acc})`;
+        ctx.fillStyle = col(pivA); ctx.beginPath(); ctx.arc(px, py, pr * (1 + 0.25 * fl), 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = col(!pivA); ctx.beginPath(); ctx.arc(mx, my, pr, 0, Math.PI * 2); ctx.fill();
+      }
     }
     drawHud(U);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

@@ -641,7 +641,7 @@
   // (los teclados del celular suelen poner la primera letra en mayúscula o agregar un espacio al final)
   const devNorm = str => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').toLowerCase();
   // Huellas de los códigos (el texto del código no queda en el archivo): uno desbloquea todo y otro reinicia la progresión
-  const DEV_CODES = { '6b5c4795': 'unlock', 'aa57be75': 'reset' };
+  const DEV_CODES = { '6b5c4795': 'unlock', 'aa57be75': 'reset', '4467a711': 'beta' };
   const devHash = str => { let h = 0x811c9dc5; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };
   function devUnlock() {
     for (const g of GALAXIES) S.galOpen[g.id] = true;
@@ -666,6 +666,7 @@
     e.preventDefault();
     const raw = $('devCode').value, act = [raw.trim(), devNorm(raw)].map(v => DEV_CODES[devHash(v)]).find(Boolean);
     if (act === 'unlock') { devUnlock(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
+    else if (act === 'beta') { lookBeta(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
     else if (act === 'reset') { devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; resetAsk(); }
     else { $('devCode').value = ''; $('devCode').placeholder = 'Código incorrecto'; }
   });
@@ -689,7 +690,7 @@
   }
   function settingsOpen(on) {
     $('setCard').hidden = $('setBack').hidden = !on;
-    if (on) { renderSettings(); $('lowGfx').checked = !!S.lowGfx; $('setClose').focus(); }
+    if (on) { renderSettings(); renderLook(); $('lowGfx').checked = !!S.lowGfx; $('setClose').focus(); }
   }
   $('lowGfx').addEventListener('change', e => { S.lowGfx = e.target.checked; if (!S.lowGfx) gfxScale = 2; save(); resize(); if (view === 'play' && run) (run.mode === 'stack' ? drawStack : run.mode === 'signal' ? drawSignal : run.mode === 'path' ? drawPath : draw)(); });
   $('volList').addEventListener('input', e => {
@@ -708,7 +709,7 @@
   resetBox.addEventListener('click', e => {
     if (e.target.id === 'reset') resetAsk();
     else if (e.target.id === 'yes' || e.target.id === 'no') {
-      if (e.target.id === 'yes') { run = null; if (dlgOpen()) dlgSkip(); S = fresh(); chartCache.clear(); treeId = 'pulso'; builtTree = null; galSel = 'pulso'; save(); setView('gal'); }
+      if (e.target.id === 'yes') { run = null; if (dlgOpen()) dlgSkip(); S = fresh(); lookApply(); chartCache.clear(); treeId = 'pulso'; builtTree = null; galSel = 'pulso'; save(); setView('gal'); }
       resetBox.innerHTML = '<button class="link" id="reset">Reiniciar progreso</button>';
     }
   });
@@ -736,7 +737,7 @@
   function boot() {
     applyLand();
     if (offlineNote) { $('noticeText').innerHTML = cur(offlineNote); $('notice').hidden = false; }
-    storyInit(); setView(S.story.prologue ? 'map' : 'gal'); requestAnimationFrame(frame);
+    lookApply(); storyInit(); setView(S.story.prologue ? 'map' : 'gal'); requestAnimationFrame(frame);
   }
   document.fonts?.ready?.then(() => { resize(); if (view === 'tree') drawLines(); });
   window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot();

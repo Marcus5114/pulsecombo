@@ -209,13 +209,13 @@
     const card = $('repCard'); if (card.dataset.wi !== String(wi)) { card.classList.remove('open'); affNewVisit(wi); } card.dataset.wi = wi;
     const open = card.classList.contains('open');
     card.innerHTML = `<button class="rep-strip" id="repStrip" aria-expanded="${open}" aria-controls="repMore">
-        <span class="rep-face">${faceSvg(id)}</span>
+        <span class="rep-face${lookFrame(id) ? ' gold' : ''}">${faceSvg(id)}</span>
         <span class="rs-main"><span class="rep-name">${name}</span>${affStripHtml(wi) ? `<span class="rs-aff">${affStripHtml(wi)}</span>` : `<span class="rep-role">${role}</span>`}</span>
         <span class="rs-chev" aria-hidden="true">›</span>
       </button>
       <div class="rep-back" id="repBack"></div>
       <div class="rep-more" id="repMore" role="dialog" aria-label="${name}">
-        <div class="rm-head"><span class="rep-face">${faceSvg(id)}</span><div><div class="rep-name">${name}</div><div class="rep-role">${role}</div></div><button class="ghost-btn rm-close" id="repClose" aria-label="Cerrar">✕</button></div>
+        <div class="rm-head"><span class="rep-face${lookFrame(id) ? ' gold' : ''}">${faceSvg(id)}</span><div><div class="rep-name">${name}</div><div class="rep-role">${role}</div></div><button class="ghost-btn rm-close" id="repClose" aria-label="Cerrar">✕</button></div>
         <div class="rep-say">“${paintGlyphs(speak(id, QUIPS[id]?.idle || ''))}”</div>${affCardHtml(wi)}
         ${repTalkLines(wi).length ? '<button class="ghost-btn rm-talk" id="repTalk">Volver a charlar</button>' : ''}
       </div>`;
@@ -238,7 +238,7 @@
   function reactorStart(song) {
     rxId = repOf(song.wi); rxSayAt = 0; rxKind = '';
     const el = $('reactor');
-    el.className = 'reactor'; el.querySelector('.rx-face').innerHTML = faceSvg(rxId);
+    el.className = 'reactor'; el.querySelector('.rx-face').innerHTML = faceSvg(rxId); el.querySelector('.rx-face').classList.toggle('gold', lookFrame(rxId));
     el.querySelector('.rx-say').innerHTML = paintGlyphs(speak(rxId, QUIPS[rxId]?.idle || ''));
     el.querySelector('.rx-name').textContent = SPK[rxId][0];
   }
