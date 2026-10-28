@@ -178,6 +178,7 @@
       branches: [
         { id: 'ed', name: 'Diseño', tag: 'Ver más lejos: piezas siguientes, proyección y bodega.' },
         { id: 'ec', name: 'Cadencia', tag: 'Moverse a tiempo multiplica lo que ganás por cada fila.' },
+        { id: 'et', name: 'Taller', tag: 'Chatarra útil: piezas con bloques especiales que cambian lo que pasa al completar su fila.' },
       ],
       nodes: [
         { id: 'e_core', br: 'core', name: 'Grúa', max: 1, desc: 'La grúa principal del astillero. De acá salen todas las mejoras de Ensamble.', fx: () => 'Activa' },
@@ -192,6 +193,12 @@
         { id: 'e_c_rank', br: 'ec', pos: [1, 2], name: 'Turnos dobles', max: 4, cost: [560, 8.7], req: [['e_c_root', 1]], desc: 'Sube el tope del multiplicador de ritmo.', fx: lv => `Ritmo hasta x${dec(1.5 + 0.5 * lv)}` },
         { id: 'e_c_tetra', br: 'ec', pos: [3, 2], name: 'Ensamble perfecto', max: 3, cost: [480, 8], req: [['e_c_root', 1]], desc: 'Completar 4 filas de una vez da un bonus extra.', fx: lv => lv ? `+${50 * lv}% en 4 filas` : 'Sin bonus' },
         { id: 'e_c_soft', br: 'ec', pos: [2, 3], name: 'Amortiguador', max: 3, cost: [800, 10.1], req: [['e_c_rank', 1]], desc: 'Algunos movimientos fuera de tiempo por canción no cortan la racha de ritmo.', fx: lv => lv ? `${2 * lv} errores perdonados` : 'Sin perdón' },
+        { id: 'e_t_root', br: 'et', pos: [2, 1], root: true, name: 'Chatarra útil', max: 1, cost: [200, 1], req: [['e_core', 1]], desc: 'Algunas piezas traen un bloque especial dorado ×2: la fila que completes con él da el doble de {piezas}. El bloque se ve en las piezas siguientes.', fx: lv => lv ? '1 de cada 6 piezas, aprox.' : 'Sin bloques especiales' },
+        { id: 'e_t_freq', br: 'et', pos: [1, 2], name: 'Desguace', max: 3, cost: [380, 8], req: [['e_t_root', 1]], desc: 'Más piezas traen un bloque especial.', fx: lv => `${17 + lv * 6}% de las piezas` },
+        { id: 'e_t_x3', br: 'et', pos: [3, 2], name: 'Aleación triple', max: 2, cost: [520, 9.4], req: [['e_t_root', 1]], desc: 'Aparecen bloques rosas ×3: la fila da el triple. Dos bloques en la misma fila se multiplican entre sí.', fx: lv => lv ? `×3 ${lv > 1 ? 'frecuentes' : 'ocasionales'}` : 'Solo ×2' },
+        { id: 'e_t_slow', br: 'et', pos: [1, 3], name: 'Reloj de arena', max: 3, cost: [640, 9.4], req: [['e_t_freq', 1]], desc: 'Aparecen bloques reloj (celestes). Al completar su fila, la canción va al 70% de velocidad unos tiempos: dura más y tenés más tiempo para pensar cada pieza.', fx: lv => lv ? `${4 + 2 * lv} tiempos en cámara lenta` : 'Sin relojes' },
+        { id: 'e_t_bomb', br: 'et', pos: [3, 3], name: 'Detonador', max: 3, cost: [640, 9.4], req: [['e_t_x3', 1]], desc: 'Aparecen bloques explosivos (naranjas). Al completar su fila, rompen los bloques de alrededor: limpian huecos y cada bloque roto da {piezas}.', fx: lv => ['Sin explosivos', 'Rompe 3×3', 'Rompe 3×3 y una cruz de 5', 'Rompe 5×5 sin esquinas'][lv] },
+        { id: 'e_t_mult', br: 'et', pos: [2, 4], name: 'Templado', max: 3, cost: [900, 10.8], req: [['e_t_slow', 1], ['e_t_bomb', 1]], desc: 'Los bloques ×2 y ×3 multiplican más.', fx: lv => `×${dec(2 + lv * 0.5)} y ×${dec(3 + lv * 0.5)}` },
       ],
     },
     sen: {

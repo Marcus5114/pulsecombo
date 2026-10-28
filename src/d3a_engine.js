@@ -17,7 +17,22 @@
   let view = 'map', run = null, judge = null, judgeGold = false, judgeAt = 0, rankAt = 0, feverAt = 0;
   const press = Array(8).fill(0), flash = Array(8).fill(0), keyDown = Array(8).fill(false);
   const TRAVEL = 1.45;
-  const gameT = () => clock() - run.t0;
+  // Tiempo de la canción. Normalmente es el reloj real desde el inicio; con cámara lenta (bloque reloj de Ensamble,
+  // Freno de péndulo de Compás) avanza más despacio. run.warp guarda tramos { r0: tiempo real, c0: tiempo de canción, rate }.
+  // Todo se juzga y se dibuja en tiempo de canción, y el audio se programa convirtiendo de vuelta a tiempo real,
+  // así que la música (sintetizada) sigue en tempo con todo, solo que más lenta.
+  const warpSeg = (key, v) => { const w = run.warp; let s = w[0]; for (const x of w) if (x[key] <= v) s = x; return s; };
+  const toChart = raw => { if (!run.warp) return raw; const s = warpSeg('r0', raw); return s.c0 + (raw - s.r0) * s.rate; };
+  const toRaw = c => { if (!run.warp) return c; const s = warpSeg('c0', c); return s.r0 + (c - s.c0) / s.rate; };
+  const rateAt = c => run.warp ? warpSeg('c0', c).rate : 1;
+  const gameT = () => toChart(clock() - run.t0);
+  // Cámara lenta: desde el próximo paso de audio sin programar, 'beats' tiempos de la canción a 'rate' de velocidad
+  function slowMo(beats, rate) {
+    const st = run.ch.step, c0 = Math.max(gameT(), LEAD + run.audioStep * st), c1 = c0 + beats * 4 * st;
+    const raw0 = toRaw(c0), w = (run.warp || [{ r0: 0, c0: 0, rate: 1 }]).filter(x => x.c0 < c0);
+    w.push({ r0: raw0, c0, rate }, { r0: raw0 + (c1 - c0) / rate, c0: c1, rate: 1 });
+    run.warp = w; run.slowUntil = c1; run.slowFrom = c0;
+  }
   const modeWin = () => (run.mode === 'signal' ? 1 + 0.1 * L('s_win') : run.mode === 'stack' ? 1 + 0.1 * L('e_win') : run.mode === 'path' ? 1 + 0.1 * L('p_win') : 1 + 0.1 * L('win')) + tuneWin();
   const lifeLv = () => run.mode === 'signal' ? L('s_life') : run.mode === 'stack' ? L('e_life') : run.mode === 'path' ? L('p_life') : L('life');
   const missDmg = () => (6 + run.stars * 0.6) * (1 - LIFE_STEP * lifeLv());
@@ -35,7 +50,7 @@
   const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
   const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
   const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
-    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2' };
+    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA' };
   // Portadoras de Señal: dorada (x2) y rosa (x3)
   const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
@@ -81,13 +96,13 @@
   const inResponse = i => { const ch = run.ch, cyc = ch.cycle, k = i - 16; if (k < 0 || k >= run.rounds.length * cyc) return false; return k % cyc >= ch.len + ch.gap; };
   function scheduleAudio(t) {
     const { ch, song } = run, w = WORLDS[song.wi], st = ch.step;
-    while (run.audioStep < ch.total && LEAD + run.audioStep * st < t + 0.2) {
+    while (run.audioStep < ch.total && LEAD + run.audioStep * st < t + 0.2 * rateAt(t)) {
       const i = run.audioStep, pos = i % 4, beat = Math.floor(i / 4) % 4, bar = Math.floor(i / 16);
-      const at = run.t0 + LEAD + i * st + (w.swing && pos === 2 ? st * 0.667 : 0);
-      playMusic(run.music, at, i, st, ch.total, run.mode === 'signal');
+      const c = LEAD + i * st + (w.swing && pos === 2 ? st * 0.667 : 0), at = run.t0 + toRaw(c), rs = st / rateAt(c);
+      playMusic(run.music, at, i, rs, ch.total, run.mode === 'signal');
       if (run.mode === 'signal') {
         while (run.callIdx < ch.calls.length && ch.calls[run.callIdx].i === i) beacon(at, ch.calls[run.callIdx++].lane);
-        if (ch.gap && ch.gapAt.has(i)) walkie(at, ch.gap * st);
+        if (ch.gap && ch.gapAt.has(i)) walkie(at, ch.gap * rs);
         if (L('s_t_metro') && pos % 2 === 0 && inResponse(i)) click(at, pos === 0);
       }
       run.audioStep++;
@@ -380,14 +395,25 @@
     COLS = r.song.tut ? 6 : r.mods.narrow ? 8 : 10;
     Object.assign(r, { board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)), bag: [], rs: rng(ch.seed), piece: null, queue: [], hold: null, holdUsed: false,
       gStep: 60 / r.song.bpm / ch.rpb, nextGrav: 0, rcombo: 0, rmax: 0, on: 0, off: 0, lines: 0, tetras: 0, soft: 2 * L('e_c_soft'),
-      nextGarbage: LEAD + 128 * ch.step, fx: [], beatFlash: 0 });
+      nextGarbage: LEAD + 128 * ch.step, fx: [], beatFlash: 0, qspec: [], sp: Array.from({ length: ROWS }, () => Array(COLS).fill(null)), pspec: null, holdSpec: null, special: 0 });
     if (r.song.tut) {
       // Tutorial: tablero de 6 columnas con la fila de abajo casi completa. La primera pieza (una I) la cierra aunque no muevas nada.
       // Después siguen piezas fáciles, con la sombra de recomendación. Si las piezas llegan arriba, el tablero se vacía y seguís.
       r.tutSeq = ['I', 'O', 'O', 'I', 'L', 'J', 'I', 'O', 'T'];
       r.board[ROWS - 1] = ['G', null, null, null, null, 'G'];
     }
-    for (let k = 0; k < 4; k++) r.queue.push(nextType(r));
+    for (let k = 0; k < 4; k++) { r.queue.push(nextType(r)); r.qspec.push(nextSpec(r)); }
+  }
+  // Chatarra útil: algunas piezas traen un bloque especial (en una de sus 4 celdas). Si completás una fila con él:
+  //   x2 / x3: esa fila da el doble o el triple · reloj: cámara lenta unos tiempos · explosivo: rompe los bloques de alrededor
+  const SPEC_KINDS = { x2: { col: '242,193,78' }, x3: { col: '255,122,217' }, slow: { col: '92,208,230' }, bomb: { col: '255,107,61' } };
+  const specMult = k => k === 'x2' ? 2 + 0.5 * L('e_t_mult') : k === 'x3' ? 3 + 0.5 * L('e_t_mult') : 1;
+  function nextSpec(r) {
+    if (!L('e_t_root') || r.song.tut || r.rs() >= 0.17 + 0.06 * L('e_t_freq')) return null;
+    const pool = [['x2', 3], ['x3', [0, 1, 2][L('e_t_x3')]], ['slow', L('e_t_slow') ? 1.5 : 0], ['bomb', L('e_t_bomb') ? 1.5 : 0]].filter(([, w]) => w > 0);
+    let u = r.rs() * pool.reduce((a, [, w]) => a + w, 0), k = pool[0][0];
+    for (const [id, w] of pool) { if (u < w) { k = id; break; } u -= w; }
+    return { i: Math.floor(r.rs() * 4), k };
   }
   function nextType(r) {
     if (r.tutSeq) { if (!r.lines && r.tutIdx) return 'I';   // hasta la primera fila, siempre otra I
@@ -406,7 +432,11 @@
     run.boardVer = (run.boardVer || 0) + 1; setJudge('soft');
   }
   function spawn(type) {
-    type = type || run.queue.shift(); if (run.queue.length < 4) run.queue.push(nextType(run));
+    let spec = null;
+    if (type) spec = run.holdSpecIn || null; else { type = run.queue.shift(); spec = run.qspec.shift() || null; }
+    run.holdSpecIn = null;
+    if (run.queue.length < 4) { run.queue.push(nextType(run)); run.qspec.push(nextSpec(run)); }
+    run.pspec = spec;
     run.piece = { type, rot: 0, x: Math.floor((COLS - (BOXN[type] || 3)) / 2), y: type === 'I' ? -1 : 0 };
     if (!fits(run.piece) && run.song.tut) tutReset();
     if (!fits(run.piece)) { run.failed = true; setJudge('off'); finishStack(); }
@@ -447,17 +477,33 @@
   const stackBase = () => 1 + L('e_base');
   function lockPiece() {
     const p = run.piece;
-    for (const [cx, cy] of cellsOf(p.type, p.rot)) {
+    for (const [k, [cx, cy]] of cellsOf(p.type, p.rot).entries()) {
       const x = p.x + cx, y = p.y + cy;
       if (y < 0) { if (run.song.tut) { tutReset(); run.piece = null; spawn(); return; } run.failed = true; finishStack(); return; }
-      run.board[y][x] = p.type;
+      run.board[y][x] = p.type; run.sp[y][x] = run.pspec && run.pspec.i === k ? run.pspec.k : null;
     }
     run.earned += stackBase() * 0.5 * rhythmMult() * run.mult;
     const full = []; for (let y = 0; y < ROWS; y++) if (run.board[y].every(Boolean)) full.push(y);
     if (full.length) {
-      for (const y of full) { run.board.splice(y, 1); run.board.unshift(Array(COLS).fill(null)); }
+      // Bloques especiales en las filas completas
+      let rowMult = 0, slow = 0; const bombs = [];
+      for (const y of full) { let m = 1; for (let x = 0; x < COLS; x++) { const k = run.sp[y][x]; if (!k) continue; run.special++;
+        if (k === 'x2' || k === 'x3') m *= specMult(k); else if (k === 'slow') slow++; else if (k === 'bomb') bombs.push([x, y]); } rowMult += m; }
+      const fullSet = new Set(full), blv = L('e_t_bomb'), rad = blv >= 2 ? 2 : 1;
+      let broken = 0;
+      for (const [bx0, by0] of bombs) for (let y = by0 - rad; y <= by0 + rad; y++) for (let x = bx0 - rad; x <= bx0 + rad; x++) {
+        if (y < 0 || y >= ROWS || x < 0 || x >= COLS || fullSet.has(y) || !run.board[y][x]) continue;
+        const dx = Math.abs(x - bx0), dy = Math.abs(y - by0);
+        if (blv === 2 && (dx === 2 || dy === 2) && dx && dy) continue;   // nivel 2: 3×3 más los brazos de la cruz
+        if (blv >= 3 && dx === 2 && dy === 2) continue;                   // nivel 3: 5×5 sin las esquinas
+        run.board[y][x] = null; run.sp[y][x] = null; broken++;
+      }
+      for (const y of full) { run.board.splice(y, 1); run.board.unshift(Array(COLS).fill(null)); run.sp.splice(y, 1); run.sp.unshift(Array(COLS).fill(null)); }
       const n = full.length;
-      let v = stackBase() * LINE_PTS[n] * rhythmMult() * run.mult;
+      let v = stackBase() * LINE_PTS[n] * rhythmMult() * run.mult * (rowMult / n);
+      if (broken) { run.earned += stackBase() * broken * rhythmMult() * run.mult; run.fx.push({ boom: bombs, at: performance.now() }); if (ac) { tone(ac.currentTime, 'sawtooth', 70, 0.25, 0.25, 40); } }
+      if (slow) slowMo(4 + 2 * L('e_t_slow') * slow, 0.7);
+      if (rowMult > n) run.fx.push({ mult: rowMult / n, rows: full, at: performance.now() });
       if (n === 4) { v *= 1 + 0.5 * L('e_c_tetra'); run.tetras++; setJudge('tetra'); } else setJudge('line');
       run.earned += v; run.lines += n; run.life = Math.min(100, run.life + 4 * n);
       run.fx.push({ rows: full, at: performance.now() });
@@ -472,6 +518,7 @@
   }
   function addGarbage() {
     if (run.board[0].some(Boolean)) { run.failed = true; finishStack(); return; }
+    run.sp.shift(); run.sp.push(Array(COLS).fill(null));
     const gap = Math.floor(run.rs() * COLS);
     run.board.shift(); run.board.push(Array.from({ length: COLS }, (_, x) => x === gap ? null : 'G')); run.boardVer = (run.boardVer || 0) + 1;
     if (run.piece && !fits(run.piece)) run.piece.y--;
@@ -499,7 +546,7 @@
     else if (act === 'U') { const nr = (p.rot + 1) % 4; for (const [kx, ky] of [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1]]) if (fits(p, kx, ky, nr)) { p.x += kx; p.y += ky; p.rot = nr; break; } }
     else if (act === 'D') gravityStep();
     else if (act === 'H') { while (fits(p, 0, 1)) p.y++; lockPiece(); }
-    else if (act === 'C') { const cur = p.type; run.piece = null; if (run.hold) spawn(run.hold); else spawn(); run.hold = cur; run.holdUsed = true; }
+    else if (act === 'C') { const cur = p.type, cs = run.pspec; run.piece = null; run.holdSpecIn = run.holdSpec; if (run.hold) spawn(run.hold); else spawn(); run.hold = cur; run.holdSpec = cs; run.holdUsed = true; }
   }
   function updateStack(t) {
     scheduleAudio(t);

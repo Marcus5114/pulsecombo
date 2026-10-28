@@ -1144,6 +1144,7 @@ body.pat-still::before { animation: none; }
       branches: [
         { id: 'ed', name: 'Diseño', tag: 'Ver más lejos: piezas siguientes, proyección y bodega.' },
         { id: 'ec', name: 'Cadencia', tag: 'Moverse a tiempo multiplica lo que ganás por cada fila.' },
+        { id: 'et', name: 'Taller', tag: 'Chatarra útil: piezas con bloques especiales que cambian lo que pasa al completar su fila.' },
       ],
       nodes: [
         { id: 'e_core', br: 'core', name: 'Grúa', max: 1, desc: 'La grúa principal del astillero. De acá salen todas las mejoras de Ensamble.', fx: () => 'Activa' },
@@ -1158,6 +1159,12 @@ body.pat-still::before { animation: none; }
         { id: 'e_c_rank', br: 'ec', pos: [1, 2], name: 'Turnos dobles', max: 4, cost: [560, 8.7], req: [['e_c_root', 1]], desc: 'Sube el tope del multiplicador de ritmo.', fx: lv => `Ritmo hasta x${dec(1.5 + 0.5 * lv)}` },
         { id: 'e_c_tetra', br: 'ec', pos: [3, 2], name: 'Ensamble perfecto', max: 3, cost: [480, 8], req: [['e_c_root', 1]], desc: 'Completar 4 filas de una vez da un bonus extra.', fx: lv => lv ? `+${50 * lv}% en 4 filas` : 'Sin bonus' },
         { id: 'e_c_soft', br: 'ec', pos: [2, 3], name: 'Amortiguador', max: 3, cost: [800, 10.1], req: [['e_c_rank', 1]], desc: 'Algunos movimientos fuera de tiempo por canción no cortan la racha de ritmo.', fx: lv => lv ? `${2 * lv} errores perdonados` : 'Sin perdón' },
+        { id: 'e_t_root', br: 'et', pos: [2, 1], root: true, name: 'Chatarra útil', max: 1, cost: [200, 1], req: [['e_core', 1]], desc: 'Algunas piezas traen un bloque especial dorado ×2: la fila que completes con él da el doble de {piezas}. El bloque se ve en las piezas siguientes.', fx: lv => lv ? '1 de cada 6 piezas, aprox.' : 'Sin bloques especiales' },
+        { id: 'e_t_freq', br: 'et', pos: [1, 2], name: 'Desguace', max: 3, cost: [380, 8], req: [['e_t_root', 1]], desc: 'Más piezas traen un bloque especial.', fx: lv => `${17 + lv * 6}% de las piezas` },
+        { id: 'e_t_x3', br: 'et', pos: [3, 2], name: 'Aleación triple', max: 2, cost: [520, 9.4], req: [['e_t_root', 1]], desc: 'Aparecen bloques rosas ×3: la fila da el triple. Dos bloques en la misma fila se multiplican entre sí.', fx: lv => lv ? `×3 ${lv > 1 ? 'frecuentes' : 'ocasionales'}` : 'Solo ×2' },
+        { id: 'e_t_slow', br: 'et', pos: [1, 3], name: 'Reloj de arena', max: 3, cost: [640, 9.4], req: [['e_t_freq', 1]], desc: 'Aparecen bloques reloj (celestes). Al completar su fila, la canción va al 70% de velocidad unos tiempos: dura más y tenés más tiempo para pensar cada pieza.', fx: lv => lv ? `${4 + 2 * lv} tiempos en cámara lenta` : 'Sin relojes' },
+        { id: 'e_t_bomb', br: 'et', pos: [3, 3], name: 'Detonador', max: 3, cost: [640, 9.4], req: [['e_t_x3', 1]], desc: 'Aparecen bloques explosivos (naranjas). Al completar su fila, rompen los bloques de alrededor: limpian huecos y cada bloque roto da {piezas}.', fx: lv => ['Sin explosivos', 'Rompe 3×3', 'Rompe 3×3 y una cruz de 5', 'Rompe 5×5 sin esquinas'][lv] },
+        { id: 'e_t_mult', br: 'et', pos: [2, 4], name: 'Templado', max: 3, cost: [900, 10.8], req: [['e_t_slow', 1], ['e_t_bomb', 1]], desc: 'Los bloques ×2 y ×3 multiplican más.', fx: lv => `×${dec(2 + lv * 0.5)} y ×${dec(3 + lv * 0.5)}` },
       ],
     },
     sen: {
@@ -2365,7 +2372,22 @@ body.pat-still::before { animation: none; }
   let view = 'map', run = null, judge = null, judgeGold = false, judgeAt = 0, rankAt = 0, feverAt = 0;
   const press = Array(8).fill(0), flash = Array(8).fill(0), keyDown = Array(8).fill(false);
   const TRAVEL = 1.45;
-  const gameT = () => clock() - run.t0;
+  // Tiempo de la canción. Normalmente es el reloj real desde el inicio; con cámara lenta (bloque reloj de Ensamble,
+  // Freno de péndulo de Compás) avanza más despacio. run.warp guarda tramos { r0: tiempo real, c0: tiempo de canción, rate }.
+  // Todo se juzga y se dibuja en tiempo de canción, y el audio se programa convirtiendo de vuelta a tiempo real,
+  // así que la música (sintetizada) sigue en tempo con todo, solo que más lenta.
+  const warpSeg = (key, v) => { const w = run.warp; let s = w[0]; for (const x of w) if (x[key] <= v) s = x; return s; };
+  const toChart = raw => { if (!run.warp) return raw; const s = warpSeg('r0', raw); return s.c0 + (raw - s.r0) * s.rate; };
+  const toRaw = c => { if (!run.warp) return c; const s = warpSeg('c0', c); return s.r0 + (c - s.c0) / s.rate; };
+  const rateAt = c => run.warp ? warpSeg('c0', c).rate : 1;
+  const gameT = () => toChart(clock() - run.t0);
+  // Cámara lenta: desde el próximo paso de audio sin programar, 'beats' tiempos de la canción a 'rate' de velocidad
+  function slowMo(beats, rate) {
+    const st = run.ch.step, c0 = Math.max(gameT(), LEAD + run.audioStep * st), c1 = c0 + beats * 4 * st;
+    const raw0 = toRaw(c0), w = (run.warp || [{ r0: 0, c0: 0, rate: 1 }]).filter(x => x.c0 < c0);
+    w.push({ r0: raw0, c0, rate }, { r0: raw0 + (c1 - c0) / rate, c0: c1, rate: 1 });
+    run.warp = w; run.slowUntil = c1; run.slowFrom = c0;
+  }
   const modeWin = () => (run.mode === 'signal' ? 1 + 0.1 * L('s_win') : run.mode === 'stack' ? 1 + 0.1 * L('e_win') : run.mode === 'path' ? 1 + 0.1 * L('p_win') : 1 + 0.1 * L('win')) + tuneWin();
   const lifeLv = () => run.mode === 'signal' ? L('s_life') : run.mode === 'stack' ? L('e_life') : run.mode === 'path' ? L('p_life') : L('life');
   const missDmg = () => (6 + run.stars * 0.6) * (1 - LIFE_STEP * lifeLv());
@@ -2383,7 +2405,7 @@ body.pat-still::before { animation: none; }
   const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
   const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
   const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
-    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2' };
+    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA' };
   // Portadoras de Señal: dorada (x2) y rosa (x3)
   const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
@@ -2429,13 +2451,13 @@ body.pat-still::before { animation: none; }
   const inResponse = i => { const ch = run.ch, cyc = ch.cycle, k = i - 16; if (k < 0 || k >= run.rounds.length * cyc) return false; return k % cyc >= ch.len + ch.gap; };
   function scheduleAudio(t) {
     const { ch, song } = run, w = WORLDS[song.wi], st = ch.step;
-    while (run.audioStep < ch.total && LEAD + run.audioStep * st < t + 0.2) {
+    while (run.audioStep < ch.total && LEAD + run.audioStep * st < t + 0.2 * rateAt(t)) {
       const i = run.audioStep, pos = i % 4, beat = Math.floor(i / 4) % 4, bar = Math.floor(i / 16);
-      const at = run.t0 + LEAD + i * st + (w.swing && pos === 2 ? st * 0.667 : 0);
-      playMusic(run.music, at, i, st, ch.total, run.mode === 'signal');
+      const c = LEAD + i * st + (w.swing && pos === 2 ? st * 0.667 : 0), at = run.t0 + toRaw(c), rs = st / rateAt(c);
+      playMusic(run.music, at, i, rs, ch.total, run.mode === 'signal');
       if (run.mode === 'signal') {
         while (run.callIdx < ch.calls.length && ch.calls[run.callIdx].i === i) beacon(at, ch.calls[run.callIdx++].lane);
-        if (ch.gap && ch.gapAt.has(i)) walkie(at, ch.gap * st);
+        if (ch.gap && ch.gapAt.has(i)) walkie(at, ch.gap * rs);
         if (L('s_t_metro') && pos % 2 === 0 && inResponse(i)) click(at, pos === 0);
       }
       run.audioStep++;
@@ -2728,14 +2750,25 @@ body.pat-still::before { animation: none; }
     COLS = r.song.tut ? 6 : r.mods.narrow ? 8 : 10;
     Object.assign(r, { board: Array.from({ length: ROWS }, () => Array(COLS).fill(null)), bag: [], rs: rng(ch.seed), piece: null, queue: [], hold: null, holdUsed: false,
       gStep: 60 / r.song.bpm / ch.rpb, nextGrav: 0, rcombo: 0, rmax: 0, on: 0, off: 0, lines: 0, tetras: 0, soft: 2 * L('e_c_soft'),
-      nextGarbage: LEAD + 128 * ch.step, fx: [], beatFlash: 0 });
+      nextGarbage: LEAD + 128 * ch.step, fx: [], beatFlash: 0, qspec: [], sp: Array.from({ length: ROWS }, () => Array(COLS).fill(null)), pspec: null, holdSpec: null, special: 0 });
     if (r.song.tut) {
       // Tutorial: tablero de 6 columnas con la fila de abajo casi completa. La primera pieza (una I) la cierra aunque no muevas nada.
       // Después siguen piezas fáciles, con la sombra de recomendación. Si las piezas llegan arriba, el tablero se vacía y seguís.
       r.tutSeq = ['I', 'O', 'O', 'I', 'L', 'J', 'I', 'O', 'T'];
       r.board[ROWS - 1] = ['G', null, null, null, null, 'G'];
     }
-    for (let k = 0; k < 4; k++) r.queue.push(nextType(r));
+    for (let k = 0; k < 4; k++) { r.queue.push(nextType(r)); r.qspec.push(nextSpec(r)); }
+  }
+  // Chatarra útil: algunas piezas traen un bloque especial (en una de sus 4 celdas). Si completás una fila con él:
+  //   x2 / x3: esa fila da el doble o el triple · reloj: cámara lenta unos tiempos · explosivo: rompe los bloques de alrededor
+  const SPEC_KINDS = { x2: { col: '242,193,78' }, x3: { col: '255,122,217' }, slow: { col: '92,208,230' }, bomb: { col: '255,107,61' } };
+  const specMult = k => k === 'x2' ? 2 + 0.5 * L('e_t_mult') : k === 'x3' ? 3 + 0.5 * L('e_t_mult') : 1;
+  function nextSpec(r) {
+    if (!L('e_t_root') || r.song.tut || r.rs() >= 0.17 + 0.06 * L('e_t_freq')) return null;
+    const pool = [['x2', 3], ['x3', [0, 1, 2][L('e_t_x3')]], ['slow', L('e_t_slow') ? 1.5 : 0], ['bomb', L('e_t_bomb') ? 1.5 : 0]].filter(([, w]) => w > 0);
+    let u = r.rs() * pool.reduce((a, [, w]) => a + w, 0), k = pool[0][0];
+    for (const [id, w] of pool) { if (u < w) { k = id; break; } u -= w; }
+    return { i: Math.floor(r.rs() * 4), k };
   }
   function nextType(r) {
     if (r.tutSeq) { if (!r.lines && r.tutIdx) return 'I';   // hasta la primera fila, siempre otra I
@@ -2754,7 +2787,11 @@ body.pat-still::before { animation: none; }
     run.boardVer = (run.boardVer || 0) + 1; setJudge('soft');
   }
   function spawn(type) {
-    type = type || run.queue.shift(); if (run.queue.length < 4) run.queue.push(nextType(run));
+    let spec = null;
+    if (type) spec = run.holdSpecIn || null; else { type = run.queue.shift(); spec = run.qspec.shift() || null; }
+    run.holdSpecIn = null;
+    if (run.queue.length < 4) { run.queue.push(nextType(run)); run.qspec.push(nextSpec(run)); }
+    run.pspec = spec;
     run.piece = { type, rot: 0, x: Math.floor((COLS - (BOXN[type] || 3)) / 2), y: type === 'I' ? -1 : 0 };
     if (!fits(run.piece) && run.song.tut) tutReset();
     if (!fits(run.piece)) { run.failed = true; setJudge('off'); finishStack(); }
@@ -2795,17 +2832,33 @@ body.pat-still::before { animation: none; }
   const stackBase = () => 1 + L('e_base');
   function lockPiece() {
     const p = run.piece;
-    for (const [cx, cy] of cellsOf(p.type, p.rot)) {
+    for (const [k, [cx, cy]] of cellsOf(p.type, p.rot).entries()) {
       const x = p.x + cx, y = p.y + cy;
       if (y < 0) { if (run.song.tut) { tutReset(); run.piece = null; spawn(); return; } run.failed = true; finishStack(); return; }
-      run.board[y][x] = p.type;
+      run.board[y][x] = p.type; run.sp[y][x] = run.pspec && run.pspec.i === k ? run.pspec.k : null;
     }
     run.earned += stackBase() * 0.5 * rhythmMult() * run.mult;
     const full = []; for (let y = 0; y < ROWS; y++) if (run.board[y].every(Boolean)) full.push(y);
     if (full.length) {
-      for (const y of full) { run.board.splice(y, 1); run.board.unshift(Array(COLS).fill(null)); }
+      // Bloques especiales en las filas completas
+      let rowMult = 0, slow = 0; const bombs = [];
+      for (const y of full) { let m = 1; for (let x = 0; x < COLS; x++) { const k = run.sp[y][x]; if (!k) continue; run.special++;
+        if (k === 'x2' || k === 'x3') m *= specMult(k); else if (k === 'slow') slow++; else if (k === 'bomb') bombs.push([x, y]); } rowMult += m; }
+      const fullSet = new Set(full), blv = L('e_t_bomb'), rad = blv >= 2 ? 2 : 1;
+      let broken = 0;
+      for (const [bx0, by0] of bombs) for (let y = by0 - rad; y <= by0 + rad; y++) for (let x = bx0 - rad; x <= bx0 + rad; x++) {
+        if (y < 0 || y >= ROWS || x < 0 || x >= COLS || fullSet.has(y) || !run.board[y][x]) continue;
+        const dx = Math.abs(x - bx0), dy = Math.abs(y - by0);
+        if (blv === 2 && (dx === 2 || dy === 2) && dx && dy) continue;   // nivel 2: 3×3 más los brazos de la cruz
+        if (blv >= 3 && dx === 2 && dy === 2) continue;                   // nivel 3: 5×5 sin las esquinas
+        run.board[y][x] = null; run.sp[y][x] = null; broken++;
+      }
+      for (const y of full) { run.board.splice(y, 1); run.board.unshift(Array(COLS).fill(null)); run.sp.splice(y, 1); run.sp.unshift(Array(COLS).fill(null)); }
       const n = full.length;
-      let v = stackBase() * LINE_PTS[n] * rhythmMult() * run.mult;
+      let v = stackBase() * LINE_PTS[n] * rhythmMult() * run.mult * (rowMult / n);
+      if (broken) { run.earned += stackBase() * broken * rhythmMult() * run.mult; run.fx.push({ boom: bombs, at: performance.now() }); if (ac) { tone(ac.currentTime, 'sawtooth', 70, 0.25, 0.25, 40); } }
+      if (slow) slowMo(4 + 2 * L('e_t_slow') * slow, 0.7);
+      if (rowMult > n) run.fx.push({ mult: rowMult / n, rows: full, at: performance.now() });
       if (n === 4) { v *= 1 + 0.5 * L('e_c_tetra'); run.tetras++; setJudge('tetra'); } else setJudge('line');
       run.earned += v; run.lines += n; run.life = Math.min(100, run.life + 4 * n);
       run.fx.push({ rows: full, at: performance.now() });
@@ -2820,6 +2873,7 @@ body.pat-still::before { animation: none; }
   }
   function addGarbage() {
     if (run.board[0].some(Boolean)) { run.failed = true; finishStack(); return; }
+    run.sp.shift(); run.sp.push(Array(COLS).fill(null));
     const gap = Math.floor(run.rs() * COLS);
     run.board.shift(); run.board.push(Array.from({ length: COLS }, (_, x) => x === gap ? null : 'G')); run.boardVer = (run.boardVer || 0) + 1;
     if (run.piece && !fits(run.piece)) run.piece.y--;
@@ -2847,7 +2901,7 @@ body.pat-still::before { animation: none; }
     else if (act === 'U') { const nr = (p.rot + 1) % 4; for (const [kx, ky] of [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1]]) if (fits(p, kx, ky, nr)) { p.x += kx; p.y += ky; p.rot = nr; break; } }
     else if (act === 'D') gravityStep();
     else if (act === 'H') { while (fits(p, 0, 1)) p.y++; lockPiece(); }
-    else if (act === 'C') { const cur = p.type; run.piece = null; if (run.hold) spawn(run.hold); else spawn(); run.hold = cur; run.holdUsed = true; }
+    else if (act === 'C') { const cur = p.type, cs = run.pspec; run.piece = null; run.holdSpecIn = run.holdSpec; if (run.hold) spawn(run.hold); else spawn(); run.hold = cur; run.holdSpec = cs; run.holdUsed = true; }
   }
   function updateStack(t) {
     scheduleAudio(t);
@@ -3089,6 +3143,14 @@ body.pat-still::before { animation: none; }
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(run.song.tut ? 'Práctica' : fmt(run.earned), 10, 22);
     drawRunLabel(U);
+    // Cámara lenta: velo celeste y cartel con los tiempos que quedan
+    const tt = gameT();
+    if (run.slowUntil && tt < run.slowUntil && tt > run.slowFrom - 0.2) {
+      const left = (run.slowUntil - tt) / (run.ch.step * 4), a = Math.min(1, left);
+      ctx.fillStyle = `rgba(92,208,230,${0.06 * a})`; ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = F(800, U * 0.032); ctx.fillStyle = `rgba(92,208,230,${0.9 * a})`;
+      ctx.fillText(`CÁMARA LENTA · ${Math.ceil(left)}`, W / 2, 44);
+    }
   }
   const wrapCache = new Map();   // partir un texto en líneas mide cada palabra: se hace una sola vez por texto, fuente y ancho
   function wrapLines(msg, maxW) {
@@ -3247,9 +3309,18 @@ body.pat-still::before { animation: none; }
     }
     ctx.globalAlpha = 1;
   }
-  function drawMini(type, x, y, cs) {
+  // Bloque especial de Chatarra útil: borde y símbolo del color de su efecto
+  function drawSpec(x, y, cs, k) {
+    const col = SPEC_KINDS[k].col, m = cs / 2;
+    ctx.fillStyle = `rgba(${col},0.85)`; ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+    ctx.strokeStyle = 'rgba(13,13,14,0.85)'; ctx.fillStyle = 'rgba(13,13,14,0.85)'; ctx.lineWidth = Math.max(1.2, cs * 0.09);
+    if (k === 'x2' || k === 'x3') { ctx.font = F(900, cs * 0.62); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(k === 'x2' ? '×2' : '×3', x + m, y + m + 1); }
+    else if (k === 'slow') { const a = cs * 0.26; ctx.beginPath(); ctx.moveTo(x + m - a, y + m - a * 1.2); ctx.lineTo(x + m + a, y + m - a * 1.2); ctx.lineTo(x + m - a, y + m + a * 1.2); ctx.lineTo(x + m + a, y + m + a * 1.2); ctx.closePath(); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.arc(x + m, y + m + cs * 0.06, cs * 0.22, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(x + m + cs * 0.12, y + m - cs * 0.14); ctx.lineTo(x + m + cs * 0.26, y + m - cs * 0.3); ctx.stroke(); }
+  }
+  function drawMini(type, x, y, cs, spec) {
     const c = cellsOf(type, 0), w = (BOXN[type] || 3) * cs;
-    for (const [cx, cy] of c) drawCell(x + cx * cs + (3 * cs - w) / 2, y + cy * cs, cs, SHADE[type]);
+    c.forEach(([cx, cy], k) => { const X = x + cx * cs + (3 * cs - w) / 2, Y = y + cy * cs; drawCell(X, Y, cs, SHADE[type]); if (spec && spec.i === k) drawSpec(X, Y, cs, spec.k); });
   }
   function drawStack() {
     if (!run || !W) return;
@@ -3264,13 +3335,17 @@ body.pat-still::before { animation: none; }
     ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
     for (let x = 1; x < COLS; x++) { ctx.beginPath(); ctx.moveTo(bx + x * cs + 0.5, by); ctx.lineTo(bx + x * cs + 0.5, by + bh); ctx.stroke(); }
     ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.5 * bp})`; ctx.lineWidth = 2; ctx.strokeRect(bx - 1, by - 1, bw + 2, bh + 2);
-    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const c = run.board[y][x]; if (c) drawCell(bx + x * cs, by + y * cs, cs, SHADE[c]); }
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const c = run.board[y][x]; if (c) { drawCell(bx + x * cs, by + y * cs, cs, SHADE[c]); const k = run.sp[y][x]; if (k) drawSpec(bx + x * cs, by + y * cs, cs, k); } }
     for (const f of run.fx) {
-      const a = 1 - (now - f.at) / 350; if (a <= 0) continue;
-      ctx.fillStyle = `rgba(255,255,255,${0.7 * a})`;
-      f.rows.forEach(y => ctx.fillRect(bx, by + y * cs, bw, cs));
+      const life = f.mult ? 900 : f.boom ? 500 : 350, a = 1 - (now - f.at) / life; if (a <= 0) continue;
+      if (f.mult) {   // la fila valió más: el multiplicador sube y se apaga
+        ctx.font = F(900, cs * 1.3); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = `rgba(242,193,78,${a})`;
+        ctx.fillText(`×${dec(f.mult)}`, bx + bw / 2, by + f.rows[0] * cs + cs / 2 - (1 - a) * cs * 1.5);
+      } else if (f.boom) {
+        for (const [x, y] of f.boom) { ctx.fillStyle = `rgba(255,107,61,${0.5 * a})`; ctx.beginPath(); ctx.arc(bx + x * cs + cs / 2, by + y * cs + cs / 2, cs * (1 + 2 * (1 - a)), 0, Math.PI * 2); ctx.fill(); }
+      } else { ctx.fillStyle = `rgba(255,255,255,${0.7 * a})`; f.rows.forEach(y => ctx.fillRect(bx, by + y * cs, bw, cs)); }
     }
-    run.fx = run.fx.filter(f => now - f.at < 350);
+    run.fx = run.fx.filter(f => now - f.at < 900);
     const p = run.piece;
     // Sombra de recomendación (tutorial y Fácil): contorno punteado del color de la galaxia donde conviene encastrar
     if (p && hintOn()) {
@@ -3290,17 +3365,17 @@ body.pat-still::before { animation: none; }
         ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
         for (const [cx, cy] of cellsOf(p.type, p.rot)) { const y = p.y + cy + gy; if (y >= 0) ctx.strokeRect(bx + (p.x + cx) * cs + 2.5, by + y * cs + 2.5, cs - 5, cs - 5); }
       }
-      for (const [cx, cy] of cellsOf(p.type, p.rot)) { const y = p.y + cy; if (y >= 0) drawCell(bx + (p.x + cx) * cs, by + y * cs, cs, SHADE[p.type]); }
+      cellsOf(p.type, p.rot).forEach(([cx, cy], k) => { const y = p.y + cy; if (y < 0) return; drawCell(bx + (p.x + cx) * cs, by + y * cs, cs, SHADE[p.type]); if (run.pspec && run.pspec.i === k) drawSpec(bx + (p.x + cx) * cs, by + y * cs, cs, run.pspec.k); });
     }
     // Panel lateral
     const px = bx + bw + Math.max(10, W * 0.03), pw = W - px - 10, mcs = Math.max(6, Math.floor(Math.min(cs * 0.6, pw / 4)));
     ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = F(700, U * 0.028); ctx.fillStyle = 'rgba(255,255,255,0.45)';
     let yy = by;
     ctx.fillText('SIGUIENTE', px, yy); yy += U * 0.045;
-    run.queue.slice(0, 1 + L('e_d_prev')).forEach(tp => { drawMini(tp, px, yy, mcs); yy += mcs * 2.8; });
+    run.queue.slice(0, 1 + L('e_d_prev')).forEach((tp, k) => { drawMini(tp, px, yy, mcs, run.qspec[k]); yy += mcs * 2.8; });
     if (L('e_d_hold')) {
       ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText('BODEGA (C)', px, yy); yy += U * 0.045;
-      if (run.hold) drawMini(run.hold, px, yy, mcs); yy += mcs * 2.8;
+      if (run.hold) drawMini(run.hold, px, yy, mcs, run.holdSpec); yy += mcs * 2.8;
     }
     ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText('FILAS', px, yy); yy += U * 0.035;
     ctx.font = F(900, U * 0.06); ctx.fillStyle = '#ffffff'; ctx.fillText(run.lines, px, yy); yy += U * 0.08;

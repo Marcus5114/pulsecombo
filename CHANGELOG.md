@@ -12,6 +12,13 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.5.3
 
 ### Agregado
+- **Ensamble: rama nueva Taller (Chatarra útil).** Algunas piezas traen un bloque especial en una de sus celdas, visible también en las piezas siguientes y en la bodega. El efecto se activa al completar la fila que lo contiene.
+  - **Chatarra útil:** bloques dorados ×2, la fila da el doble de Piezas. Dos bloques en la misma fila se multiplican entre sí.
+  - **Desguace** (3 niveles): más piezas con bloque especial, de 17% a 35%.
+  - **Aleación triple** (2 niveles): bloques rosas ×3.
+  - **Reloj de arena** (3 niveles): bloques celestes. La canción entera (música, caída y ritmo) pasa al 70% de velocidad durante 6, 8 o 10 tiempos, con un velo celeste y la cuenta de tiempos que quedan. La canción dura más y hay más tiempo para pensar cada pieza.
+  - **Detonador** (3 niveles): bloques naranjas que rompen los bloques de alrededor (3×3, después con una cruz de 5, después 5×5 sin esquinas). Limpian huecos y cada bloque roto da Piezas.
+  - **Templado** (3 niveles): los ×2 y ×3 suman x0,5 por nivel.
 - **Señal: rama nueva Portadoras.**
   - **Onda portadora:** algunos patrones traen una nota portadora, dorada en la llamada, en la línea de tiempo y en la respuesta. Si decodificás ese patrón entero, todo lo que dio (notas y bonus) vale x2. Al decodificarlo dice "DECODIFICADO x2" y en el resultado se cuentan las portadoras.
   - **Banda ancha** (3 niveles): más patrones con portadora, de 25% a 55%.

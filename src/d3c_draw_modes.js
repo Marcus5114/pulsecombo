@@ -13,6 +13,14 @@
     ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = F(800, U * 0.045);
     ctx.fillText(run.song.tut ? 'Práctica' : fmt(run.earned), 10, 22);
     drawRunLabel(U);
+    // Cámara lenta: velo celeste y cartel con los tiempos que quedan
+    const tt = gameT();
+    if (run.slowUntil && tt < run.slowUntil && tt > run.slowFrom - 0.2) {
+      const left = (run.slowUntil - tt) / (run.ch.step * 4), a = Math.min(1, left);
+      ctx.fillStyle = `rgba(92,208,230,${0.06 * a})`; ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = F(800, U * 0.032); ctx.fillStyle = `rgba(92,208,230,${0.9 * a})`;
+      ctx.fillText(`CÁMARA LENTA · ${Math.ceil(left)}`, W / 2, 44);
+    }
   }
   const wrapCache = new Map();   // partir un texto en líneas mide cada palabra: se hace una sola vez por texto, fuente y ancho
   function wrapLines(msg, maxW) {
@@ -171,9 +179,18 @@
     }
     ctx.globalAlpha = 1;
   }
-  function drawMini(type, x, y, cs) {
+  // Bloque especial de Chatarra útil: borde y símbolo del color de su efecto
+  function drawSpec(x, y, cs, k) {
+    const col = SPEC_KINDS[k].col, m = cs / 2;
+    ctx.fillStyle = `rgba(${col},0.85)`; ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+    ctx.strokeStyle = 'rgba(13,13,14,0.85)'; ctx.fillStyle = 'rgba(13,13,14,0.85)'; ctx.lineWidth = Math.max(1.2, cs * 0.09);
+    if (k === 'x2' || k === 'x3') { ctx.font = F(900, cs * 0.62); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(k === 'x2' ? '×2' : '×3', x + m, y + m + 1); }
+    else if (k === 'slow') { const a = cs * 0.26; ctx.beginPath(); ctx.moveTo(x + m - a, y + m - a * 1.2); ctx.lineTo(x + m + a, y + m - a * 1.2); ctx.lineTo(x + m - a, y + m + a * 1.2); ctx.lineTo(x + m + a, y + m + a * 1.2); ctx.closePath(); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.arc(x + m, y + m + cs * 0.06, cs * 0.22, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(x + m + cs * 0.12, y + m - cs * 0.14); ctx.lineTo(x + m + cs * 0.26, y + m - cs * 0.3); ctx.stroke(); }
+  }
+  function drawMini(type, x, y, cs, spec) {
     const c = cellsOf(type, 0), w = (BOXN[type] || 3) * cs;
-    for (const [cx, cy] of c) drawCell(x + cx * cs + (3 * cs - w) / 2, y + cy * cs, cs, SHADE[type]);
+    c.forEach(([cx, cy], k) => { const X = x + cx * cs + (3 * cs - w) / 2, Y = y + cy * cs; drawCell(X, Y, cs, SHADE[type]); if (spec && spec.i === k) drawSpec(X, Y, cs, spec.k); });
   }
   function drawStack() {
     if (!run || !W) return;
@@ -188,13 +205,17 @@
     ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
     for (let x = 1; x < COLS; x++) { ctx.beginPath(); ctx.moveTo(bx + x * cs + 0.5, by); ctx.lineTo(bx + x * cs + 0.5, by + bh); ctx.stroke(); }
     ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.5 * bp})`; ctx.lineWidth = 2; ctx.strokeRect(bx - 1, by - 1, bw + 2, bh + 2);
-    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const c = run.board[y][x]; if (c) drawCell(bx + x * cs, by + y * cs, cs, SHADE[c]); }
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const c = run.board[y][x]; if (c) { drawCell(bx + x * cs, by + y * cs, cs, SHADE[c]); const k = run.sp[y][x]; if (k) drawSpec(bx + x * cs, by + y * cs, cs, k); } }
     for (const f of run.fx) {
-      const a = 1 - (now - f.at) / 350; if (a <= 0) continue;
-      ctx.fillStyle = `rgba(255,255,255,${0.7 * a})`;
-      f.rows.forEach(y => ctx.fillRect(bx, by + y * cs, bw, cs));
+      const life = f.mult ? 900 : f.boom ? 500 : 350, a = 1 - (now - f.at) / life; if (a <= 0) continue;
+      if (f.mult) {   // la fila valió más: el multiplicador sube y se apaga
+        ctx.font = F(900, cs * 1.3); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = `rgba(242,193,78,${a})`;
+        ctx.fillText(`×${dec(f.mult)}`, bx + bw / 2, by + f.rows[0] * cs + cs / 2 - (1 - a) * cs * 1.5);
+      } else if (f.boom) {
+        for (const [x, y] of f.boom) { ctx.fillStyle = `rgba(255,107,61,${0.5 * a})`; ctx.beginPath(); ctx.arc(bx + x * cs + cs / 2, by + y * cs + cs / 2, cs * (1 + 2 * (1 - a)), 0, Math.PI * 2); ctx.fill(); }
+      } else { ctx.fillStyle = `rgba(255,255,255,${0.7 * a})`; f.rows.forEach(y => ctx.fillRect(bx, by + y * cs, bw, cs)); }
     }
-    run.fx = run.fx.filter(f => now - f.at < 350);
+    run.fx = run.fx.filter(f => now - f.at < 900);
     const p = run.piece;
     // Sombra de recomendación (tutorial y Fácil): contorno punteado del color de la galaxia donde conviene encastrar
     if (p && hintOn()) {
@@ -214,17 +235,17 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
         for (const [cx, cy] of cellsOf(p.type, p.rot)) { const y = p.y + cy + gy; if (y >= 0) ctx.strokeRect(bx + (p.x + cx) * cs + 2.5, by + y * cs + 2.5, cs - 5, cs - 5); }
       }
-      for (const [cx, cy] of cellsOf(p.type, p.rot)) { const y = p.y + cy; if (y >= 0) drawCell(bx + (p.x + cx) * cs, by + y * cs, cs, SHADE[p.type]); }
+      cellsOf(p.type, p.rot).forEach(([cx, cy], k) => { const y = p.y + cy; if (y < 0) return; drawCell(bx + (p.x + cx) * cs, by + y * cs, cs, SHADE[p.type]); if (run.pspec && run.pspec.i === k) drawSpec(bx + (p.x + cx) * cs, by + y * cs, cs, run.pspec.k); });
     }
     // Panel lateral
     const px = bx + bw + Math.max(10, W * 0.03), pw = W - px - 10, mcs = Math.max(6, Math.floor(Math.min(cs * 0.6, pw / 4)));
     ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = F(700, U * 0.028); ctx.fillStyle = 'rgba(255,255,255,0.45)';
     let yy = by;
     ctx.fillText('SIGUIENTE', px, yy); yy += U * 0.045;
-    run.queue.slice(0, 1 + L('e_d_prev')).forEach(tp => { drawMini(tp, px, yy, mcs); yy += mcs * 2.8; });
+    run.queue.slice(0, 1 + L('e_d_prev')).forEach((tp, k) => { drawMini(tp, px, yy, mcs, run.qspec[k]); yy += mcs * 2.8; });
     if (L('e_d_hold')) {
       ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText('BODEGA (C)', px, yy); yy += U * 0.045;
-      if (run.hold) drawMini(run.hold, px, yy, mcs); yy += mcs * 2.8;
+      if (run.hold) drawMini(run.hold, px, yy, mcs, run.holdSpec); yy += mcs * 2.8;
     }
     ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText('FILAS', px, yy); yy += U * 0.035;
     ctx.font = F(900, U * 0.06); ctx.fillStyle = '#ffffff'; ctx.fillText(run.lines, px, yy); yy += U * 0.08;
