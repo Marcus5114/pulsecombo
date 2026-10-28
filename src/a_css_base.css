@@ -45,7 +45,7 @@ main { flex: 1; min-height: 0; width: 100%; display: flex; }
 .view { flex: 1; min-height: 0; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; overflow-x: hidden; padding-bottom: 12px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .view > * { flex-shrink: 0; }
 #vMap, #vGal { max-width: 980px; }
-.map { position: relative; flex: 1 1 auto; width: 100%; min-height: 240px; margin: 0 auto; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: radial-gradient(ellipse at 30% 40%, #18181c 0%, #0b0b0d 55%, #050506 100%); }
+.map { position: relative; flex: 1 1 auto; width: 100%; min-height: 240px; margin: 0 auto; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--pat, none), radial-gradient(ellipse at 30% 40%, var(--map0, #18181c) 0%, var(--map1, #0b0b0d) 55%, var(--map2, #050506) 100%); }
 .map-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .map-svg line { stroke: #4a4a52; stroke-width: 1.5; stroke-dasharray: 3 7; }
 .pl { --sz: clamp(46px, 8.5vw, 92px); position: absolute; transform: translate(-50%, calc(-6px - var(--sz) / 2)); display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: 0; color: var(--fg); cursor: pointer; padding: 6px; border-radius: 10px; }

@@ -34,6 +34,7 @@
     const rY = H * 0.16, size = Math.min(lw * 0.72, 64), speed = (H - rY) / TRAVEL;
     const fever = t < run.feverUntil;
     ctx.fillStyle = LK.cv; ctx.fillRect(0, 0, W, H);
+    if (LK.pat && !S.lowGfx) { ctx.fillStyle = LK.pat; ctx.fillRect(0, 0, W, H); }
     if (!S.lowGfx) { ctx.fillStyle = '#fff'; for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
       ctx.globalAlpha = st.a; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
