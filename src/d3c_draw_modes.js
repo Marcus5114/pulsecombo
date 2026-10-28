@@ -300,6 +300,19 @@
       { const [hx, hy] = vx(start); ctx.moveTo(px + hx * R, py + hy * R); }
       if (t >= P.t) { for (let j = 1; j <= Math.floor(Math.abs(v - start)); j++) { const [hx, hy] = vx(start + sg * j); ctx.lineTo(px + hx * R, py + hy * R); } ctx.lineTo(mx, my); ctx.stroke(); }
       for (let j = 0; j < 6; j++) { const [hx, hy] = vx(j); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(px + hx * R, py + hy * R, 2.5, 0, Math.PI * 2); ctx.fill(); }
+      // Guía: flechitas translúcidas sobre la órbita, desde el planeta hasta el vértice donde tiene que tocar
+      // (la próxima baldosa). Se encienden de a poco a medida que el planeta se acerca.
+      if (N1 && t >= P.t) {
+        const vt = P.D + 3 + sg * (N1.t - P.t) / (P.u * st), left = (vt - v) * sg;
+        const at = u => { const j = Math.floor(u), f = u - j, [x0, y0] = vx(j), [x1, y1] = vx(j + 1);
+          return [px + (x0 + (x1 - x0) * f) * R, py + (y0 + (y1 - y0) * f) * R, Math.atan2((y1 - y0) * sg, (x1 - x0) * sg)]; };
+        const cs = R * 0.12; ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (let d = 0.5; d < left - 0.15; d += 0.5) {
+          const [gx, gy, a] = at(v + sg * d), near = 1 - d / Math.max(1, left);
+          ctx.strokeStyle = `rgba(${acc},${(0.3 + 0.5 * near).toFixed(2)})`;
+          ctx.save(); ctx.translate(gx, gy); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(-cs, -cs); ctx.lineTo(0, 0); ctx.lineTo(-cs, cs); ctx.stroke(); ctx.restore();
+        }
+      }
       const pivA = k % 2 === 0, fl = Math.max(0, 1 - (now - flash[0]) / 220);
       if (LK.des.com) {   // Eclipse (diseño de los Gemelos Vaivén): uno es un sol con rayos y el otro una luna creciente
         const body = (A, x, y, r) => {

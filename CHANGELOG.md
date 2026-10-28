@@ -12,6 +12,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.5.3
 
 ### Agregado
+- **Compás: guía hacia la próxima baldosa.** Sobre la órbita aparecen flechitas translúcidas desde el planeta que gira hasta el punto donde tiene que tocar. Se encienden a medida que se acerca, así se ve cuántos lados faltan y para qué lado va.
 - **Todo el juego se puede usar solo con el teclado.**
   - Al cambiar de pantalla, el foco va al elemento principal: la galaxia elegida, el planeta donde estás, la canción seleccionada, la primera mejora del árbol o "Volver al mundo" en el resultado. Al terminar una charla, el foco vuelve a la pantalla.
   - El foco ya no se pierde cuando una lista se vuelve a dibujar (por ejemplo al elegir otra canción o dificultad, o al tocar una paleta): pasa al botón equivalente.
