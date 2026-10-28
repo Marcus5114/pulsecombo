@@ -20,6 +20,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - Menú de canciones: Escape vuelve al mapa, y una línea arriba de la lista recuerda las teclas (no aparece en pantallas táctiles).
 
 ### Corregido
+- **Las flechas de los botones táctiles se veían de distinto tamaño y grosor:** eran caracteres de texto y cada sistema saca ↑ ↓ de una fuente y ← → de otra. Ahora son íconos dibujados con el mismo trazo en todas las direcciones, y lo mismo para Girar, Soltar y Bodega de Ensamble.
 - **En iPhone y iPad, algunos símbolos se veían como emoji:** las flechas diagonales del idioma de Vía Pulso (↗ ↘ ↙ ↖), la onda 〰 de Señal, el ♥ de algunas frases y el engranaje ⚙ de Ajustes y Mecánicas. Ahora se piden siempre en su versión de texto, con el color y el peso del resto del idioma.
 - **Apariencia (en prueba):** el diseño Luz cardinal de Kadenza no se aplicaba a las flechas largas. Ahora el recorrido de la larga toma el color de la estela, con un halo a los lados, y brilla más mientras la sostenés.
 - En el menú de canciones, con Ajustes abierto, las flechas cambiaban la canción o la dificultad en vez de mover la barra de volumen. Ahora las flechas son del control que tiene el foco o de la ventana abierta.

@@ -769,6 +769,9 @@ body.pat-still::before { animation: none; }
 .menu-keys kbd { font-size: 0.64rem; padding: 0 4px; }
 @media (hover: none) and (pointer: coarse) { .menu-keys { display: none; } }   /* en el celular no hay teclado */
 .glyph, .tab-set, .side-btn { font-variant-emoji: text; }   /* símbolos como texto, no como emoji (iOS) */
+/* Íconos de los botones táctiles: mismo trazo y tamaño en todas las direcciones */
+.pad-ic { width: 1.1em; height: 1.1em; display: block; margin: 0 auto; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.pad small .pad-ic, .pad .pad-ic + small { margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -3388,7 +3391,16 @@ body.pat-still::before { animation: none; }
 
   // ---------- Pads táctiles ----------
   // Vertical: botones debajo de la pista. Horizontal (celular acostado): un grupo a cada lado, para jugar con los pulgares.
-  const ARROWS = ['←', '↓', '↑', '→'], ARIA = ['Izquierda', 'Abajo', 'Arriba', 'Derecha'];
+  // Íconos de los botones dibujados en SVG: los caracteres ← ↓ ↑ → salen de fuentes distintas según el sistema
+  // (en muchos, ↑ ↓ vienen de una y ← → de otra) y se veían de distinto tamaño y grosor.
+  const ICO = {
+    arrow: '<path d="M0 -8.5V8.5M-7 -1.5L0 -8.5L7 -1.5"/>',
+    turn: '<path d="M6.5 -3.5A7.5 7.5 0 1 0 7.5 1.5"/><path d="M7.5 -8.5V-3H2"/>',
+    drop: '<path d="M0 -8.5V4M-6 -2L0 4L6 -2M-7.5 8.5H7.5"/>',
+    swap: '<path d="M-7.5 -3.5H7.5M3.5 -7.5L7.5 -3.5L3.5 0.5M7.5 3.5H-7.5M-3.5 -0.5L-7.5 3.5L-3.5 7.5"/>',
+  };
+  const icon = (k, rot = 0) => `<svg class="pad-ic" viewBox="-11 -11 22 22" aria-hidden="true"${rot ? ` style="transform:rotate(${rot}deg)"` : ''}>${ICO[k]}</svg>`;
+  const ARROWS = [icon('arrow', -90), icon('arrow', 180), icon('arrow'), icon('arrow', 90)], ARIA = ['Izquierda', 'Abajo', 'Arriba', 'Derecha'];
   const isLand = () => document.body.classList.contains('land');
   const arrowPad = l => `<button class="pad" id="pad${l}" data-l="${l}" aria-label="${ARIA[l % 4]}">${ARROWS[l % 4]}</button>`;
   const actPad = ([a, s, l]) => `<button class="pad" data-act="${a}" aria-label="${l}">${s}<small>${l}</small></button>`;
@@ -3402,8 +3414,8 @@ body.pat-still::before { animation: none; }
         pads.innerHTML = `<div class="pg side left">${PAUSE_GAP}<div class="pg-pads">${big('pad0')}</div></div><div class="pg side right">${PAUSE_PAD}<div class="pg-pads">${big('pad0b')}</div></div>`;
       } else { pads.className = 'pads'; pads.innerHTML = `<div class="pg"><div class="pg-pads one">${big('pad0')}</div></div>`; }
     } else if (run.mode === 'stack') {
-      const acts = [['L', '←', 'Mover'], ['U', '↻', 'Girar'], ['R', '→', 'Mover'], ['D', '↓', 'Bajar'], ['H', '⤓', 'Soltar']];
-      if (L('e_d_hold')) acts.push(['C', '⇄', 'Bodega']);
+      const acts = [['L', ARROWS[0], 'Mover'], ['U', icon('turn'), 'Girar'], ['R', ARROWS[3], 'Mover'], ['D', ARROWS[1], 'Bajar'], ['H', icon('drop'), 'Soltar']];
+      if (L('e_d_hold')) acts.push(['C', icon('swap'), 'Bodega']);
       if (land) {
         const left = [acts[0], acts[2], acts[1]], right = acts.slice(3);
         pads.className = 'pads land-pads';

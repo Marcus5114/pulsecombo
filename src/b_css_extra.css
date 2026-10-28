@@ -525,3 +525,6 @@ body.pat-still::before { animation: none; }
 .menu-keys kbd { font-size: 0.64rem; padding: 0 4px; }
 @media (hover: none) and (pointer: coarse) { .menu-keys { display: none; } }   /* en el celular no hay teclado */
 .glyph, .tab-set, .side-btn { font-variant-emoji: text; }   /* símbolos como texto, no como emoji (iOS) */
+/* Íconos de los botones táctiles: mismo trazo y tamaño en todas las direcciones */
+.pad-ic { width: 1.1em; height: 1.1em; display: block; margin: 0 auto; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.pad small .pad-ic, .pad .pad-ic + small { margin-top: 2px; }
