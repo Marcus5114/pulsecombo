@@ -30,6 +30,25 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - **Barra de arriba y panel de galaxias:** solo se reescriben cuando cambia algún número. Antes el panel de galaxias se rehacía entero, con retratos, cada segundo.
 - El botón de pausa en el celular se veía como un cuadrado vacío en Android: el carácter ❚❚ no existe en algunas fuentes. Ahora el ícono se dibuja con dos barras.
 
+### Cambiado
+- **Árbol global más caro y con menos niveles**, para que funcione como un freno suave en el progreso avanzado. Cada nivel vale el doble, así que el efecto máximo de cada mejora es el mismo. Comprar todo el árbol pasa a costar unos 1.000 de Materia Oscura.
+
+| Mejora | Niveles | Efecto por nivel | Costo total |
+| --- | --- | --- | --- |
+| Resonancia | 10 → 5 | +20% en todo | 192 |
+| Afinación cósmica | 3 → 2 | +7,5% de margen | 45 |
+| Cosecha oscura | 4 → 2 | +50% de Materia Oscura | 26 |
+| Amplificadores (Pulso, Ensamble, Señal, Compás) | 8 → 4 | +50% de la moneda | 86, 106, 106 y 127 |
+| Sinfonía | 1 | x1,5 en todo | 25 → 90 |
+| Modificadores | 1 | abre los modificadores | 3 → 6 |
+| Maestría | 4 → 2 | +50% de estrellas de los modificadores | 42 |
+| Ecos persistentes | 6 → 3 | +10% de rendimiento | 37 |
+| Bucle temporal | 4 → 2 | ecos 50% más seguidos | 36 |
+| Memoria del vacío | 5 → 3 | +4 h sin jugar | 37 |
+| Eco total | 1 | suma todas las dificultades | 15 → 60 |
+
+  - Las partidas guardadas conservan el efecto que ya tenían: cada mejora pasa al nivel nuevo equivalente, redondeando para arriba.
+
 ### Agregado
 - **Modo rendimiento** en Ajustes (sección Gráficos), para celulares o computadoras lentas. Dibuja la pista a resolución 1x, apaga las estrellas de fondo y las animaciones de los personajes, y la música usa un solo oscilador por nota y sin eco. Así se crean muchos menos nodos de audio, que en el celular provocan pausas periódicas.
 

@@ -1168,20 +1168,20 @@ body.land .rx-txt { display: none; }
       ],
       nodes: [
         { id: 'g_core', br: 'core', name: 'Núcleo galáctico', max: 1, desc: 'El centro de todo el viaje. Se compra con {mo}.', fx: () => 'Activo' },
-        { id: 'g_res', br: 'core', parent: 'g_core', name: 'Resonancia', max: 10, cost: [3, 1.35], desc: 'Todas las monedas de todas las galaxias valen más.', fx: lv => `+${10 * lv}% en todo` },
-        { id: 'g_tune', br: 'core', parent: 'g_core', name: 'Afinación cósmica', max: 3, cost: [4, 2], desc: 'Agranda el margen de timing en todas las galaxias.', fx: lv => `+${5 * lv}% de margen` },
-        { id: 'g_dark', br: 'core', parent: 'g_core', name: 'Cosecha oscura', max: 4, cost: [4, 1.8], desc: 'Los hitos dan más {mo}.', fx: lv => `+${25 * lv}% de {mo}` },
-        { id: 'g_amp_pulso', br: 'ga', pos: [2, 1], root: true, name: 'Amplificador Pulso', max: 8, cost: [2, 1.35], req: [['g_core', 1]], desc: 'Más {pts} en Vía Pulso.', fx: lv => `+${25 * lv}% {pts}` },
-        { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más {piezas} en Ensamble.', fx: lv => `+${25 * lv}% {piezas}` },
-        { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 8, cost: [3, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más {datos} en Señal.', fx: lv => `+${25 * lv}% {datos}` },
-        { id: 'g_amp_com', br: 'ga', pos: [2, 2], name: 'Amplificador Compás', max: 8, cost: [4, 1.35], req: [['g_amp_pulso', 1]], desc: 'Más {giros} en Compás.', fx: lv => `+${25 * lv}% {giros}` },
-        { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [25, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3], ['g_amp_com', 3]], desc: 'Con todas las galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
-        { id: 'g_mods', br: 'gm', pos: [2, 1], root: true, name: 'Modificadores', max: 1, cost: [3, 1], req: [['g_core', 1]], desc: 'Abre los modificadores en el menú de cada canción. Cada uno se habilita al superar Difícil en un planeta de su galaxia.', fx: lv => lv ? 'Modificadores abiertos' : 'Cerrados' },
-        { id: 'g_mod_amp', br: 'gm', pos: [2, 2], name: 'Maestría', max: 4, cost: [5, 1.6], req: [['g_mods', 1]], desc: 'Los modificadores que suben la dificultad suman más estrellas. No cambia los que restan.', fx: lv => `Suman ${100 + 25 * lv}% de lo normal` },
-        { id: 'g_eco_eff', br: 'ge', pos: [2, 1], root: true, name: 'Ecos persistentes', max: 6, cost: [2, 1.6], req: [['g_core', 1]], desc: 'Cada eco rinde un porcentaje mayor de tu mejor resultado.', fx: lv => `Rinden ${10 + 5 * lv}%` },
-        { id: 'g_eco_speed', br: 'ge', pos: [1, 2], name: 'Bucle temporal', max: 4, cost: [3, 1.8], req: [['g_eco_eff', 1]], desc: 'Los ecos se repiten más seguido.', fx: lv => `${pct(1 / (1 + 0.25 * lv))} del tiempo` },
-        { id: 'g_eco_off', br: 'ge', pos: [3, 2], name: 'Memoria del vacío', max: 5, cost: [2, 1.6], req: [['g_eco_eff', 1]], desc: 'Los ecos siguen sonando más horas con el juego cerrado.', fx: lv => `Hasta ${2 + 2 * lv} h sin jugar` },
-        { id: 'g_eco_all', br: 'ge', pos: [2, 3], name: 'Eco total', max: 1, cost: [15, 1], req: [['g_eco_eff', 3]], desc: 'Cada canción repite el mejor resultado de cada dificultad, no solo el más alto.', fx: lv => lv ? 'Suma todas las dificultades' : 'Solo la mejor dificultad' },
+        { id: 'g_res', br: 'core', parent: 'g_core', name: 'Resonancia', max: 5, cost: [12, 1.6], desc: 'Todas las monedas de todas las galaxias valen más.', fx: lv => `+${20 * lv}% en todo` },
+        { id: 'g_tune', br: 'core', parent: 'g_core', name: 'Afinación cósmica', max: 2, cost: [15, 2], desc: 'Agranda el margen de timing en todas las galaxias.', fx: lv => `+${dec(7.5 * lv)}% de margen` },
+        { id: 'g_dark', br: 'core', parent: 'g_core', name: 'Cosecha oscura', max: 2, cost: [8, 2.2], desc: 'Los hitos dan más {mo}.', fx: lv => `+${50 * lv}% de {mo}` },
+        { id: 'g_amp_pulso', br: 'ga', pos: [2, 1], root: true, name: 'Amplificador Pulso', max: 4, cost: [8, 1.7], req: [['g_core', 1]], desc: 'Más {pts} en Vía Pulso.', fx: lv => `+${50 * lv}% {pts}` },
+        { id: 'g_amp_ens', br: 'ga', pos: [1, 2], name: 'Amplificador Ensamble', max: 4, cost: [10, 1.7], req: [['g_amp_pulso', 1]], desc: 'Más {piezas} en Ensamble.', fx: lv => `+${50 * lv}% {piezas}` },
+        { id: 'g_amp_sen', br: 'ga', pos: [3, 2], name: 'Amplificador Señal', max: 4, cost: [10, 1.7], req: [['g_amp_pulso', 1]], desc: 'Más {datos} en Señal.', fx: lv => `+${50 * lv}% {datos}` },
+        { id: 'g_amp_com', br: 'ga', pos: [2, 2], name: 'Amplificador Compás', max: 4, cost: [12, 1.7], req: [['g_amp_pulso', 1]], desc: 'Más {giros} en Compás.', fx: lv => `+${50 * lv}% {giros}` },
+        { id: 'g_sym', br: 'ga', pos: [2, 3], name: 'Sinfonía', max: 1, cost: [90, 1], req: [['g_amp_ens', 3], ['g_amp_sen', 3], ['g_amp_com', 3]], desc: 'Con todas las galaxias amplificadas, todo vale x1,5.', fx: lv => lv ? 'x1,5 en todo' : 'Inactiva' },
+        { id: 'g_mods', br: 'gm', pos: [2, 1], root: true, name: 'Modificadores', max: 1, cost: [6, 1], req: [['g_core', 1]], desc: 'Abre los modificadores en el menú de cada canción. Cada uno se habilita al superar Difícil en un planeta de su galaxia.', fx: lv => lv ? 'Modificadores abiertos' : 'Cerrados' },
+        { id: 'g_mod_amp', br: 'gm', pos: [2, 2], name: 'Maestría', max: 2, cost: [15, 1.8], req: [['g_mods', 1]], desc: 'Los modificadores que suben la dificultad suman más estrellas. No cambia los que restan.', fx: lv => `Suman ${100 + 50 * lv}% de lo normal` },
+        { id: 'g_eco_eff', br: 'ge', pos: [2, 1], root: true, name: 'Ecos persistentes', max: 3, cost: [6, 1.8], req: [['g_core', 1]], desc: 'Cada eco rinde un porcentaje mayor de tu mejor resultado.', fx: lv => `Rinden ${10 + 10 * lv}%` },
+        { id: 'g_eco_speed', br: 'ge', pos: [1, 2], name: 'Bucle temporal', max: 2, cost: [12, 2], req: [['g_eco_eff', 1]], desc: 'Los ecos se repiten más seguido.', fx: lv => `${pct(1 / (1 + 0.5 * lv))} del tiempo` },
+        { id: 'g_eco_off', br: 'ge', pos: [3, 2], name: 'Memoria del vacío', max: 3, cost: [6, 1.8], req: [['g_eco_eff', 1]], desc: 'Los ecos siguen sonando más horas con el juego cerrado.', fx: lv => `Hasta ${2 + 4 * lv} h sin jugar` },
+        { id: 'g_eco_all', br: 'ge', pos: [2, 3], name: 'Eco total', max: 1, cost: [60, 1], req: [['g_eco_eff', 3]], desc: 'Cada canción repite el mejor resultado de cada dificultad, no solo el más alto.', fx: lv => lv ? 'Suma todas las dificultades' : 'Solo la mejor dificultad' },
       ],
     },
   };
@@ -1193,13 +1193,14 @@ body.land .rx-txt { display: none; }
 
   // ---------- Estado ----------
   const KEY = 'comboPulso_v3';
-  const fresh = () => ({ pts: 0, piezas: 0, datos: 0, giros: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0, com: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, cond: {}, sMarks: 1, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
+  const fresh = () => ({ gtree: 2, pts: 0, piezas: 0, datos: 0, giros: 0, mo: 0, tot: { pulso: 0, ens: 0, sen: 0, com: 0 }, n: {}, rec: {}, sel: 0, diff: 0, keysL: 'wasd', keysR: 'arrows', off: {}, mods: {}, cond: {}, sMarks: 1, world: 0, galaxy: 'pulso', galOpen: { pulso: true }, seen: Date.now(), moInit: true, v: 2 });
   let S = fresh();
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const d = JSON.parse(raw);
       S = { ...fresh(), ...d, moInit: d.moInit || false };
+      if (!d.gtree) S.gtree = 1;   // partida de antes del árbol global nuevo: se convierte más abajo
       S.n = S.n || {}; S.rec = S.rec || {}; S.off = S.off || {}; S.mods = S.mods || {}; S.cond = S.cond || {};
       if (S.n.s_m_root && !d.sMarks) { S.n.s_m_arrows = 1; S.sMarks = 1; }   // v0.4.1: Eco visual se separó en Marcas de ritmo + Eco visual
       S.tot = { pulso: 0, ens: 0, sen: 0, com: 0, ...(d.tot || {}) };
@@ -1217,6 +1218,12 @@ body.land .rx-txt { display: none; }
   window.claude?.hot?.snapshot?.(() => ({ S }));
   const save = () => { S.seen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
+  // v0.5.2: el árbol global tiene menos niveles y cada uno vale más. Las partidas viejas pasan al nivel con el mismo efecto.
+  if ((S.gtree || 1) < 2) {
+    const conv = { g_res: 0.5, g_tune: 2 / 3, g_dark: 0.5, g_amp_pulso: 0.5, g_amp_ens: 0.5, g_amp_sen: 0.5, g_amp_com: 0.5, g_mod_amp: 0.5, g_eco_eff: 0.5, g_eco_speed: 0.5, g_eco_off: 0.5 };
+    for (const [id, f] of Object.entries(conv)) if (S.n[id]) S.n[id] = Math.ceil(S.n[id] * f);
+    S.gtree = 2;
+  }
   const L = id => CORE_IDS.has(id) ? 1 : (S.n[id] || 0);
   const wallet = gal => GX[gal].cur;
   // Mejoras que agregan contenido al patrón de Vía Pulso: se pueden apagar para bajar la dificultad
@@ -1233,8 +1240,8 @@ body.land .rx-txt { display: none; }
   const canBuy = n => n.cost && reqMet(n) && !maxed(n) && !capped(n) && S[TREES[n.tree].wallet] >= nodeCost(n, L(n.id));
 
   // Multiplicador global de cada galaxia (árbol global)
-  const galMult = gal => (1 + 0.1 * L('g_res')) * (1 + 0.25 * L('g_amp_' + gal)) * (L('g_sym') ? 1.5 : 1);
-  const tuneWin = () => 0.05 * L('g_tune');
+  const galMult = gal => (1 + 0.2 * L('g_res')) * (1 + 0.5 * L('g_amp_' + gal)) * (L('g_sym') ? 1.5 : 1);
+  const tuneWin = () => 0.075 * L('g_tune');
 
   // ---------- Progresión ----------
   // Cada dificultad se abre al superar la anterior en esa canción. Cada planeta, cuando un vecino abierto tiene suficientes canciones superadas.
@@ -1262,7 +1269,7 @@ body.land .rx-txt { display: none; }
   const galHardClear = gal => !!S.dev || SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
   const modOpen = id => !!L('g_mods') && galHardClear(MODS[id].gal);
   const activeMods = s => s.tut ? [] : Object.keys(MODS).filter(id => MODS[id].gal === s.gal && S.mods[id] && modOpen(id));
-  const modPct = id => MODS[id].pct > 0 ? MODS[id].pct * (1 + 0.25 * L('g_mod_amp')) : MODS[id].pct;
+  const modPct = id => MODS[id].pct > 0 ? MODS[id].pct * (1 + 0.5 * L('g_mod_amp')) : MODS[id].pct;
   const modFactor = ids => Math.max(0.3, 1 + ids.reduce((a, id) => a + modPct(id), 0));
   const tutDone = gal => SONGS.some(s => s.gal === gal && s.tut && recOf(s, 0)?.clear);
   const clearedIn = wi => WORLDS[wi].idx.filter(i => [0, 1, 2, 3].some(d => recOf(SONGS[i], d)?.clear)).length;
@@ -1292,7 +1299,7 @@ body.land .rx-txt { display: none; }
 
   // ---------- Materia oscura ----------
   // Hitos: primera vez que superás una dificultad (+1; los tutoriales no dan), primera S (+1), primer Full Combo (+1), cada planeta nuevo (+2).
-  const darkMult = () => 1 + 0.25 * L('g_dark');
+  const darkMult = () => 1 + 0.5 * L('g_dark');
   // Los hitos dan la mitad de materia oscura que antes (v0.5): las galaxias también piden recomendaciones
   const MO_RATE = 0.5;
   // Condensador: convierte la moneda de una galaxia en 1 de materia oscura. Cada condensación cuesta 6% más.
@@ -1314,8 +1321,8 @@ body.land .rx-txt { display: none; }
   }
 
   // ---------- Ecos: repetición automática de tus mejores resultados ----------
-  const ecoEff = () => 0.10 + 0.05 * L('g_eco_eff');
-  const ecoInterval = s => songDur(s) * 20 / (1 + 0.25 * L('g_eco_speed'));
+  const ecoEff = () => 0.10 + 0.1 * L('g_eco_eff');
+  const ecoInterval = s => songDur(s) * 20 / (1 + 0.5 * L('g_eco_speed'));
   const ecoBest = s => {
     if (s.tut) return 0;   // los tutoriales no generan ecos
     const bs = [0, 1, 2, 3].map(d => recOf(s, d)?.best || 0);
@@ -1327,7 +1334,7 @@ body.land .rx-txt { display: none; }
   let ecoCache = { at: -1e9, v: {} };
   const ecoRate = gal => { const now = performance.now(); if (now - ecoCache.at > 1000) ecoCache = { at: now, v: {} }; return ecoCache.v[gal] ?? (ecoCache.v[gal] = ecoRateRaw(gal)); };
   const ecoDirty = () => { ecoCache.at = -1e9; };
-  const offlineCap = () => 3600 * (2 + 2 * L('g_eco_off'));
+  const offlineCap = () => 3600 * (2 + 4 * L('g_eco_off'));
   function creditEcos(dt) {
     const got = {};
     for (const g of GALAXIES) {
