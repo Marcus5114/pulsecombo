@@ -23,7 +23,7 @@
     { id: 'rompeondas', name: 'Velocidad',       bg: '#0a0b12', s1: '#13151f', s2: '#1b1e2c', line: '#2c3147', muted: '#8f96b3', fg: '#eef1ff', cv: '#06070c', note: '#e4e9ff', acc: '#5b7cff' },
   ];
   // Fondo de cada paleta: un patrón sutil que se repite, ligado al representante (a = acento, n = color de notas).
-  // Va de fondo en la interfaz y, más tenue, sobre el fondo de la pista. Cada uno es un SVG chico que se repite.
+  // Va solo de fondo en la interfaz (menús); ni en la partida ni en los mapas. Cada uno es un SVG chico que se repite.
   const PATTERNS = {
     lumi: [48, (a, n) => `<path d="M12 4l8 14H4z" fill="none" stroke="${a}" stroke-width="1.2"/><path d="M36 28l7 12H29z" fill="${n}" fill-opacity="0.5"/><path d="M34 8v6M31 11h6M10 34v4M8 36h4" stroke="${n}" stroke-width="1"/>`],   // prismas y destellos
     brasa: [42, (a, n) => `<path d="M10.5 0l10.5 6v12l-10.5 6L0 18V6zM31.5 18l10.5 6v12l-10.5 6L21 36V24z" fill="none" stroke="${a}" stroke-width="1"/><path d="M10.5 9v6M31.5 27l2 4" stroke="${n}" stroke-width="1"/>`],   // columnas de basalto con grietas
@@ -44,16 +44,6 @@
   const patUrl = (id, o) => { const P = PALETTES.find(q => q.id === id), T = PATTERNS[id]; if (!P || !T) return '';
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${T[0]}" height="${T[0]}" viewBox="0 0 ${T[0]} ${T[0]}"><g opacity="${o}">${T[1](P.acc, P.note)}</g></svg>`;
     return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`; };
-  // Patrón para la pista (canvas): se carga como imagen y se guarda en LK.pat cuando está lista
-  const patCache = {};
-  function canvasPat(id) {
-    if (patCache[id] !== undefined) return patCache[id];
-    patCache[id] = null;
-    const img = new Image();
-    img.onload = () => { patCache[id] = ctx.createPattern(img, 'repeat'); if (lookState().pal === id) LK.pat = patCache[id]; };
-    img.src = patUrl(id, 0.14).slice(5, -2);
-    return null;
-  }
   const PAL_DEF = { bg: '#0d0d0e', s1: '#17171a', s2: '#1f1f23', line: '#2c2c31', muted: '#8a8a90', fg: '#ececee', cv: '#070708', note: '#f2f2f4' };
   // Diseño de cada embajador: uno por galaxia, cambia el dibujo de la pista de su modo
   const DESIGNS = [
@@ -79,13 +69,13 @@
     const a = on && st.acc && accOk(st.acc) ? PALETTES.find(q => q.id === st.acc) : null;
     if (a) { document.body.style.setProperty('--acc', a.acc); document.body.style.setProperty('--acc-ink', '#0a0a0c'); }
     else { document.body.style.removeProperty('--acc'); document.body.style.removeProperty('--acc-ink'); }
-    // patrón del representante: de fondo en la interfaz (tenue) y en la pista (más tenue todavía)
+    // patrón del representante: solo de fondo en la interfaz (no en la partida ni en los mapas)
     const bs = document.body.style;
     if (p && PATTERNS[p.id]) { bs.backgroundImage = patUrl(p.id, 0.16); bs.backgroundAttachment = 'fixed'; } else { bs.backgroundImage = ''; bs.backgroundAttachment = ''; }
-    // en los mapas (galaxias y planetas) el patrón va sobre un degradé con los tonos de la paleta
-    const mp = [['--pat', p && PATTERNS[p.id] ? patUrl(p.id, 0.2) : ''], ['--map0', p ? P.s2 : ''], ['--map1', p ? P.bg : ''], ['--map2', p ? P.cv : '']];
+    // en los mapas (galaxias y planetas) no hay patrón: solo el degradé toma los tonos de la paleta
+    const mp = [['--map0', p ? P.s2 : ''], ['--map1', p ? P.bg : ''], ['--map2', p ? P.cv : '']];
     for (const [k, v] of mp) v ? root.setProperty(k, v) : root.removeProperty(k);
-    LK = { cv: P.cv, note: P.note, ink: P.bg, des: {}, pat: p ? canvasPat(p.id) : null };
+    LK = { cv: P.cv, note: P.note, ink: P.bg, des: {} };
     if (on) for (const d of DESIGNS) LK.des[d.gal] = !!st.des[d.gal] && desOk(d.gal);
   }
   // Aviso al subir de nivel con un representante (solo con la prueba activa)

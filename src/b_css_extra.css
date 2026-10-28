@@ -511,3 +511,4 @@ body.land .rx-txt { display: none; }
 .set-prog .dev { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .set-prog .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 body.playing .set-prog, body.playing .set-prog-h { display: none; }   /* en la partida no se reinicia ni se canjean códigos */
+body.playing { background-image: none !important; }   /* el patrón de la paleta no va en la partida */

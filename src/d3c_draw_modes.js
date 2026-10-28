@@ -2,7 +2,6 @@
   // Fondo común: estrellas que suben despacio
   function drawSky(t) {
     ctx.fillStyle = LK.cv; ctx.fillRect(0, 0, W, H);
-    if (LK.pat && !S.lowGfx) { ctx.fillStyle = LK.pat; ctx.fillRect(0, 0, W, H); }
     if (!S.lowGfx) { ctx.fillStyle = '#fff'; for (const st of STARS) {
       const sy = ((st.y - t * 0.025 * st.z) % 1 + 1) % 1;
       ctx.globalAlpha = st.a; ctx.fillRect(st.x * W, sy * H, st.r, st.r);
