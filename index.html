@@ -1165,6 +1165,7 @@ body.pat-still::before { animation: none; }
       branches: [
         { id: 'sm', name: 'Memoria', tag: 'Ayudas para recordar el patrón y premios por decodificarlo entero.' },
         { id: 'st', name: 'Transmisión', tag: 'Más {datos} por señal y tolerancia a errores.' },
+        { id: 'sp', name: 'Portadoras', tag: 'Notas especiales dentro del patrón que multiplican lo que vale si lo decodificás entero.' },
       ],
       nodes: [
         { id: 's_core', br: 'core', name: 'Antena', max: 1, desc: 'La antena receptora. De acá salen todas las mejoras de Señal.', fx: () => 'Activa' },
@@ -1177,6 +1178,12 @@ body.pat-still::before { animation: none; }
         { id: 's_m_streak', br: 'sm', pos: [3, 2], name: 'Racha de señal', max: 4, cost: [480, 8.7], req: [['s_m_root', 1]], desc: 'Cada patrón decodificado seguido suma +10% a todo lo que ganás, hasta un tope.', fx: lv => lv ? `Hasta +${50 * lv}%` : 'Sin racha' },
         { id: 's_t_gain', br: 'st', pos: [2, 1], root: true, name: 'Amplificador de Datos', max: 5, cost: [320, 6.6], req: [['s_core', 1]], desc: 'Todos los {datos} que ganás en una canción valen más.', fx: lv => `+${25 * lv}% de {datos}` },
         { id: 's_t_fix', br: 'st', pos: [1, 2], name: 'Corrección de errores', max: 2, cost: [800, 11.5], req: [['s_t_gain', 1]], desc: 'Un patrón cuenta como decodificado aunque falles alguna nota.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por patrón` : 'Sin tolerancia' },
+        { id: 's_m_chord', br: 'sm', pos: [2, 3], name: 'Eco de acorde', max: 1, cost: [220, 1], req: [['s_m_arrows', 1]], desc: 'En la respuesta, las notas que van juntas (acordes) se marcan con un punto doble, aunque no se vea qué flecha va. Con Eco visual, las dos flechas aparecen apiladas.', fx: lv => lv ? 'Acordes marcados' : 'Sin marca' },
+        { id: 's_t_mux', br: 'st', pos: [2, 2], name: 'Multiplexado', max: 3, cost: [500, 8], req: [['s_t_gain', 1]], desc: 'Las notas de acordes y ráfagas (modificadores Acordes y Ráfagas) valen más {datos}.', fx: lv => `+${lv * 50}% por nota de acorde o ráfaga` },
+        { id: 's_p_root', br: 'sp', pos: [2, 1], root: true, name: 'Onda portadora', max: 1, cost: [300, 1], req: [['s_core', 1]], desc: 'Algunos patrones traen una nota portadora, dorada en la llamada y en la respuesta. Si decodificás ese patrón entero, todo lo que dio vale x2.', fx: lv => lv ? 'Portadoras x2 en 1 de cada 4 patrones' : 'Sin portadoras' },
+        { id: 's_p_freq', br: 'sp', pos: [1, 2], name: 'Banda ancha', max: 3, cost: [400, 8], req: [['s_p_root', 1]], desc: 'Más patrones traen portadora.', fx: lv => `${25 + lv * 10}% de los patrones` },
+        { id: 's_p_x3', br: 'sp', pos: [3, 2], name: 'Portadora triple', max: 2, cost: [700, 10.1], req: [['s_p_root', 1]], desc: 'Algunas portadoras son triples (color rosa): el patrón vale x3.', fx: lv => lv ? `${[0, 25, 45][lv]}% de las portadoras son x3` : 'Solo x2' },
+        { id: 's_p_amp', br: 'sp', pos: [2, 3], name: 'Resonancia de onda', max: 3, cost: [900, 10.8], req: [['s_p_freq', 1], ['s_p_x3', 1]], desc: 'Las portadoras multiplican más.', fx: lv => `x${dec(2 + lv * 0.5)} y x${dec(3 + lv * 0.5)}` },
         { id: 's_t_metro', br: 'st', pos: [3, 2], name: 'Metrónomo de respuesta', max: 1, cost: [90, 1], req: [['s_t_gain', 1]], desc: 'Durante la respuesta suena un clic en cada corchea para guiarte.', fx: lv => lv ? 'Clic activo' : 'Sin clic' },
       ],
     },
@@ -2177,28 +2184,30 @@ body.pat-still::before { animation: none; }
       let offs = [...pick].sort((a, b) => a - b);
       const grid = ns ? 1 : ne ? 2 : 4;
       // Ráfagas: un tiempo del patrón trae dos o tres notas seguidas en semicorcheas
+      let burstOffs = null;
       if (mods.includes('burst') && grid > 1 && offs.length > 1) {
         const b = Math.floor(R() * (offs.length - 1)), o = offs[b], next = offs[b + 1], add = [o + 1];
         if (R() < 0.4) add.push(o + 2);
         offs = [...new Set([...offs, ...add.filter(x => x < next && x < len)])].sort((a, b) => a - b);
+        burstOffs = new Set(add);
       }
       const pat = [];
       offs.forEach((off, k) => {
         let lane = s.tut ? (r + k) % 4 : Math.floor(R() * 4);
         if (!s.tut && lane === last && R() < 0.5) lane = (lane + 1 + Math.floor(R() * 3)) % 4;
         last = lane;
-        pat.push({ off, lane });
-        // Acordes: algunas notas son dos flechas a la vez
-        if (mods.includes('chords') && R() < (di === 2 ? 0.35 : 0.25)) pat.push({ off, lane: (lane + 1 + Math.floor(R() * 3)) % 4 });
+        pat.push({ off, lane, multi: !!burstOffs?.has(off) });
+        // Acordes: algunas notas son dos flechas a la vez (multi: valen más con Multiplexado)
+        if (mods.includes('chords') && R() < (di === 2 ? 0.35 : 0.25)) { pat[pat.length - 1].multi = true; pat.push({ off, lane: (lane + 1 + Math.floor(R() * 3)) % 4, multi: true }); }
       });
       for (const p of pat) calls.push({ t: LEAD + (start + p.off) * step, i: start + p.off, lane: p.lane });
       pats.push(pat);
       // Respuesta: la llamada tal cual, la anterior (diferida) y/o con las flechas en orden inverso (mismo ritmo)
       const src = mods.includes('delay') && r > 0 ? pats[r - 1] : pat;
       const lanes = src.map(p => p.lane); if (mods.includes('reverse')) lanes.reverse();
-      const rs = src.map((p, k) => ({ off: p.off, lane: lanes[k] }));
+      const rs = src.map((p, k) => ({ off: p.off, lane: lanes[k], multi: p.multi }));
       const round = { start, resp, n: rs.length, left: rs.length, hits: 0, misses: 0, slots: rs, callSlots: pat };
-      for (const sl of rs) notes.push({ t: LEAD + (resp + sl.off) * step, i: resp + sl.off, lane: sl.lane, kind: 'q', r });
+      for (const sl of rs) notes.push({ t: LEAD + (resp + sl.off) * step, i: resp + sl.off, lane: sl.lane, kind: 'q', r, multi: sl.multi });
       sumN += rs.length;
       rounds.push(round);
     }
@@ -2374,7 +2383,9 @@ body.pat-still::before { animation: none; }
   const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
   const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
   const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
-    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO' };
+    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2' };
+  // Portadoras de Señal: dorada (x2) y rosa (x3)
+  const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
   const gradeRank = g => 'EDCBAS'.indexOf(g);
 
@@ -2393,7 +2404,18 @@ body.pat-still::before { animation: none; }
         xHit: 0, xStreak: 0, feverUntil: -1, holdsDone: 0, drops: 0, ghost: 0, ghostTimes: [], shields: mode === 'arrows' ? L('c_shield') : mode === 'path' ? L('p_r_safe') : 0 });
       if (mode === 'path') Object.assign(run, { secIdx: 0, secMiss: 0, secEarn: 0, tramos: 0, goldHit: 0, pk: 0 });
       if (mode === 'signal') {
-        run.rounds = ch.rounds.map(r => ({ ...r })); run.streak = 0; run.decoded = 0;
+        run.rounds = ch.rounds.map(r => ({ ...r, raw: 0 })); run.streak = 0; run.decoded = 0; run.sigR = null; run.carriers = 0;
+        // Portadoras: se sortean al empezar (dependen de las mejoras, no de la canción). Se marca un momento del patrón (cOff)
+        // que tenga nota en la respuesta y, si se puede, también en la llamada.
+        if (L('s_p_root') && !s.tut) {
+          const R = rng(5000 + si * 31 + di * 7 + (S.plays?.[s.id] || 0)), pc = 0.25 + 0.1 * L('s_p_freq'), p3 = [0, 0.25, 0.45][L('s_p_x3')];
+          for (const r of run.rounds) {
+            if (R() >= pc) continue;
+            const resp = [...new Set(r.slots.map(x => x.off))], both = resp.filter(o => r.callSlots.some(c => c.off === o));
+            const pool = both.length ? both : resp; r.cOff = pool[Math.floor(R() * pool.length)];
+            r.carrier = R() < p3 ? 3 : 2;
+          }
+        }
         run.roundNotes = run.rounds.map(() => []); for (const n of run.notes) run.roundNotes[n.r].push(n);
       }
     }
@@ -2435,7 +2457,7 @@ body.pat-still::before { animation: none; }
   }
   const sigStreakMult = () => 1 + Math.min(0.1 * run.streak, 0.5 * L('s_m_streak'));
   function award(v, j) {
-    if (run.mode === 'signal') { run.earned += v * sigStreakMult() * run.mult * (1 + 0.25 * L('s_t_gain')); return; }
+    if (run.mode === 'signal') { const g = v * sigStreakMult() * run.mult * (1 + 0.25 * L('s_t_gain')); run.earned += g; if (run.sigR != null && run.rounds[run.sigR]) run.rounds[run.sigR].raw += g; return; }
     if (run.mode === 'path') {
       v *= pathMult() * run.mult; if (j === 'perfect' && L('p_r_perf')) v *= 1 + 0.2 * L('p_r_perf');
       run.earned += v; run.secEarn += v; return;
@@ -2457,8 +2479,10 @@ body.pat-still::before { animation: none; }
     if (r.left > 0) return;
     if (r.misses <= L('s_t_fix')) {
       run.decoded++;
-      award(r.n * basePts() * (1 + 0.4 * L('s_m_dec')), null);
-      run.streak++; setJudge('dec');
+      run.sigR = n.r; award(r.n * basePts() * (1 + 0.4 * L('s_m_dec')), null); run.sigR = null;
+      // Portadora: todo lo que dio el patrón (notas y bonus de decodificar) se multiplica
+      if (r.carrier) { const m = r.carrier + 0.5 * L('s_p_amp'); run.earned += r.raw * (m - 1); run.carriers++; r.paid = m; JTXT.carrier = `DECODIFICADO x${dec(m)}`; run.lastCarrier = r.carrier; }
+      run.streak++; setJudge(r.carrier ? 'carrier' : 'dec');
     } else { run.streak = 0; setJudge('lost'); }
   }
 
@@ -2497,7 +2521,9 @@ body.pat-still::before { animation: none; }
       return;
     }
     run.counts[j]++; addCombo(1);
-    award(basePts() * JVAL[j], j);
+    if (run.mode === 'signal') run.sigR = best.r;
+    award(basePts() * JVAL[j] * (best.multi && L('s_t_mux') ? 1 + 0.5 * L('s_t_mux') : 1), j);
+    run.sigR = null;
     run.life = Math.min(100, run.life + (j === 'perfect' ? 1.2 : j === 'great' ? 0.6 : 0));
     if (best.gold && j === 'perfect') { award(basePts() * (2 + L('p_c_goldv')), j); run.goldHit++; setJudge(j, true); blip(best.pl, j, true); }
     else { setJudge(j); blip(run.mode === 'path' ? best.pl : lane, j); }
@@ -2587,6 +2613,7 @@ body.pat-still::before { animation: none; }
     const ch = run.ch;
     const rows = [['Perfecto', c.perfect], ['Genial', c.great], ['Bien', c.good], ['Fallo', c.miss], ['Combo máx.', run.maxCombo], ['Precisión', Math.round(acc) + '%']];
     if (run.mode === 'signal') rows.push(['Patrones', `${run.decoded}/${run.rounds.length}`]);
+    if (run.mode === 'signal' && run.rounds.some(r => r.carrier)) rows.push(['Portadoras', `${run.carriers}/${run.rounds.filter(r => r.carrier).length}`]);
     if (run.mode === 'path') { rows.push(['Tramos perfectos', `${run.tramos}/${ch.secs}`]); if (ch.golds) rows.push(['Doradas', `${run.goldHit}/${ch.golds}`]); }
     if (ch.extras) rows.push(['Notas extra', `${run.xHit}/${ch.extras}`]);
     if (ch.holds) rows.push(['Largas', `${run.holdsDone}/${ch.holds}`]);
@@ -3077,8 +3104,8 @@ body.pat-still::before { animation: none; }
     const al = 1 - age, sc = 1 + 0.15 * Math.max(0, 1 - age * 4);
     ctx.save(); ctx.translate(W / 2, y); ctx.scale(sc, sc);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = F(900, U * (['dec', 'lost', 'tetra', 'off'].includes(judge) ? 0.065 : 0.08));
-    const col = judgeGold ? XC() : { miss: '95,95,100', drop: '95,95,100', early: '120,120,126', spam: '120,120,126', lost: '110,110,116', off: '120,120,126', soft: '170,170,176', great: '210,210,214', good: '150,150,156' }[judge] || '255,255,255';
+    ctx.font = F(900, U * (['dec', 'lost', 'tetra', 'off', 'carrier'].includes(judge) ? 0.065 : 0.08));
+    const col = judge === 'carrier' ? CARRIER_RGB[run.lastCarrier] : judgeGold ? XC() : { miss: '95,95,100', drop: '95,95,100', early: '120,120,126', spam: '120,120,126', lost: '110,110,116', off: '120,120,126', soft: '170,170,176', great: '210,210,214', good: '150,150,156' }[judge] || '255,255,255';
     ctx.fillStyle = `rgba(${col},${al})`; ctx.fillText(JTXT[judge], 0, 0);
     ctx.restore();
   }
@@ -3128,10 +3155,12 @@ body.pat-still::before { animation: none; }
     const ly = H * 0.48, gap = W / 4.6, size = Math.min(gap * 0.75, 80);
     for (let l = 0; l < 4; l++) {
       const x = W / 2 + (l - 1.5) * gap;
-      const callLit = !run.mods.audio && ch.calls.some(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24);   // Solo audio: la llamada no se ve
+      const litCall = run.mods.audio ? null : ch.calls.find(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24), callLit = !!litCall;   // Solo audio: la llamada no se ve
       const f = Math.max(0, 1 - (now - flash[l]) / 220), p = Math.max(0, 1 - (now - press[l]) / 180);
       arrow(x, ly, size * (1 + 0.1 * Math.max(f, callLit ? 1 : 0)), ANG[l]);
-      if (callLit) { ctx.fillStyle = '#ffffff'; ctx.fill(); }
+      const cR = callLit && rIdx >= 0 ? run.rounds[rIdx] : null, cCol = cR && cR.carrier && litCall.i - cR.start === cR.cOff ? CARRIER_RGB[cR.carrier] : null;
+      if (cCol) { ctx.fillStyle = `rgb(${cCol})`; ctx.fill(); }
+      else if (callLit) { ctx.fillStyle = '#ffffff'; ctx.fill(); }
       else if (f > 0) { ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.5 * f})`; ctx.fill(); }
       else if (p > 0) { ctx.fillStyle = `rgba(255,255,255,${0.18 * p})`; ctx.fill(); }
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.stroke();
@@ -3173,18 +3202,26 @@ body.pat-still::before { animation: none; }
         const x = tx0 + tw * sl.off / ch.len, n = phase === 'resp' ? run.roundNotes[rIdx][k] : null;
         const passed = phase === 'gap' && sl.off <= sweep, flashS = passed ? Math.max(0, 1 - (sweep - sl.off) / (ch.len * 0.25)) : 0;
         const hitOk = (n && n.judged && !n.missed) || flashS > 0.5, missed = n && n.missed;
-        if (showLanes) {
+        const cc = R.carrier && sl.off === R.cOff ? CARRIER_RGB[R.carrier] : null;   // portadora: dorada o rosa
+        const chord = (callish ? R.callSlots : R.slots).filter(o => o.off === sl.off).length > 1;
+        // Eco de acorde: en la respuesta, el acorde se ve aunque las flechas estén ocultas (y con Eco visual, apiladas aunque haya giro)
+        const chordLanes = !callish && chord && L('s_m_chord') && L('s_m_arrows') && !MD.audio;
+        if (showLanes || chordLanes) {
           const asz = Math.min(U * 0.05, tw * 2 / ch.len * 0.85);   // nunca más ancha que una corchea
           arrow(x, ty - U * 0.03 - asz * 0.6 - lift * asz * 1.15, asz, ANG[sl.lane]);
-          ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : callish ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
+          ctx.fillStyle = hitOk ? (cc ? `rgb(${cc})` : '#ffffff') : missed ? 'rgba(90,90,96,0.8)' : cc ? `rgba(${cc},${callish ? 0.9 : 0.55})` : callish ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
         }
-        ctx.beginPath(); ctx.arc(x, ty, U * 0.012, 0, Math.PI * 2);
-        ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.9)' : 'rgba(255,255,255,0.5)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(x, ty, U * (cc ? 0.016 : 0.012), 0, Math.PI * 2);
+        ctx.fillStyle = hitOk ? (cc ? `rgb(${cc})` : '#ffffff') : missed ? 'rgba(90,90,96,0.9)' : cc ? `rgba(${cc},0.85)` : 'rgba(255,255,255,0.5)'; ctx.fill();
+        if (chord && !callish && L('s_m_chord') && lift === 0) {   // punto doble: van dos flechas juntas
+          ctx.beginPath(); ctx.arc(x, ty - U * 0.028, U * 0.009, 0, Math.PI * 2); ctx.fill();
+        }
       });
       ctx.fillStyle = phase === 'resp' || phase === 'gap' ? '#ffffff' : 'rgba(255,255,255,0.5)'; ctx.fillRect(px - 1, ty - 14, 2, 28);
       ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.textAlign = 'left';
       const nn = callish ? R.callSlots.length : R.n;
       ctx.fillText(`Patrón ${rIdx + 1}/${run.rounds.length} · ${nn} ${nn > 1 ? 'notas' : 'nota'}${phase === 'resp' && MD.delay && rIdx > 0 ? ' · repetí el anterior' : ''}`, tx0, ty + U * 0.06);
+      if (R.carrier) { ctx.fillStyle = `rgb(${CARRIER_RGB[R.carrier]})`; ctx.fillText(`PORTADORA x${dec(R.carrier + 0.5 * L('s_p_amp'))}`, tx0, ty + U * 0.1); ctx.fillStyle = 'rgba(255,255,255,0.45)'; }
       ctx.textAlign = 'right';
       ctx.fillText(`Decodificados ${run.decoded}${run.streak > 1 ? ` · racha ${run.streak}` : ''}`, tx1, ty + U * 0.06);
     }
@@ -3712,7 +3749,7 @@ body.pat-still::before { animation: none; }
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('repCard').classList.contains('open')) { repToggle(false); e.stopPropagation(); } }, true);
 
   // Reacciones en la partida: animación del retrato y una frase según el juicio
-  const REACT = { perfect: 'perfect', great: 'great', good: 'good', ok: 'great', on: 'great', line: 'great', dec: 'perfect', tetra: 'perfect', tramo: 'perfect',
+  const REACT = { perfect: 'perfect', great: 'great', good: 'good', ok: 'great', on: 'great', line: 'great', dec: 'perfect', carrier: 'perfect', tetra: 'perfect', tramo: 'perfect',
     miss: 'miss', early: 'miss', drop: 'miss', spam: 'miss', off: 'miss', lost: 'miss' };
   let rxId = null, rxSayAt = 0, rxKind = '';
   function reactorStart(song) {

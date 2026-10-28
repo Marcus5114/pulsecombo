@@ -35,7 +35,9 @@
   const WIN = { perfect: 0.045, great: 0.09, good: 0.135 };
   const JVAL = { perfect: 1, great: 0.7, good: 0.4 };
   const JTXT = { perfect: 'PERFECTO', great: 'GENIAL', good: 'BIEN', miss: 'FALLO', drop: 'SOLTASTE', ok: 'SOSTENIDA', shield: 'ESCUDO', early: 'TEMPRANO', spam: 'SIN RITMO',
-    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO' };
+    tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2' };
+  // Portadoras de Señal: dorada (x2) y rosa (x3)
+  const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
   const gradeRank = g => 'EDCBAS'.indexOf(g);
 
@@ -54,7 +56,18 @@
         xHit: 0, xStreak: 0, feverUntil: -1, holdsDone: 0, drops: 0, ghost: 0, ghostTimes: [], shields: mode === 'arrows' ? L('c_shield') : mode === 'path' ? L('p_r_safe') : 0 });
       if (mode === 'path') Object.assign(run, { secIdx: 0, secMiss: 0, secEarn: 0, tramos: 0, goldHit: 0, pk: 0 });
       if (mode === 'signal') {
-        run.rounds = ch.rounds.map(r => ({ ...r })); run.streak = 0; run.decoded = 0;
+        run.rounds = ch.rounds.map(r => ({ ...r, raw: 0 })); run.streak = 0; run.decoded = 0; run.sigR = null; run.carriers = 0;
+        // Portadoras: se sortean al empezar (dependen de las mejoras, no de la canción). Se marca un momento del patrón (cOff)
+        // que tenga nota en la respuesta y, si se puede, también en la llamada.
+        if (L('s_p_root') && !s.tut) {
+          const R = rng(5000 + si * 31 + di * 7 + (S.plays?.[s.id] || 0)), pc = 0.25 + 0.1 * L('s_p_freq'), p3 = [0, 0.25, 0.45][L('s_p_x3')];
+          for (const r of run.rounds) {
+            if (R() >= pc) continue;
+            const resp = [...new Set(r.slots.map(x => x.off))], both = resp.filter(o => r.callSlots.some(c => c.off === o));
+            const pool = both.length ? both : resp; r.cOff = pool[Math.floor(R() * pool.length)];
+            r.carrier = R() < p3 ? 3 : 2;
+          }
+        }
         run.roundNotes = run.rounds.map(() => []); for (const n of run.notes) run.roundNotes[n.r].push(n);
       }
     }
@@ -96,7 +109,7 @@
   }
   const sigStreakMult = () => 1 + Math.min(0.1 * run.streak, 0.5 * L('s_m_streak'));
   function award(v, j) {
-    if (run.mode === 'signal') { run.earned += v * sigStreakMult() * run.mult * (1 + 0.25 * L('s_t_gain')); return; }
+    if (run.mode === 'signal') { const g = v * sigStreakMult() * run.mult * (1 + 0.25 * L('s_t_gain')); run.earned += g; if (run.sigR != null && run.rounds[run.sigR]) run.rounds[run.sigR].raw += g; return; }
     if (run.mode === 'path') {
       v *= pathMult() * run.mult; if (j === 'perfect' && L('p_r_perf')) v *= 1 + 0.2 * L('p_r_perf');
       run.earned += v; run.secEarn += v; return;
@@ -118,8 +131,10 @@
     if (r.left > 0) return;
     if (r.misses <= L('s_t_fix')) {
       run.decoded++;
-      award(r.n * basePts() * (1 + 0.4 * L('s_m_dec')), null);
-      run.streak++; setJudge('dec');
+      run.sigR = n.r; award(r.n * basePts() * (1 + 0.4 * L('s_m_dec')), null); run.sigR = null;
+      // Portadora: todo lo que dio el patrón (notas y bonus de decodificar) se multiplica
+      if (r.carrier) { const m = r.carrier + 0.5 * L('s_p_amp'); run.earned += r.raw * (m - 1); run.carriers++; r.paid = m; JTXT.carrier = `DECODIFICADO x${dec(m)}`; run.lastCarrier = r.carrier; }
+      run.streak++; setJudge(r.carrier ? 'carrier' : 'dec');
     } else { run.streak = 0; setJudge('lost'); }
   }
 
@@ -158,7 +173,9 @@
       return;
     }
     run.counts[j]++; addCombo(1);
-    award(basePts() * JVAL[j], j);
+    if (run.mode === 'signal') run.sigR = best.r;
+    award(basePts() * JVAL[j] * (best.multi && L('s_t_mux') ? 1 + 0.5 * L('s_t_mux') : 1), j);
+    run.sigR = null;
     run.life = Math.min(100, run.life + (j === 'perfect' ? 1.2 : j === 'great' ? 0.6 : 0));
     if (best.gold && j === 'perfect') { award(basePts() * (2 + L('p_c_goldv')), j); run.goldHit++; setJudge(j, true); blip(best.pl, j, true); }
     else { setJudge(j); blip(run.mode === 'path' ? best.pl : lane, j); }
@@ -248,6 +265,7 @@
     const ch = run.ch;
     const rows = [['Perfecto', c.perfect], ['Genial', c.great], ['Bien', c.good], ['Fallo', c.miss], ['Combo máx.', run.maxCombo], ['Precisión', Math.round(acc) + '%']];
     if (run.mode === 'signal') rows.push(['Patrones', `${run.decoded}/${run.rounds.length}`]);
+    if (run.mode === 'signal' && run.rounds.some(r => r.carrier)) rows.push(['Portadoras', `${run.carriers}/${run.rounds.filter(r => r.carrier).length}`]);
     if (run.mode === 'path') { rows.push(['Tramos perfectos', `${run.tramos}/${ch.secs}`]); if (ch.golds) rows.push(['Doradas', `${run.goldHit}/${ch.golds}`]); }
     if (ch.extras) rows.push(['Notas extra', `${run.xHit}/${ch.extras}`]);
     if (ch.holds) rows.push(['Largas', `${run.holdsDone}/${ch.holds}`]);

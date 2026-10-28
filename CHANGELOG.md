@@ -12,6 +12,13 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.5.3
 
 ### Agregado
+- **Señal: rama nueva Portadoras.**
+  - **Onda portadora:** algunos patrones traen una nota portadora, dorada en la llamada, en la línea de tiempo y en la respuesta. Si decodificás ese patrón entero, todo lo que dio (notas y bonus) vale x2. Al decodificarlo dice "DECODIFICADO x2" y en el resultado se cuentan las portadoras.
+  - **Banda ancha** (3 niveles): más patrones con portadora, de 25% a 55%.
+  - **Portadora triple** (2 niveles): algunas portadoras son rosas y valen x3.
+  - **Resonancia de onda** (3 niveles): cada nivel suma x0,5 a las dos portadoras (hasta x3,5 y x4,5).
+- **Señal: Eco de acorde** (rama Memoria). En la respuesta, las notas que van juntas se marcan con un punto doble aunque no se vea la flecha; con Eco visual se ven las dos flechas apiladas, incluso con Al revés.
+- **Señal: Multiplexado** (rama Transmisión, 3 niveles). Las notas de acordes y ráfagas valen +50% por nivel.
 - **Compás: guía hacia la próxima baldosa.** Sobre la órbita aparecen flechitas translúcidas desde el planeta que gira hasta el punto donde tiene que tocar. Se encienden a medida que se acerca, así se ve cuántos lados faltan y para qué lado va.
 - **Todo el juego se puede usar solo con el teclado.**
   - Al cambiar de pantalla, el foco va al elemento principal: la galaxia elegida, el planeta donde estás, la canción seleccionada, la primera mejora del árbol o "Volver al mundo" en el resultado. Al terminar una charla, el foco vuelve a la pantalla.

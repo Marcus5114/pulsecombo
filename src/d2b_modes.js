@@ -47,28 +47,30 @@
       let offs = [...pick].sort((a, b) => a - b);
       const grid = ns ? 1 : ne ? 2 : 4;
       // Ráfagas: un tiempo del patrón trae dos o tres notas seguidas en semicorcheas
+      let burstOffs = null;
       if (mods.includes('burst') && grid > 1 && offs.length > 1) {
         const b = Math.floor(R() * (offs.length - 1)), o = offs[b], next = offs[b + 1], add = [o + 1];
         if (R() < 0.4) add.push(o + 2);
         offs = [...new Set([...offs, ...add.filter(x => x < next && x < len)])].sort((a, b) => a - b);
+        burstOffs = new Set(add);
       }
       const pat = [];
       offs.forEach((off, k) => {
         let lane = s.tut ? (r + k) % 4 : Math.floor(R() * 4);
         if (!s.tut && lane === last && R() < 0.5) lane = (lane + 1 + Math.floor(R() * 3)) % 4;
         last = lane;
-        pat.push({ off, lane });
-        // Acordes: algunas notas son dos flechas a la vez
-        if (mods.includes('chords') && R() < (di === 2 ? 0.35 : 0.25)) pat.push({ off, lane: (lane + 1 + Math.floor(R() * 3)) % 4 });
+        pat.push({ off, lane, multi: !!burstOffs?.has(off) });
+        // Acordes: algunas notas son dos flechas a la vez (multi: valen más con Multiplexado)
+        if (mods.includes('chords') && R() < (di === 2 ? 0.35 : 0.25)) { pat[pat.length - 1].multi = true; pat.push({ off, lane: (lane + 1 + Math.floor(R() * 3)) % 4, multi: true }); }
       });
       for (const p of pat) calls.push({ t: LEAD + (start + p.off) * step, i: start + p.off, lane: p.lane });
       pats.push(pat);
       // Respuesta: la llamada tal cual, la anterior (diferida) y/o con las flechas en orden inverso (mismo ritmo)
       const src = mods.includes('delay') && r > 0 ? pats[r - 1] : pat;
       const lanes = src.map(p => p.lane); if (mods.includes('reverse')) lanes.reverse();
-      const rs = src.map((p, k) => ({ off: p.off, lane: lanes[k] }));
+      const rs = src.map((p, k) => ({ off: p.off, lane: lanes[k], multi: p.multi }));
       const round = { start, resp, n: rs.length, left: rs.length, hits: 0, misses: 0, slots: rs, callSlots: pat };
-      for (const sl of rs) notes.push({ t: LEAD + (resp + sl.off) * step, i: resp + sl.off, lane: sl.lane, kind: 'q', r });
+      for (const sl of rs) notes.push({ t: LEAD + (resp + sl.off) * step, i: resp + sl.off, lane: sl.lane, kind: 'q', r, multi: sl.multi });
       sumN += rs.length;
       rounds.push(round);
     }

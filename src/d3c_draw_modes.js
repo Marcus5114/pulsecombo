@@ -28,8 +28,8 @@
     const al = 1 - age, sc = 1 + 0.15 * Math.max(0, 1 - age * 4);
     ctx.save(); ctx.translate(W / 2, y); ctx.scale(sc, sc);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = F(900, U * (['dec', 'lost', 'tetra', 'off'].includes(judge) ? 0.065 : 0.08));
-    const col = judgeGold ? XC() : { miss: '95,95,100', drop: '95,95,100', early: '120,120,126', spam: '120,120,126', lost: '110,110,116', off: '120,120,126', soft: '170,170,176', great: '210,210,214', good: '150,150,156' }[judge] || '255,255,255';
+    ctx.font = F(900, U * (['dec', 'lost', 'tetra', 'off', 'carrier'].includes(judge) ? 0.065 : 0.08));
+    const col = judge === 'carrier' ? CARRIER_RGB[run.lastCarrier] : judgeGold ? XC() : { miss: '95,95,100', drop: '95,95,100', early: '120,120,126', spam: '120,120,126', lost: '110,110,116', off: '120,120,126', soft: '170,170,176', great: '210,210,214', good: '150,150,156' }[judge] || '255,255,255';
     ctx.fillStyle = `rgba(${col},${al})`; ctx.fillText(JTXT[judge], 0, 0);
     ctx.restore();
   }
@@ -79,10 +79,12 @@
     const ly = H * 0.48, gap = W / 4.6, size = Math.min(gap * 0.75, 80);
     for (let l = 0; l < 4; l++) {
       const x = W / 2 + (l - 1.5) * gap;
-      const callLit = !run.mods.audio && ch.calls.some(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24);   // Solo audio: la llamada no se ve
+      const litCall = run.mods.audio ? null : ch.calls.find(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24), callLit = !!litCall;   // Solo audio: la llamada no se ve
       const f = Math.max(0, 1 - (now - flash[l]) / 220), p = Math.max(0, 1 - (now - press[l]) / 180);
       arrow(x, ly, size * (1 + 0.1 * Math.max(f, callLit ? 1 : 0)), ANG[l]);
-      if (callLit) { ctx.fillStyle = '#ffffff'; ctx.fill(); }
+      const cR = callLit && rIdx >= 0 ? run.rounds[rIdx] : null, cCol = cR && cR.carrier && litCall.i - cR.start === cR.cOff ? CARRIER_RGB[cR.carrier] : null;
+      if (cCol) { ctx.fillStyle = `rgb(${cCol})`; ctx.fill(); }
+      else if (callLit) { ctx.fillStyle = '#ffffff'; ctx.fill(); }
       else if (f > 0) { ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.5 * f})`; ctx.fill(); }
       else if (p > 0) { ctx.fillStyle = `rgba(255,255,255,${0.18 * p})`; ctx.fill(); }
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.stroke();
@@ -124,18 +126,26 @@
         const x = tx0 + tw * sl.off / ch.len, n = phase === 'resp' ? run.roundNotes[rIdx][k] : null;
         const passed = phase === 'gap' && sl.off <= sweep, flashS = passed ? Math.max(0, 1 - (sweep - sl.off) / (ch.len * 0.25)) : 0;
         const hitOk = (n && n.judged && !n.missed) || flashS > 0.5, missed = n && n.missed;
-        if (showLanes) {
+        const cc = R.carrier && sl.off === R.cOff ? CARRIER_RGB[R.carrier] : null;   // portadora: dorada o rosa
+        const chord = (callish ? R.callSlots : R.slots).filter(o => o.off === sl.off).length > 1;
+        // Eco de acorde: en la respuesta, el acorde se ve aunque las flechas estén ocultas (y con Eco visual, apiladas aunque haya giro)
+        const chordLanes = !callish && chord && L('s_m_chord') && L('s_m_arrows') && !MD.audio;
+        if (showLanes || chordLanes) {
           const asz = Math.min(U * 0.05, tw * 2 / ch.len * 0.85);   // nunca más ancha que una corchea
           arrow(x, ty - U * 0.03 - asz * 0.6 - lift * asz * 1.15, asz, ANG[sl.lane]);
-          ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.8)' : callish ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
+          ctx.fillStyle = hitOk ? (cc ? `rgb(${cc})` : '#ffffff') : missed ? 'rgba(90,90,96,0.8)' : cc ? `rgba(${cc},${callish ? 0.9 : 0.55})` : callish ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)'; ctx.fill();
         }
-        ctx.beginPath(); ctx.arc(x, ty, U * 0.012, 0, Math.PI * 2);
-        ctx.fillStyle = hitOk ? '#ffffff' : missed ? 'rgba(90,90,96,0.9)' : 'rgba(255,255,255,0.5)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(x, ty, U * (cc ? 0.016 : 0.012), 0, Math.PI * 2);
+        ctx.fillStyle = hitOk ? (cc ? `rgb(${cc})` : '#ffffff') : missed ? 'rgba(90,90,96,0.9)' : cc ? `rgba(${cc},0.85)` : 'rgba(255,255,255,0.5)'; ctx.fill();
+        if (chord && !callish && L('s_m_chord') && lift === 0) {   // punto doble: van dos flechas juntas
+          ctx.beginPath(); ctx.arc(x, ty - U * 0.028, U * 0.009, 0, Math.PI * 2); ctx.fill();
+        }
       });
       ctx.fillStyle = phase === 'resp' || phase === 'gap' ? '#ffffff' : 'rgba(255,255,255,0.5)'; ctx.fillRect(px - 1, ty - 14, 2, 28);
       ctx.font = F(700, U * 0.03); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.textAlign = 'left';
       const nn = callish ? R.callSlots.length : R.n;
       ctx.fillText(`Patrón ${rIdx + 1}/${run.rounds.length} · ${nn} ${nn > 1 ? 'notas' : 'nota'}${phase === 'resp' && MD.delay && rIdx > 0 ? ' · repetí el anterior' : ''}`, tx0, ty + U * 0.06);
+      if (R.carrier) { ctx.fillStyle = `rgb(${CARRIER_RGB[R.carrier]})`; ctx.fillText(`PORTADORA x${dec(R.carrier + 0.5 * L('s_p_amp'))}`, tx0, ty + U * 0.1); ctx.fillStyle = 'rgba(255,255,255,0.45)'; }
       ctx.textAlign = 'right';
       ctx.fillText(`Decodificados ${run.decoded}${run.streak > 1 ? ` · racha ${run.streak}` : ''}`, tx1, ty + U * 0.06);
     }

@@ -199,6 +199,7 @@
       branches: [
         { id: 'sm', name: 'Memoria', tag: 'Ayudas para recordar el patrón y premios por decodificarlo entero.' },
         { id: 'st', name: 'Transmisión', tag: 'Más {datos} por señal y tolerancia a errores.' },
+        { id: 'sp', name: 'Portadoras', tag: 'Notas especiales dentro del patrón que multiplican lo que vale si lo decodificás entero.' },
       ],
       nodes: [
         { id: 's_core', br: 'core', name: 'Antena', max: 1, desc: 'La antena receptora. De acá salen todas las mejoras de Señal.', fx: () => 'Activa' },
@@ -211,6 +212,12 @@
         { id: 's_m_streak', br: 'sm', pos: [3, 2], name: 'Racha de señal', max: 4, cost: [480, 8.7], req: [['s_m_root', 1]], desc: 'Cada patrón decodificado seguido suma +10% a todo lo que ganás, hasta un tope.', fx: lv => lv ? `Hasta +${50 * lv}%` : 'Sin racha' },
         { id: 's_t_gain', br: 'st', pos: [2, 1], root: true, name: 'Amplificador de Datos', max: 5, cost: [320, 6.6], req: [['s_core', 1]], desc: 'Todos los {datos} que ganás en una canción valen más.', fx: lv => `+${25 * lv}% de {datos}` },
         { id: 's_t_fix', br: 'st', pos: [1, 2], name: 'Corrección de errores', max: 2, cost: [800, 11.5], req: [['s_t_gain', 1]], desc: 'Un patrón cuenta como decodificado aunque falles alguna nota.', fx: lv => lv ? `${lv} ${lv > 1 ? 'fallos' : 'fallo'} por patrón` : 'Sin tolerancia' },
+        { id: 's_m_chord', br: 'sm', pos: [2, 3], name: 'Eco de acorde', max: 1, cost: [220, 1], req: [['s_m_arrows', 1]], desc: 'En la respuesta, las notas que van juntas (acordes) se marcan con un punto doble, aunque no se vea qué flecha va. Con Eco visual, las dos flechas aparecen apiladas.', fx: lv => lv ? 'Acordes marcados' : 'Sin marca' },
+        { id: 's_t_mux', br: 'st', pos: [2, 2], name: 'Multiplexado', max: 3, cost: [500, 8], req: [['s_t_gain', 1]], desc: 'Las notas de acordes y ráfagas (modificadores Acordes y Ráfagas) valen más {datos}.', fx: lv => `+${lv * 50}% por nota de acorde o ráfaga` },
+        { id: 's_p_root', br: 'sp', pos: [2, 1], root: true, name: 'Onda portadora', max: 1, cost: [300, 1], req: [['s_core', 1]], desc: 'Algunos patrones traen una nota portadora, dorada en la llamada y en la respuesta. Si decodificás ese patrón entero, todo lo que dio vale x2.', fx: lv => lv ? 'Portadoras x2 en 1 de cada 4 patrones' : 'Sin portadoras' },
+        { id: 's_p_freq', br: 'sp', pos: [1, 2], name: 'Banda ancha', max: 3, cost: [400, 8], req: [['s_p_root', 1]], desc: 'Más patrones traen portadora.', fx: lv => `${25 + lv * 10}% de los patrones` },
+        { id: 's_p_x3', br: 'sp', pos: [3, 2], name: 'Portadora triple', max: 2, cost: [700, 10.1], req: [['s_p_root', 1]], desc: 'Algunas portadoras son triples (color rosa): el patrón vale x3.', fx: lv => lv ? `${[0, 25, 45][lv]}% de las portadoras son x3` : 'Solo x2' },
+        { id: 's_p_amp', br: 'sp', pos: [2, 3], name: 'Resonancia de onda', max: 3, cost: [900, 10.8], req: [['s_p_freq', 1], ['s_p_x3', 1]], desc: 'Las portadoras multiplican más.', fx: lv => `x${dec(2 + lv * 0.5)} y x${dec(3 + lv * 0.5)}` },
         { id: 's_t_metro', br: 'st', pos: [3, 2], name: 'Metrónomo de respuesta', max: 1, cost: [90, 1], req: [['s_t_gain', 1]], desc: 'Durante la respuesta suena un clic en cada corchea para guiarte.', fx: lv => lv ? 'Clic activo' : 'Sin clic' },
       ],
     },
