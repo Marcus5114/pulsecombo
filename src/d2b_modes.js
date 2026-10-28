@@ -168,7 +168,9 @@
   function pathChain(hist, taps, o) {
     const notes = [], st = o.st || { twirls: 0, uchg: 0, quick: 0 }, units = o.tut ? [2, 4] : pathUnits(o.di), R = o.R;
     let prevU = hist[hist.length - 1].u;
-    const busy = (q, r) => hist.slice(-8).some(T => T.q === q && T.r === r);   // solo las recientes: las viejas ya se apagaron
+    // ocupadas: las baldosas recientes (las viejas ya se apagaron) y, en un camino alternativo, las del camino normal (o.avoid)
+    const busy = (q, r) => hist.slice(-8).some(T => T.q === q && T.r === r) || !!o.avoid?.has(q + ',' + r);
+    let first = true;
     for (const i of taps) {
       const prev = hist[hist.length - 1], k = hist.length - 1;
       let gap = i - prev.i, sp = hexSplit(gap, prevU, units);
@@ -178,6 +180,8 @@
       const secStart = (i >> 7) !== (prev.i >> 7);
       let twirl = !!(o.tut ? k > 0 && k % 7 === 0 : secStart && (o.di === 2 ? R() < 0.6 : o.di === 1 ? R() < 0.35 : false));
       let sign = twirl ? prev.s : -prev.s;
+      if (first && o.flip) { sign = -sign; twirl = !twirl; }   // camino alternativo: sale hacia el otro lado
+      first = false;
       const go = sg => { const D = (((prev.D + 3 + sg * m) % 6) + 6) % 6; return [D, prev.q + HEX[D][0], prev.r + HEX[D][1]]; };
       let [D, q, r] = go(sign);
       if (busy(q, r)) { const [D2, q2, r2] = go(-sign); if (!busy(q2, r2)) { sign = -sign; twirl = !twirl; [D, q, r] = [D2, q2, r2]; } }

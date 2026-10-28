@@ -32,7 +32,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - **Freno de péndulo:** una vez por canción, con F o Shift (o el botón FRENO en pantalla táctil), la canción entera pasa al 65% de velocidad durante 4 tiempos.
   - **Péndulo largo** (3 niveles): el freno dura hasta 10 tiempos.
   - **Contrapeso** (2 niveles): hasta 3 frenos por canción.
-- **Compás: Bifurcaciones** (rama Camino). En algunos tramos de 4 compases el camino se bifurca, y la baldosa anterior lleva una Y. Al tocarla aparece "¡TOCÁ YA!" con un anillo que se cierra: con un toque extra a tiempo vas por el camino difícil, más denso y con cada baldosa a x1,5. Si no reaccionás, seguís por el normal sin perder nada. En el resultado se cuentan los caminos difíciles tomados.
+- **Compás: Bifurcaciones** (rama Camino). En algunos tramos de 4 compases el camino se bifurca, y la baldosa anterior lleva una Y. El camino difícil se ve de antemano: sale de esa baldosa hacia el otro lado, con baldosas punteadas del color de la galaxia y el cartel DIFÍCIL. Al tocar la Y aparece "¡TOCÁ YA!" con un anillo que se cierra: con un toque extra a tiempo vas por el camino difícil, más denso y con cada baldosa a x1,5. Si no reaccionás, seguís por el normal sin perder nada. En el resultado se cuentan los caminos difíciles tomados.
   - **Encrucijada** (2 niveles): más bifurcaciones por canción.
   - **Camino empinado** (3 niveles): las baldosas del camino difícil valen hasta x2,25.
 - **Ensamble: rama nueva Taller (Chatarra útil).** Algunas piezas traen un bloque especial en una de sus celdas, visible también en las piezas siguientes y en la bodega. El efecto se activa al completar la fila que lo contiene.

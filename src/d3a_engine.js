@@ -74,6 +74,7 @@
         Object.assign(run, { secIdx: 0, secMiss: 0, secEarn: 0, tramos: 0, goldHit: 0, pk: 0, hardTaken: 0, hardHit: 0,
           tiles: ch.tiles.map(T => ({ ...T })),   // copia: una bifurcación reemplaza las baldosas de esta partida
           forks: ch.forks.map(f => ({ ...f, done: false })), forkWin: null, brakes: L('p_o_brake') ? 1 + L('p_o_brakeuse') : 0 });
+        prepForks();
       }
       if (mode === 'signal') {
         run.rounds = ch.rounds.map(r => ({ ...r, raw: 0 })); run.streak = 0; run.decoded = 0; run.sigR = null; run.carriers = 0;
@@ -222,14 +223,27 @@
     const f = run.forks.find(f => !f.done && f.pre === n.i); if (!f) return;
     const next = run.notes.find(x => x.t > n.t), room = next ? next.t - t - WIN.good * modeWin() - 0.04 : 0.4;
     f.done = true; if (room < 0.08) return;
-    run.forkWin = { f, from: t + 0.04, to: t + Math.min(0.45, room), k0: n.k };
+    run.forkWin = { f, from: t + 0.04, to: t + Math.min(0.45, room) };
+  }
+  // Arma el camino difícil de cada bifurcación pendiente a partir de las baldosas actuales (se ve antes de llegar,
+  // saliendo de la baldosa con la Y hacia el otro lado). Se rehace si un camino difícil anterior movió todo.
+  function prepForks() {
+    for (const f of run.forks) {
+      if (f.done) continue;
+      const k0 = run.tiles.findIndex(T => T.i === f.pre); if (k0 < 0) { f.done = true; continue; }
+      const fork = { ...run.tiles[k0] }, hist = [...run.tiles.slice(0, k0), fork];
+      const avoid = new Set(run.tiles.slice(k0 + 1).filter(T => T.i < f.b + 16).map(T => T.q + ',' + T.r));
+      f.bNotes = pathChain(hist, f.hard, { R: rng(17000 + run.si * 29 + f.a), step: run.ch.step, di: Math.min(2, run.di + 1), tut: false, golds: L('p_c_gold'), holdP: 0, avoid, flip: true });
+      for (const n of f.bNotes) n.hard = true;
+      f.k0 = k0; f.fork = fork; f.bTiles = hist.slice(k0 + 1);
+    }
   }
   function takeFork() {
-    const { f, k0 } = run.forkWin; run.forkWin = null;
-    const hist = run.tiles.slice(0, k0 + 1), taps = [...f.hard, ...run.ch.taps.filter(i => i >= f.b)];
-    const notes = pathChain(hist, taps, { R: rng(17000 + run.si * 29 + f.a), step: run.ch.step, di: Math.min(2, run.di + 1), tut: false, golds: L('p_c_gold'), holdP: run.ch.holdP });
-    for (const n of notes) if (n.i < f.b) n.hard = true;
-    run.tiles = hist; run.notes = run.notes.slice(0, k0).concat(notes); run.hardTaken++;
+    const { f } = run.forkWin; run.forkWin = null;
+    const k0 = f.k0, hist = [...run.tiles.slice(0, k0), f.fork, ...f.bTiles];
+    const rest = pathChain(hist, run.ch.taps.filter(i => i >= f.b), { R: rng(19000 + run.si * 29 + f.a), step: run.ch.step, di: run.di, tut: false, golds: L('p_c_gold'), holdP: run.ch.holdP });
+    run.tiles = hist; run.notes = run.notes.slice(0, k0).concat(f.bNotes, rest); run.hardTaken++;
+    prepForks();
     setJudge('fork'); if (ac) { const at = ac.currentTime; tone(at, 'triangle', 660, 0.08, 0.1); tone(at + 0.06, 'triangle', 990, 0.1, 0.12); }
   }
   function ghostTap(t) {

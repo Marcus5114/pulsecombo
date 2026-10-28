@@ -307,6 +307,24 @@
     // camino
     ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = R * 0.3; ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.beginPath(); for (let q = from; q <= to; q++) { const T = tiles[q]; q === from ? ctx.moveTo(SX(T.x), SY(T.y)) : ctx.lineTo(SX(T.x), SY(T.y)); } ctx.stroke();
+    // Bifurcación por delante: el camino difícil se dibuja saliendo de la baldosa con la Y, punteado y del color de la galaxia.
+    // Se ve hasta que pasa la ventana para elegirlo.
+    for (const f of run.forks || []) {
+      if (!f.bTiles || !(!f.done || run.forkWin?.f === f) || f.k0 > to || f.k0 < k - 1) continue;
+      const near = Math.max(0.35, Math.min(1, 1 - (f.k0 - k - 4) / 8)), A = f.fork;
+      ctx.save(); ctx.globalAlpha = near;
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = R * 0.22; ctx.strokeStyle = `rgba(${acc},0.16)`;
+      ctx.beginPath(); ctx.moveTo(SX(A.x), SY(A.y)); for (const T of f.bTiles.slice(0, 12)) ctx.lineTo(SX(T.x), SY(T.y)); ctx.stroke();
+      ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5;
+      f.bTiles.slice(0, 12).forEach((T, j) => {
+        hexPath(SX(T.x), SY(T.y), R * 0.5); ctx.fillStyle = `rgba(${acc},${j === 0 ? 0.22 : 0.1})`; ctx.fill();
+        ctx.strokeStyle = `rgba(${acc},${Math.max(0.25, 0.8 - j * 0.05)})`; ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      const T0 = f.bTiles[0];
+      if (T0) { ctx.font = F(800, U * 0.026); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = `rgb(${acc})`; ctx.fillText('DIFÍCIL', SX(T0.x), SY(T0.y) - R * 0.62); }
+      ctx.restore();
+    }
     // baldosas hexagonales; adentro, la forma dice cuánto vale cada lado de la órbita (triángulo semicorchea, círculo negra)
     for (let q = to; q >= from; q--) {
       const T = tiles[q], x = SX(T.x), y = SY(T.y); if (x < -R || x > W + R || y < -R || y > H + R) continue;
