@@ -97,7 +97,9 @@
     setView('play'); fitPlay();
   }
   // ¿El paso i (semicorchea) cae dentro de una respuesta de Señal?
-  const inResponse = i => { const ch = run.ch, cyc = ch.cycle, k = i - 16; if (k < 0 || k >= run.rounds.length * cyc) return false; return k % cyc >= ch.len + ch.gap; };
+  const inResponse = i => { const ch = run.ch, cyc = ch.cycle, k = i - 16; if (k < 0) return false;
+    if (ch.canon) { const c = Math.floor(k / cyc); return c >= 1 && c <= run.rounds.length && k % cyc < ch.len; }   // Canon: la respuesta de la ronda c-1 va junto con la llamada c
+    if (k >= run.rounds.length * cyc) return false; return k % cyc >= ch.len + ch.gap; };
   function scheduleAudio(t) {
     const { ch, song } = run, w = WORLDS[song.wi], st = ch.step;
     while (run.audioStep < ch.total && LEAD + run.audioStep * st < t + 0.2 * rateAt(t)) {

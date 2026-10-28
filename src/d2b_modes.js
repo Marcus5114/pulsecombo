@@ -19,8 +19,10 @@
   const click = (at, strong) => tone(at, 'square', strong ? 1760 : 1320, strong ? 0.035 : 0.022, 0.03);
   function buildSignal(si, di, mods = []) {
     const s = SONGS[si], step = 60 / s.bpm / 4, R = rng(3000 + si * 131 + di * 17);
-    const bars = s.tut ? 1 : di === 2 ? 2 : 1, len = bars * 16, gap = mods.includes('nogap') ? 0 : radioGap(s.bpm), cycle = len * 2 + gap;
-    const nR = Math.max(2, Math.floor((songMeasures(s) * 16 - 24) / cycle)), total = 16 + nR * cycle + 8;
+    // Canon: la llamada siguiente empieza cuando empieza la respuesta, así que cada ronda ocupa solo llamada + pausa
+    const canon = mods.includes('canon');
+    const bars = s.tut ? 1 : di === 2 ? 2 : 1, len = bars * 16, gap = mods.includes('nogap') ? 0 : radioGap(s.bpm), cycle = canon ? len + gap : len * 2 + gap;
+    const nR = Math.max(2, Math.floor((songMeasures(s) * 16 - 24 - (canon ? len : 0)) / cycle)), total = 16 + nR * cycle + (canon ? len : 0) + 8;
     const lvlAdj = Math.min(2, Math.floor((s.lvl - 1) / 2));
     const notes = [], calls = [], rounds = [];
     let last = -1, sumN = 0;
@@ -78,7 +80,7 @@
     const dur = total * step;
     let stars = 0.4 + 1.9 * notes.length / dur + (sumN / nR) * 0.12 + (bars === 2 ? 0.5 : 0);
     stars = Math.round(stars * 10) / 10;
-    return { notes, calls, rounds, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, bars, len, gap, cycle, gapAt: new Set(rounds.map(r => r.start + len)) };
+    return { notes, calls, rounds, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: 0, extras: 0, bars, len, gap, cycle, canon, gapAt: new Set(rounds.map(r => r.start + len)) };
   }
 
   // ---------- Ensamble: piezas que caen al compás ----------

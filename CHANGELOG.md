@@ -12,6 +12,8 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.5.3
 
 ### Agregado
+- **Modificador Canon (Señal, +45% de estrellas).** La llamada siguiente suena mientras repetís la anterior: escuchás y respondés al mismo tiempo, como en un canon. Entran más patrones por canción y la pantalla dice "REPETÍ · ESCUCHÁ".
+- **Modificador Tercer cuerpo (Compás, +15% de estrellas).** Un tercer planeta se suma a la cadena y descansa en la baldosa anterior. Los tres se turnan para girar, así que el que gira cambia de color. Con el diseño Eclipse, el tercero es un planeta con anillo.
 - **Compás: rama nueva Órbitas.**
   - **Baldosa sostenida:** en los huecos de media nota o más aparecen baldosas con anillo doble. Se toca y se mantiene apretado mientras el planeta da la vuelta, con un arco alrededor del pivote que se va llenando. Termina sola una corchea antes de la baldosa siguiente. Cada corchea sostenida suma Giros.
   - **Sostén** (4 niveles): cada corchea sostenida y cada sostenida completa valen más.

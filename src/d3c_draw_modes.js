@@ -61,11 +61,22 @@
     drawHud(U);
     const i = (t - LEAD) / st, cyc = ch.cycle;
     let phase = 'intro', rIdx = -1, local = 0;
-    if (i >= 16) {
-      const k = Math.floor((i - 16) / cyc);
-      if (k < run.rounds.length) { rIdx = k; local = (i - 16) - k * cyc; phase = local < ch.len ? 'call' : local < ch.len + ch.gap ? 'gap' : 'resp'; } else phase = 'end';
+    let rl;
+    if (i >= 16 && ch.canon) {
+      // Canon: en cada ciclo suena la llamada k mientras se responde la k-1; la línea de tiempo muestra la respuesta
+      const k = Math.floor((i - 16) / cyc), loc = (i - 16) - k * cyc;
+      if (k === 0) { rIdx = 0; local = loc; phase = loc < ch.len ? 'call' : 'gap'; }
+      else if (k <= run.rounds.length && loc < ch.len) { rIdx = k - 1; local = loc + ch.len + ch.gap; phase = 'resp'; }
+      else if (k < run.rounds.length) { rIdx = k; local = loc; phase = 'gap'; }
+      else phase = 'end';
+      rl = local - ch.len - ch.gap;
+    } else {
+      if (i >= 16) {
+        const k = Math.floor((i - 16) / cyc);
+        if (k < run.rounds.length) { rIdx = k; local = (i - 16) - k * cyc; phase = local < ch.len ? 'call' : local < ch.len + ch.gap ? 'gap' : 'resp'; } else phase = 'end';
+      }
+      rl = local - ch.len - ch.gap;   // posición dentro de la respuesta
     }
-    const rl = local - ch.len - ch.gap;   // posición dentro de la respuesta
     // Antena: un plato con ondas que se encienden en la llamada
     const ax = W / 2, ay = H * 0.2;
     const lastCall = ch.calls.filter(c => c.t <= t).pop(), callAge = lastCall ? t - lastCall.t : 9;
@@ -81,7 +92,7 @@
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = F(900, U * 0.075);
     ctx.fillStyle = phase === 'resp' ? '#ffffff' : 'rgba(255,255,255,0.55)';
-    ctx.fillText(phase === 'call' ? 'ESCUCHÁ' : phase === 'gap' ? 'CAMBIO…' : phase === 'resp' ? 'REPETÍ' : phase === 'end' ? 'FIN DE LA TRANSMISIÓN' : 'PREPARATE', W / 2, H * 0.33);
+    ctx.fillText(phase === 'call' ? 'ESCUCHÁ' : phase === 'gap' ? 'CAMBIO…' : phase === 'resp' ? (ch.canon && rIdx + 1 < run.rounds.length ? 'REPETÍ · ESCUCHÁ' : 'REPETÍ') : phase === 'end' ? 'FIN DE LA TRANSMISIÓN' : 'PREPARATE', W / 2, H * 0.33);
 
     // Cuatro luces: se encienden con la llamada y con tus toques
     const ly = H * 0.48, gap = W / 4.6, size = Math.min(gap * 0.75, 80);
@@ -90,7 +101,7 @@
       const litCall = run.mods.audio ? null : ch.calls.find(c => c.lane === l && t - c.t >= 0 && t - c.t < 0.24), callLit = !!litCall;   // Solo audio: la llamada no se ve
       const f = Math.max(0, 1 - (now - flash[l]) / 220), p = Math.max(0, 1 - (now - press[l]) / 180);
       arrow(x, ly, size * (1 + 0.1 * Math.max(f, callLit ? 1 : 0)), ANG[l]);
-      const cR = callLit && rIdx >= 0 ? run.rounds[rIdx] : null, cCol = cR && cR.carrier && litCall.i - cR.start === cR.cOff ? CARRIER_RGB[cR.carrier] : null;
+      const cR = callLit ? run.rounds[Math.floor((litCall.i - 16) / cyc)] : null, cCol = cR && cR.carrier && litCall.i - cR.start === cR.cOff ? CARRIER_RGB[cR.carrier] : null;
       if (cCol) { ctx.fillStyle = `rgb(${cCol})`; ctx.fill(); }
       else if (callLit) { ctx.fillStyle = '#ffffff'; ctx.fill(); }
       else if (f > 0) { ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.5 * f})`; ctx.fill(); }
@@ -353,24 +364,29 @@
           ctx.save(); ctx.translate(gx, gy); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(-cs, -cs); ctx.lineTo(0, 0); ctx.lineTo(-cs, cs); ctx.stroke(); ctx.restore();
         }
       }
-      const pivA = k % 2 === 0, fl = Math.max(0, 1 - (now - flash[0]) / 220);
-      if (LK.des.com) {   // Eclipse (diseño de los Gemelos Vaivén): uno es un sol con rayos y el otro una luna creciente
-        const body = (A, x, y, r) => {
-          if (A) {
+      // Cuerpos: con Tercer cuerpo son tres y rotan (pivote, el que gira y uno que descansa en la baldosa anterior);
+      // si no, dos que se alternan
+      const fl = Math.max(0, 1 - (now - flash[0]) / 220), three = MD.three, nb = three ? 3 : 2;
+      const piv = k % nb, mov = (k + 1) % nb, rest = (k + 2) % nb;
+      const body = (id, x, y, r) => {
+        if (LK.des.com) {   // Eclipse (diseño de los Gemelos Vaivén): un sol con rayos, una luna creciente y, con tres, un planeta con anillo
+          if (id === 0) {
             ctx.strokeStyle = '#ffcf5c'; ctx.lineWidth = Math.max(1.5, r * 0.16);
             ctx.beginPath(); for (let j = 0; j < 8; j++) { const a = j * Math.PI / 4 + now / 900; ctx.moveTo(x + Math.cos(a) * r * 1.3, y + Math.sin(a) * r * 1.3); ctx.lineTo(x + Math.cos(a) * r * 1.65, y + Math.sin(a) * r * 1.65); } ctx.stroke();
             ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-          } else {
+          } else if (id === 1) {
             ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = '#e6ebf5'; ctx.fill(); ctx.clip();
             ctx.fillStyle = 'rgba(20,22,34,0.88)'; ctx.beginPath(); ctx.arc(x + r * 0.5, y - r * 0.35, r * 0.85, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+          } else {
+            ctx.fillStyle = '#8fb6ff'; ctx.beginPath(); ctx.arc(x, y, r * 0.85, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#cfe0ff'; ctx.lineWidth = Math.max(1.5, r * 0.14); ctx.beginPath(); ctx.ellipse(x, y, r * 1.5, r * 0.45, -0.4, 0, Math.PI * 2); ctx.stroke();
           }
-        };
-        body(pivA, px, py, pr * (1 + 0.25 * fl)); body(!pivA, mx, my, pr);
-      } else {
-        const col = A => A ? LK.note : `rgb(${acc})`;
-        ctx.fillStyle = col(pivA); ctx.beginPath(); ctx.arc(px, py, pr * (1 + 0.25 * fl), 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = col(!pivA); ctx.beginPath(); ctx.arc(mx, my, pr, 0, Math.PI * 2); ctx.fill();
-      }
+          return;
+        }
+        ctx.fillStyle = id === 0 ? LK.note : id === 1 ? `rgb(${acc})` : '#8fb6ff'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      };
+      if (three && k > 0) { const B = tiles[k - 1]; ctx.globalAlpha = 0.85; body(rest, SX(B.x), SY(B.y), pr * 0.8); ctx.globalAlpha = 1; }
+      body(piv, px, py, pr * (1 + 0.25 * fl)); body(mov, mx, my, pr);
     }
     // Sostenida en curso: arco alrededor del pivote que se llena hasta soltar
     const hold = run.active.find(h => h.holding);
