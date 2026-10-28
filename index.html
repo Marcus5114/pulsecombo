@@ -2980,9 +2980,12 @@ body.pat-still::before { animation: none; }
         if (yEnd < -size) continue;
         const yHead = n.holding ? rY : y, bwid = size * 0.42, dead = n.missed || n.dropped;
         if (yEnd > yHead) {
-          ctx.fillStyle = dead ? 'rgba(80,80,86,0.35)' : n.holding ? (n.relAt != null ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.6)') : 'rgba(255,255,255,0.32)';
+          // Luz cardinal: el cuerpo de la larga toma el color de la estela (más brillante mientras la sostenés), con un halo a los lados
+          const hc = LC || '255,255,255';
+          if (LC && !dead) { ctx.fillStyle = `rgba(${LC},${n.holding && n.relAt == null ? 0.22 : 0.12})`; ctx.fillRect(x - bwid * 0.9, yHead, bwid * 1.8, yEnd - yHead); }
+          ctx.fillStyle = dead ? 'rgba(80,80,86,0.35)' : n.holding ? (n.relAt != null ? `rgba(${hc},0.3)` : `rgba(${hc},${LC ? 0.75 : 0.6})`) : `rgba(${hc},${LC ? 0.45 : 0.32})`;
           ctx.fillRect(x - bwid / 2, yHead, bwid, yEnd - yHead);
-          ctx.fillStyle = dead ? 'rgba(80,80,86,0.6)' : '#ececee';
+          ctx.fillStyle = dead ? 'rgba(80,80,86,0.6)' : LC ? `rgb(${LC})` : '#ececee';
           ctx.fillRect(x - bwid / 2 - 5, yEnd - 3, bwid + 10, 6);
         }
         arrow(x, yHead, size, a);

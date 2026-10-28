@@ -20,6 +20,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
   - Menú de canciones: Escape vuelve al mapa, y una línea arriba de la lista recuerda las teclas (no aparece en pantallas táctiles).
 
 ### Corregido
+- **Apariencia (en prueba):** el diseño Luz cardinal de Kadenza no se aplicaba a las flechas largas. Ahora el recorrido de la larga toma el color de la estela, con un halo a los lados, y brilla más mientras la sostenés.
 - En el menú de canciones, con Ajustes abierto, las flechas cambiaban la canción o la dificultad en vez de mover la barra de volumen. Ahora las flechas son del control que tiene el foco o de la ventana abierta.
 
 ## v0.5.2
