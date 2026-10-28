@@ -751,6 +751,10 @@ body.land .rx-txt { display: none; }
 .lk-dot i { display: block; width: 100%; height: 100%; border-radius: 50%; }
 .lk-dot.on { border-color: var(--fg); }
 .set-check.locked { opacity: 0.55; cursor: default; }
+.set-prog { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 0.8rem; }
+.set-prog .dev { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.set-prog .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+body.playing .set-prog, body.playing .set-prog-h { display: none; }   /* en la partida no se reinicia ni se canjean códigos */
 </style>
 </head>
 <body>
@@ -784,6 +788,8 @@ body.land .rx-txt { display: none; }
   <h3 class="set-h">Gráficos</h3>
   <label class="set-check"><input type="checkbox" id="lowGfx"><span><b>Modo rendimiento</b><small>Para celulares o computadoras lentas: dibuja la pista a menor resolución, apaga las estrellas de fondo y las animaciones de los personajes, y usa menos capas de sonido en la música. Se activa solo si el juego va lento.</small></span></label>
   <div class="lk" id="lookBox" hidden></div>
+  <h3 class="set-h set-prog-h">Progreso</h3>
+  <div class="set-prog"><span id="devBox"><button class="link" id="devOpen">Código</button></span><span id="resetBox"><button class="link" id="reset">Reiniciar progreso</button></span></div>
 </div>
 
 <div class="notice" id="notice" hidden><span id="noticeText"></span><button class="link" id="noticeClose">Cerrar</button></div>
@@ -938,7 +944,6 @@ body.land .rx-txt { display: none; }
 
 <footer class="foot">
   <span id="tot"></span>
-  <span class="foot-r"><span id="devBox"><button class="link" id="devOpen">Código</button></span><span id="resetBox"><button class="link" id="reset">Reiniciar progreso</button></span></span>
 </footer>
 
 <script>
@@ -5039,8 +5044,8 @@ body.land .rx-txt { display: none; }
   devBox.addEventListener('submit', e => {
     e.preventDefault();
     const raw = $('devCode').value, act = [raw.trim(), devNorm(raw)].map(v => DEV_CODES[devHash(v)]).find(Boolean);
-    if (act === 'unlock') { devUnlock(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
-    else if (act === 'beta') { lookBeta(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
+    if (act === 'unlock') { settingsOpen(false); devUnlock(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
+    else if (act === 'beta') { lookBeta(); renderLook(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
     else if (act === 'reset') { devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; resetAsk(); }
     else { $('devCode').value = ''; $('devCode').placeholder = 'Código incorrecto'; }
   });
@@ -5083,7 +5088,7 @@ body.land .rx-txt { display: none; }
   resetBox.addEventListener('click', e => {
     if (e.target.id === 'reset') resetAsk();
     else if (e.target.id === 'yes' || e.target.id === 'no') {
-      if (e.target.id === 'yes') { run = null; if (dlgOpen()) dlgSkip(); S = fresh(); lookApply(); chartCache.clear(); treeId = 'pulso'; builtTree = null; galSel = 'pulso'; save(); setView('gal'); }
+      if (e.target.id === 'yes') { run = null; if (dlgOpen()) dlgSkip(); S = fresh(); lookApply(); chartCache.clear(); treeId = 'pulso'; builtTree = null; galSel = 'pulso'; save(); settingsOpen(false); setView('gal'); }
       resetBox.innerHTML = '<button class="link" id="reset">Reiniciar progreso</button>';
     }
   });

@@ -665,8 +665,8 @@
   devBox.addEventListener('submit', e => {
     e.preventDefault();
     const raw = $('devCode').value, act = [raw.trim(), devNorm(raw)].map(v => DEV_CODES[devHash(v)]).find(Boolean);
-    if (act === 'unlock') { devUnlock(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
-    else if (act === 'beta') { lookBeta(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
+    if (act === 'unlock') { settingsOpen(false); devUnlock(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
+    else if (act === 'beta') { lookBeta(); renderLook(); devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; }
     else if (act === 'reset') { devBox.innerHTML = '<button class="link" id="devOpen">Código</button>'; resetAsk(); }
     else { $('devCode').value = ''; $('devCode').placeholder = 'Código incorrecto'; }
   });
@@ -709,7 +709,7 @@
   resetBox.addEventListener('click', e => {
     if (e.target.id === 'reset') resetAsk();
     else if (e.target.id === 'yes' || e.target.id === 'no') {
-      if (e.target.id === 'yes') { run = null; if (dlgOpen()) dlgSkip(); S = fresh(); lookApply(); chartCache.clear(); treeId = 'pulso'; builtTree = null; galSel = 'pulso'; save(); setView('gal'); }
+      if (e.target.id === 'yes') { run = null; if (dlgOpen()) dlgSkip(); S = fresh(); lookApply(); chartCache.clear(); treeId = 'pulso'; builtTree = null; galSel = 'pulso'; save(); settingsOpen(false); setView('gal'); }
       resetBox.innerHTML = '<button class="link" id="reset">Reiniciar progreso</button>';
     }
   });

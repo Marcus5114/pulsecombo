@@ -507,3 +507,7 @@ body.land .rx-txt { display: none; }
 .lk-dot i { display: block; width: 100%; height: 100%; border-radius: 50%; }
 .lk-dot.on { border-color: var(--fg); }
 .set-check.locked { opacity: 0.55; cursor: default; }
+.set-prog { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 0.8rem; }
+.set-prog .dev { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.set-prog .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+body.playing .set-prog, body.playing .set-prog-h { display: none; }   /* en la partida no se reinicia ni se canjean códigos */

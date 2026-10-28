@@ -31,6 +31,7 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 - El botón de pausa en el celular se veía como un cuadrado vacío en Android: el carácter ❚❚ no existe en algunas fuentes. Ahora el ícono se dibuja con dos barras.
 
 ### Cambiado
+- **"Código" y "Reiniciar progreso" se mudaron a Ajustes** (⚙), en una sección nueva llamada Progreso. Antes estaban al pie de la pantalla de galaxias y en algunas pantallas, como dentro del artifact, quedaban fuera de vista. Durante la partida esa sección no aparece.
 - **Árbol global más caro y con menos niveles**, para que funcione como un freno suave en el progreso avanzado. Cada nivel vale el doble, así que el efecto máximo de cada mejora es el mismo. Comprar todo el árbol pasa a costar unos 1.000 de Materia Oscura.
 
 | Mejora | Niveles | Efecto por nivel | Costo total |
