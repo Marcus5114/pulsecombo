@@ -382,6 +382,7 @@
     burst:   { gal: 'sen', label: 'Ráfagas', pct: 0.2, desc: 'Un tiempo de cada patrón trae dos o tres notas seguidas en semicorcheas.' },
     delay:   { gal: 'sen', label: 'Memoria diferida', pct: 0.4, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
     canon:   { gal: 'sen', label: 'Canon', pct: 0.45, desc: 'La llamada siguiente suena mientras repetís la anterior: escuchás y respondés al mismo tiempo. La línea de tiempo muestra solo la respuesta.' },
+    noguide: { gal: 'com', label: 'Sin guía', pct: 0.1, desc: 'Sin la cinta de flechitas sobre el hilo que marca el orden de las baldosas.' },
     three:   { gal: 'com', label: 'Tercer cuerpo', pct: 0.15, desc: 'Un tercer planeta se suma a la cadena y los colores rotan entre los tres: el que gira no siempre es del mismo color.' },
   };
   const galHardClear = gal => !!S.dev || SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
