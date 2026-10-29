@@ -9,6 +9,11 @@ Formato: cada versión agrupa sus cambios por tipo.
 
 Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman una sola versión, que sube `z` (v0.2.2, después v0.2.3…), así no se saltean números. Si el paquete junta muchos cambios o algo grande, sube `y` (v0.3). Los cambios se acumulan en "Sin publicar" hasta que se sube el paquete a GitHub.
 
+## Sin publicar — próxima versión: v0.5.4
+
+### Cambiado
+- **Bifurcaciones de Compás: el desvío difícil se distingue de punta a punta.** El camino difícil (la vista previa y, si lo tomás, el desvío entero) ahora es rojizo, con borde doble, para no confundirse con las baldosas doradas. Mientras lo recorrés, arriba dice "CAMINO DIFÍCIL" con su multiplicador, y al terminar el desvío aparece "DE VUELTA AL CAMINO NORMAL".
+
 ## v0.5.3
 
 ### Agregado

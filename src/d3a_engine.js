@@ -53,6 +53,7 @@
     tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA', fork: 'CAMINO DIFÍCIL', brake: 'FRENO', saved: 'SEÑAL SALVADA' };
   // Portadoras de Señal: dorada (x2) y rosa (x3)
   const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
+  const HARD_RGB = '255,96,96';   // camino difícil de las bifurcaciones
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
   const gradeRank = g => 'EDCBAS'.indexOf(g);
 
@@ -235,7 +236,7 @@
       const avoid = new Set(run.tiles.slice(k0 + 1).filter(T => T.i < f.b + 16).map(T => T.q + ',' + T.r));
       f.bNotes = pathChain(hist, f.hard, { R: rng(17000 + run.si * 29 + f.a), step: run.ch.step, di: Math.min(2, run.di + 1), tut: false, golds: L('p_c_gold'), holdP: 0, avoid, flip: true });
       for (const n of f.bNotes) n.hard = true;
-      f.k0 = k0; f.fork = fork; f.bTiles = hist.slice(k0 + 1);
+      f.k0 = k0; f.fork = fork; f.bTiles = hist.slice(k0 + 1); for (const T of f.bTiles) T.hard = true;
     }
   }
   function takeFork() {
