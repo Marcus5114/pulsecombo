@@ -325,6 +325,23 @@
       if (T0) { ctx.font = F(800, U * 0.026); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = `rgb(${HARD_RGB})`; ctx.fillText('DIFÍCIL', SX(T0.x), SY(T0.y) - R * 0.62); }
       ctx.restore();
     }
+    // Guía sobre el hilo: una cadena continua de flechitas que sigue el camino de baldosa en baldosa, por detrás de ellas
+    // (se ven a través del relleno translúcido). Indican el orden de las baldosas aunque estén apretadas o en ángulos cerrados.
+    {
+      const cs = R * 0.07, gapc = R * 0.2, lim = Math.min(n - 1, k + (MD.blind ? 3 : 8));
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 1.8;
+      for (let q = Math.max(0, k); q < lim; q++) {
+        const A = tiles[q], B = tiles[q + 1], ax2 = SX(A.x), ay2 = SY(A.y), bx2 = SX(B.x), by2 = SY(B.y);
+        const len = Math.hypot(bx2 - ax2, by2 - ay2), ang = Math.atan2(by2 - ay2, bx2 - ax2), d = q - k;
+        ctx.strokeStyle = `rgba(${acc},${Math.max(0.2, 0.75 - d * 0.08).toFixed(2)})`;
+        // desplazadas con el tiempo para que la cadena parezca avanzar hacia la próxima baldosa
+        const off = ((t / (st * 4)) % 1) * gapc;
+        for (let u = off; u < len; u += gapc) {
+          const gx = ax2 + Math.cos(ang) * u, gy = ay2 + Math.sin(ang) * u;
+          ctx.save(); ctx.translate(gx, gy); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(-cs * 0.7, -cs); ctx.lineTo(cs * 0.3, 0); ctx.lineTo(-cs * 0.7, cs); ctx.stroke(); ctx.restore();
+        }
+      }
+    }
     // baldosas hexagonales; adentro, la forma dice cuánto vale cada lado de la órbita (triángulo semicorchea, círculo negra)
     for (let q = to; q >= from; q--) {
       const T = tiles[q], x = SX(T.x), y = SY(T.y); if (x < -R || x > W + R || y < -R || y > H + R) continue;
@@ -358,20 +375,6 @@
       }
     }
     ctx.globalAlpha = 1;
-    // Guía: una flechita sobre el hilo que une cada baldosa con la siguiente, apuntando hacia adonde va el camino.
-    // Las más cercanas brillan más; así se lee el orden de las baldosas aunque estén apretadas o en ángulos cerrados.
-    {
-      const cs = R * 0.15; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      for (let q = k; q < Math.min(n - 1, k + (MD.blind ? 3 : 7)); q++) {
-        const A = tiles[q], B = tiles[q + 1], ax2 = SX(A.x), ay2 = SY(A.y), bx2 = SX(B.x), by2 = SY(B.y);
-        const mxx = (ax2 + bx2) / 2, myy = (ay2 + by2) / 2, ang = Math.atan2(by2 - ay2, bx2 - ax2), d = q - k;
-        ctx.strokeStyle = `rgba(${acc},${(d === 0 ? 0.95 : Math.max(0.25, 0.75 - d * 0.1)).toFixed(2)})`;
-        const col = ctx.strokeStyle;
-        ctx.save(); ctx.translate(mxx, myy); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(-cs * 0.6, -cs); ctx.lineTo(cs * 0.4, 0); ctx.lineTo(-cs * 0.6, cs);
-        ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(7,7,8,0.75)'; ctx.stroke();   // contorno oscuro para que se lea sobre el borde de las baldosas
-        ctx.lineWidth = 3; ctx.strokeStyle = col; ctx.stroke(); ctx.restore();
-      }
-    }
     const px = SX(P.x), py = SY(P.y), mx = px + (ax + (bx - ax) * f) * R, my = py + (ay + (by - ay) * f) * R, pr = R * 0.22;
     if (MD.still) {
       const bl = 60 / run.song.bpm, bp = t > LEAD ? 1 - (((t - LEAD) % bl) / bl) : 0;
@@ -385,6 +388,19 @@
       { const [hx, hy] = vx(start); ctx.moveTo(px + hx * R, py + hy * R); }
       if (t >= P.t) { for (let j = 1; j <= Math.floor(Math.abs(v - start)); j++) { const [hx, hy] = vx(start + sg * j); ctx.lineTo(px + hx * R, py + hy * R); } ctx.lineTo(mx, my); ctx.stroke(); }
       for (let j = 0; j < 6; j++) { const [hx, hy] = vx(j); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(px + hx * R, py + hy * R, 2.5, 0, Math.PI * 2); ctx.fill(); }
+      // Guía: flechitas translúcidas sobre la órbita, desde el planeta hasta el vértice donde tiene que tocar
+      // (la próxima baldosa). Se encienden de a poco a medida que el planeta se acerca.
+      if (N1 && t >= P.t) {
+        const vt = P.D + 3 + sg * (N1.t - P.t) / (P.u * st), left = (vt - v) * sg;
+        const at = u => { const j = Math.floor(u), f = u - j, [x0, y0] = vx(j), [x1, y1] = vx(j + 1);
+          return [px + (x0 + (x1 - x0) * f) * R, py + (y0 + (y1 - y0) * f) * R, Math.atan2((y1 - y0) * sg, (x1 - x0) * sg)]; };
+        const cs = R * 0.12; ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (let d = 0.5; d < left - 0.15; d += 0.5) {
+          const [gx, gy, a] = at(v + sg * d), near = 1 - d / Math.max(1, left);
+          ctx.strokeStyle = `rgba(${acc},${(0.3 + 0.5 * near).toFixed(2)})`;
+          ctx.save(); ctx.translate(gx, gy); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(-cs, -cs); ctx.lineTo(0, 0); ctx.lineTo(-cs, cs); ctx.stroke(); ctx.restore();
+        }
+      }
       // Cuerpos: con Tercer cuerpo son tres y rotan (pivote, el que gira y uno que descansa en la baldosa anterior);
       // si no, dos que se alternan
       const fl = Math.max(0, 1 - (now - flash[0]) / 220), three = MD.three, nb = three ? 3 : 2;
