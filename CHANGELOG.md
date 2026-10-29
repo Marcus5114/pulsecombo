@@ -12,6 +12,8 @@ Numeración: `x.y.z`. Todos los cambios que se juntan antes de publicar forman u
 ## Sin publicar — próxima versión: v0.5.4
 
 ### Cambiado
+- **Compás: la guía pasa al camino (en prueba).** Las flechitas ya no van sobre la órbita: ahora hay una sobre el hilo que une cada baldosa con la siguiente, apuntando hacia adonde sigue el camino, en las próximas 7 baldosas (3 con Ciego). La más cercana brilla más y llevan un contorno oscuro para leerse sobre los bordes. Así se ve el orden de las baldosas antes del golpe, aunque estén apretadas o en ángulos cerrados.
+- **Compás: el triángulo de las baldosas en semicorcheas es más chico**, para que no se confunda con otras marcas.
 - **Bifurcaciones de Compás: el desvío difícil se distingue de punta a punta.** El camino difícil (la vista previa y, si lo tomás, el desvío entero) ahora es rojizo, con borde doble, para no confundirse con las baldosas doradas. Mientras lo recorrés, arriba dice "CAMINO DIFÍCIL" con su multiplicador, y al terminar el desvío aparece "DE VUELTA AL CAMINO NORMAL".
 
 ## v0.5.3
