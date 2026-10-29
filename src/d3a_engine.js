@@ -53,7 +53,8 @@
     tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA', fork: 'CAMINO DIFÍCIL', brake: 'FRENO', saved: 'SEÑAL SALVADA' };
   // Portadoras de Señal: dorada (x2) y rosa (x3)
   const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
-  const HARD_RGB = '255,96,96';   // camino difícil de las bifurcaciones
+  const HARD_RGB = '255,96,96';
+  const MOON_RGB = '143,182,255';   // luna del modificador Tercer cuerpo   // camino difícil de las bifurcaciones
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
   const gradeRank = g => 'EDCBAS'.indexOf(g);
 
@@ -75,7 +76,7 @@
         Object.assign(run, { secIdx: 0, secMiss: 0, secEarn: 0, tramos: 0, goldHit: 0, pk: 0, hardTaken: 0, hardHit: 0,
           tiles: ch.tiles.map(T => ({ ...T })),   // copia: una bifurcación reemplaza las baldosas de esta partida
           forks: ch.forks.map(f => ({ ...f, done: false })), forkWin: null, brakes: L('p_o_brake') ? 1 + L('p_o_brakeuse') : 0 });
-        prepForks();
+        prepForks(); mapTileNotes();
       }
       if (mode === 'signal') {
         run.rounds = ch.rounds.map(r => ({ ...r, raw: 0 })); run.streak = 0; run.decoded = 0; run.sigR = null; run.carriers = 0;
@@ -239,12 +240,17 @@
       f.k0 = k0; f.fork = fork; f.bTiles = hist.slice(k0 + 1); for (const T of f.bTiles) T.hard = true;
     }
   }
+  // Compás: nota de cada baldosa (las notas de luna no tienen baldosa)
+  function mapTileNotes() { run.tnote = []; for (const n of run.notes) if (n.k != null && !n.moon) run.tnote[n.k] = n; }
   function takeFork() {
     const { f } = run.forkWin; run.forkWin = null;
     const k0 = f.k0, hist = [...run.tiles.slice(0, k0), f.fork, ...f.bTiles];
     const rest = pathChain(hist, run.ch.taps.filter(i => i >= f.b), { R: rng(19000 + run.si * 29 + f.a), step: run.ch.step, di: run.di, tut: false, golds: L('p_c_gold'), holdP: run.ch.holdP });
-    run.tiles = hist; run.notes = run.notes.slice(0, k0).concat(f.bNotes, rest); run.hardTaken++;
-    prepForks();
+    // se conservan las notas hasta la baldosa de la Y (incluidas las de luna anteriores); el resto se rehace
+    const keep = run.notes.filter(n => n.moon ? n.piv < k0 : n.k <= k0), all = keep.concat(f.bNotes, rest);
+    if (run.mods.three) addMoons(hist, all, k0 + f.bTiles.length, rng(15500 + run.si * 37 + f.a), run.di, run.ch.step);
+    run.tiles = hist; run.notes = all.sort((a, b) => a.t - b.t); run.hardTaken++;
+    prepForks(); mapTileNotes();
     setJudge('fork'); if (ac) { const at = ac.currentTime; tone(at, 'triangle', 660, 0.08, 0.1); tone(at + 0.06, 'triangle', 990, 0.1, 0.12); }
   }
   function ghostTap(t) {

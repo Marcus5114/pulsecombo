@@ -346,7 +346,7 @@
     // baldosas hexagonales; adentro, la forma dice cuánto vale cada lado de la órbita (triángulo semicorchea, círculo negra)
     for (let q = to; q >= from; q--) {
       const T = tiles[q], x = SX(T.x), y = SY(T.y); if (x < -R || x > W + R || y < -R || y > H + R) continue;
-      const nt = q > 0 ? run.notes[q - 1] : null, rr = R * 0.5;
+      const nt = q > 0 ? (run.tnote ? run.tnote[q] : run.notes[q - 1]) : null, rr = R * 0.5;
       ctx.globalAlpha = q < k ? 0.35 - 0.08 * (k - q) : MD.blind && q > k + 1 ? Math.max(0.15, 1 - (q - k - 1) / 3) : q > k + 8 ? Math.max(0.15, 1 - (q - k - 8) / 9) : 1;
       const judged = nt && nt.judged, hitOk = judged && !nt.missed;
       hexPath(x, y, rr);
@@ -360,6 +360,9 @@
       if (nt && nt.kind === 'h' && !judged) {   // sostenida: anillo doble (mantené apretado mientras gira)
         ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, rr * 0.62, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.arc(x, y, rr * 0.48, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (MD.three && q > 0 && run.notes.some(o => o.moon && o.piv === q - 1 && !o.judged)) {   // antes de esta baldosa viene un toque de luna
+        ctx.fillStyle = `rgb(${MOON_RGB})`; ctx.beginPath(); ctx.arc(x + rr * 0.55, y - rr * 0.55, rr * 0.16, 0, Math.PI * 2); ctx.fill();
       }
       const fk = run.forks && run.forks.find(f => !f.done && f.pre === T.i);
       if (fk) {   // bifurcación: una Y en la baldosa (después de tocarla, reaccioná rápido para el camino difícil)
@@ -391,8 +394,8 @@
       for (let j = 0; j < 6; j++) { const [hx, hy] = vx(j); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(px + hx * R, py + hy * R, 2.5, 0, Math.PI * 2); ctx.fill(); }
       // Cuerpos: con Tercer cuerpo son tres y rotan (pivote, el que gira y uno que descansa en la baldosa anterior);
       // si no, dos que se alternan
-      const fl = Math.max(0, 1 - (now - flash[0]) / 220), three = MD.three, nb = three ? 3 : 2;
-      const piv = k % nb, mov = (k + 1) % nb, rest = (k + 2) % nb;
+      const fl = Math.max(0, 1 - (now - flash[0]) / 220), three = MD.three;
+      const piv = k % 2, mov = (k + 1) % 2;
       const body = (id, x, y, r) => {
         if (LK.des.com) {   // Eclipse (diseño de los Gemelos Vaivén): un sol con rayos, una luna creciente y, con tres, un planeta con anillo
           if (id === 0) {
@@ -408,9 +411,20 @@
           }
           return;
         }
-        ctx.fillStyle = id === 0 ? LK.note : id === 1 ? `rgb(${acc})` : '#8fb6ff'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = id === 0 ? LK.note : id === 1 ? `rgb(${acc})` : `rgb(${MOON_RGB})`; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
       };
-      if (three && k > 0) { const B = tiles[k - 1]; ctx.globalAlpha = 0.85; body(rest, SX(B.x), SY(B.y), pr * 0.8); ctx.globalAlpha = 1; }
+      // Tercer cuerpo: la luna gira alrededor del mismo pivote en sentido contrario, saliendo del vértice opuesto.
+      // Los vértices donde hay que tocar cuando llega la luna se marcan con un anillo de su color.
+      if (three) {
+        for (const o of run.notes) {
+          if (!o.moon || o.piv !== k || o.judged) continue;
+          const [hx, hy] = vx(P.D - sg * o.side), near = Math.max(0, Math.min(1, 1 - (o.t - t) / (st * 8)));
+          ctx.strokeStyle = `rgba(${MOON_RGB},${(0.45 + 0.55 * near).toFixed(2)})`; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(px + hx * R, py + hy * R, pr * (1.6 - 0.5 * near), 0, Math.PI * 2); ctx.stroke();
+        }
+        const vm = P.D - sg * Math.max(0, t - P.t) / (P.u * st), vm0 = Math.floor(vm), fm = vm - vm0, [ux, uy] = vx(vm0), [wx, wy] = vx(vm0 + 1);
+        body(2, px + (ux + (wx - ux) * fm) * R, py + (uy + (wy - uy) * fm) * R, pr * 0.75);
+      }
       body(piv, px, py, pr * (1 + 0.25 * fl)); body(mov, mx, my, pr);
     }
     // Sostenida en curso: arco alrededor del pivote que se llena hasta soltar

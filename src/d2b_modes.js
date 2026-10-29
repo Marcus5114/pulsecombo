@@ -203,7 +203,22 @@
     }
     return notes;
   }
-  function buildPath(si, di) {
+  // Tercer cuerpo: una luna gira alrededor del pivote en sentido contrario al planeta. En algunos huecos de 2 lados o más
+  // hay un toque de luna: se toca cuando la luna llega al vértice marcado (a mitad de camino hacia la baldosa siguiente).
+  function addMoons(tiles, notes, fromQ, R, di, step) {
+    const p = [0.4, 0.55, 0.7][di] ?? 0.55;   // los huecos de 2 lados no pueden tener luna, así que se compensa
+    for (let q = Math.max(1, fromQ); q + 1 < tiles.length; q++) {
+      const A = tiles[q], m = tiles[q + 1].m; if (m < 2 || R() >= p) continue;
+      if (notes.some(n => n.k === q && n.kind === 'h')) continue;   // no mientras se sostiene
+      // lados posibles: la luna no puede caer en el mismo vértice que la baldosa siguiente (m + lado = 3)
+      const sides = Array.from({ length: m - 1 }, (_, j) => j + 1).filter(sd => (m + sd) % 6 !== 3);
+      if (!sides.length) continue;
+      const side = sides[Math.floor(R() * sides.length)];
+      notes.push({ t: A.t + side * A.u * step, i: A.i + side * A.u, lane: 0, kind: 'q', moon: true, piv: q, side, pl: 3 });
+    }
+    notes.sort((a, b) => a.t - b.t);
+  }
+  function buildPath(si, di, mods = []) {
     const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16, M = getMusic(si), R = rng(11000 + si * 53 + di * 7);
     const taps = pathTaps(s, M, s.tut ? 0 : di, R);
     const first = { q: 0, r: 0, D: 0, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, u: 2, m: 2, s: 1 };
@@ -238,6 +253,8 @@
     let vary = 0; for (let q = 2; q < tiles.length; q++) if (tiles[q].m !== tiles[q - 1].m) vary++;
     let stars = 0.3 + 1.2 * notes.length / dur + 1.4 * st.quick / dur + 1.5 * st.uchg / dur + 0.9 * vary / dur + 0.012 * st.twirls;
     stars = Math.round(stars * 10) / 10;
+    // las lunas se agregan después de calcular las estrellas: lo que suman lo pone el modificador
+    if (mods.includes('three') && !s.tut) addMoons(tiles, notes, 1, rng(15000 + si * 37 + di), di, step);
     return { notes, tiles, taps, forks, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: notes.filter(n => n.kind === 'h').length, extras: 0, golds: nGold, secs, holdP };
   }
 
@@ -247,7 +264,7 @@
     const s = SONGS[si], m = modeOf(s), mods = activeMods(s);
     const k = `${si}-${di}-${m === 'arrows' ? sig() : m === 'path' ? ['p_c_gold', 'p_o_hold', 'p_o_freq', 'p_c_fork', 'p_c_forkn'].map(id => L(id)).join('') : ''}-${mods.join('.')}-${L('g_mod_amp')}`;
     if (!chartCache.has(k)) {
-      const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : m === 'path' ? buildPath(si, di) : buildStack(si, di);
+      const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : m === 'path' ? buildPath(si, di, mods) : buildStack(si, di);
       c.baseStars = c.stars; c.mods = mods;
       if (mods.length) { c.stars = Math.max(0.5, Math.round(c.stars * modFactor(mods) * 10) / 10); c.mult = starMult(c.stars); }
       chartCache.set(k, c);

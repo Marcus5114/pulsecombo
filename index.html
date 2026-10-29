@@ -1358,7 +1358,7 @@ body.pat-still::before { animation: none; }
     delay:   { gal: 'sen', label: 'Memoria diferida', pct: 0.4, desc: 'Repetís la llamada anterior, no la que acaba de sonar. La primera se repite igual.' },
     canon:   { gal: 'sen', label: 'Canon', pct: 0.45, desc: 'La llamada siguiente suena mientras repetís la anterior: escuchás y respondés al mismo tiempo. La línea de tiempo muestra solo la respuesta.' },
     noguide: { gal: 'com', label: 'Sin guía', pct: 0.1, desc: 'Sin la cinta de flechitas sobre el hilo que marca el orden de las baldosas.' },
-    three:   { gal: 'com', label: 'Tercer cuerpo', pct: 0.15, desc: 'Un tercer planeta se suma a la cadena y los colores rotan entre los tres: el que gira no siempre es del mismo color.' },
+    three:   { gal: 'com', label: 'Tercer cuerpo', pct: 0.3, desc: 'Una luna azul gira alrededor del pivote en sentido contrario al planeta. Además de las baldosas, hay toques de luna: tocá cuando la luna llega al vértice marcado con un anillo azul. La baldosa siguiente lleva un punto azul cuando viene uno.' },
   };
   const galHardClear = gal => !!S.dev || SONGS.some(s => s.gal === gal && !s.tut && recOf(s, 2)?.clear);
   const modOpen = id => !!L('g_mods') && galHardClear(MODS[id].gal);
@@ -2386,7 +2386,22 @@ body.pat-still::before { animation: none; }
     }
     return notes;
   }
-  function buildPath(si, di) {
+  // Tercer cuerpo: una luna gira alrededor del pivote en sentido contrario al planeta. En algunos huecos de 2 lados o más
+  // hay un toque de luna: se toca cuando la luna llega al vértice marcado (a mitad de camino hacia la baldosa siguiente).
+  function addMoons(tiles, notes, fromQ, R, di, step) {
+    const p = [0.4, 0.55, 0.7][di] ?? 0.55;   // los huecos de 2 lados no pueden tener luna, así que se compensa
+    for (let q = Math.max(1, fromQ); q + 1 < tiles.length; q++) {
+      const A = tiles[q], m = tiles[q + 1].m; if (m < 2 || R() >= p) continue;
+      if (notes.some(n => n.k === q && n.kind === 'h')) continue;   // no mientras se sostiene
+      // lados posibles: la luna no puede caer en el mismo vértice que la baldosa siguiente (m + lado = 3)
+      const sides = Array.from({ length: m - 1 }, (_, j) => j + 1).filter(sd => (m + sd) % 6 !== 3);
+      if (!sides.length) continue;
+      const side = sides[Math.floor(R() * sides.length)];
+      notes.push({ t: A.t + side * A.u * step, i: A.i + side * A.u, lane: 0, kind: 'q', moon: true, piv: q, side, pl: 3 });
+    }
+    notes.sort((a, b) => a.t - b.t);
+  }
+  function buildPath(si, di, mods = []) {
     const s = SONGS[si], step = 60 / s.bpm / 4, total = songMeasures(s) * 16, M = getMusic(si), R = rng(11000 + si * 53 + di * 7);
     const taps = pathTaps(s, M, s.tut ? 0 : di, R);
     const first = { q: 0, r: 0, D: 0, i: taps[0] - 4, t: LEAD + (taps[0] - 4) * step, u: 2, m: 2, s: 1 };
@@ -2421,6 +2436,8 @@ body.pat-still::before { animation: none; }
     let vary = 0; for (let q = 2; q < tiles.length; q++) if (tiles[q].m !== tiles[q - 1].m) vary++;
     let stars = 0.3 + 1.2 * notes.length / dur + 1.4 * st.quick / dur + 1.5 * st.uchg / dur + 0.9 * vary / dur + 0.012 * st.twirls;
     stars = Math.round(stars * 10) / 10;
+    // las lunas se agregan después de calcular las estrellas: lo que suman lo pone el modificador
+    if (mods.includes('three') && !s.tut) addMoons(tiles, notes, 1, rng(15000 + si * 37 + di), di, step);
     return { notes, tiles, taps, forks, step, total, end: LEAD + total * step, stars, mult: starMult(stars), boards: 1, required: notes.length, holds: notes.filter(n => n.kind === 'h').length, extras: 0, golds: nGold, secs, holdP };
   }
 
@@ -2430,7 +2447,7 @@ body.pat-still::before { animation: none; }
     const s = SONGS[si], m = modeOf(s), mods = activeMods(s);
     const k = `${si}-${di}-${m === 'arrows' ? sig() : m === 'path' ? ['p_c_gold', 'p_o_hold', 'p_o_freq', 'p_c_fork', 'p_c_forkn'].map(id => L(id)).join('') : ''}-${mods.join('.')}-${L('g_mod_amp')}`;
     if (!chartCache.has(k)) {
-      const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : m === 'path' ? buildPath(si, di) : buildStack(si, di);
+      const c = m === 'arrows' ? buildChart(si, di) : m === 'signal' ? buildSignal(si, di, mods) : m === 'path' ? buildPath(si, di, mods) : buildStack(si, di);
       c.baseStars = c.stars; c.mods = mods;
       if (mods.length) { c.stars = Math.max(0.5, Math.round(c.stars * modFactor(mods) * 10) / 10); c.mult = starMult(c.stars); }
       chartCache.set(k, c);
@@ -2492,7 +2509,8 @@ body.pat-still::before { animation: none; }
     tramo: 'TRAMO PERFECTO', dec: 'DECODIFICADO', lost: 'SEÑAL PERDIDA', on: 'A TIEMPO', off: 'FUERA DE TIEMPO', soft: 'PERDONADO', line: 'FILA', tetra: 'ENSAMBLE PERFECTO', carrier: 'DECODIFICADO x2', slow: 'CÁMARA LENTA', fork: 'CAMINO DIFÍCIL', brake: 'FRENO', saved: 'SEÑAL SALVADA' };
   // Portadoras de Señal: dorada (x2) y rosa (x3)
   const CARRIER_RGB = { 2: '242,193,78', 3: '255,122,217' };
-  const HARD_RGB = '255,96,96';   // camino difícil de las bifurcaciones
+  const HARD_RGB = '255,96,96';
+  const MOON_RGB = '143,182,255';   // luna del modificador Tercer cuerpo   // camino difícil de las bifurcaciones
   const GRADES = [[95, 'S'], [88, 'A'], [78, 'B'], [65, 'C'], [0, 'D']];
   const gradeRank = g => 'EDCBAS'.indexOf(g);
 
@@ -2514,7 +2532,7 @@ body.pat-still::before { animation: none; }
         Object.assign(run, { secIdx: 0, secMiss: 0, secEarn: 0, tramos: 0, goldHit: 0, pk: 0, hardTaken: 0, hardHit: 0,
           tiles: ch.tiles.map(T => ({ ...T })),   // copia: una bifurcación reemplaza las baldosas de esta partida
           forks: ch.forks.map(f => ({ ...f, done: false })), forkWin: null, brakes: L('p_o_brake') ? 1 + L('p_o_brakeuse') : 0 });
-        prepForks();
+        prepForks(); mapTileNotes();
       }
       if (mode === 'signal') {
         run.rounds = ch.rounds.map(r => ({ ...r, raw: 0 })); run.streak = 0; run.decoded = 0; run.sigR = null; run.carriers = 0;
@@ -2678,12 +2696,17 @@ body.pat-still::before { animation: none; }
       f.k0 = k0; f.fork = fork; f.bTiles = hist.slice(k0 + 1); for (const T of f.bTiles) T.hard = true;
     }
   }
+  // Compás: nota de cada baldosa (las notas de luna no tienen baldosa)
+  function mapTileNotes() { run.tnote = []; for (const n of run.notes) if (n.k != null && !n.moon) run.tnote[n.k] = n; }
   function takeFork() {
     const { f } = run.forkWin; run.forkWin = null;
     const k0 = f.k0, hist = [...run.tiles.slice(0, k0), f.fork, ...f.bTiles];
     const rest = pathChain(hist, run.ch.taps.filter(i => i >= f.b), { R: rng(19000 + run.si * 29 + f.a), step: run.ch.step, di: run.di, tut: false, golds: L('p_c_gold'), holdP: run.ch.holdP });
-    run.tiles = hist; run.notes = run.notes.slice(0, k0).concat(f.bNotes, rest); run.hardTaken++;
-    prepForks();
+    // se conservan las notas hasta la baldosa de la Y (incluidas las de luna anteriores); el resto se rehace
+    const keep = run.notes.filter(n => n.moon ? n.piv < k0 : n.k <= k0), all = keep.concat(f.bNotes, rest);
+    if (run.mods.three) addMoons(hist, all, k0 + f.bTiles.length, rng(15500 + run.si * 37 + f.a), run.di, run.ch.step);
+    run.tiles = hist; run.notes = all.sort((a, b) => a.t - b.t); run.hardTaken++;
+    prepForks(); mapTileNotes();
     setJudge('fork'); if (ac) { const at = ac.currentTime; tone(at, 'triangle', 660, 0.08, 0.1); tone(at + 0.06, 'triangle', 990, 0.1, 0.12); }
   }
   function ghostTap(t) {
@@ -3612,7 +3635,7 @@ body.pat-still::before { animation: none; }
     // baldosas hexagonales; adentro, la forma dice cuánto vale cada lado de la órbita (triángulo semicorchea, círculo negra)
     for (let q = to; q >= from; q--) {
       const T = tiles[q], x = SX(T.x), y = SY(T.y); if (x < -R || x > W + R || y < -R || y > H + R) continue;
-      const nt = q > 0 ? run.notes[q - 1] : null, rr = R * 0.5;
+      const nt = q > 0 ? (run.tnote ? run.tnote[q] : run.notes[q - 1]) : null, rr = R * 0.5;
       ctx.globalAlpha = q < k ? 0.35 - 0.08 * (k - q) : MD.blind && q > k + 1 ? Math.max(0.15, 1 - (q - k - 1) / 3) : q > k + 8 ? Math.max(0.15, 1 - (q - k - 8) / 9) : 1;
       const judged = nt && nt.judged, hitOk = judged && !nt.missed;
       hexPath(x, y, rr);
@@ -3626,6 +3649,9 @@ body.pat-still::before { animation: none; }
       if (nt && nt.kind === 'h' && !judged) {   // sostenida: anillo doble (mantené apretado mientras gira)
         ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, rr * 0.62, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.arc(x, y, rr * 0.48, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (MD.three && q > 0 && run.notes.some(o => o.moon && o.piv === q - 1 && !o.judged)) {   // antes de esta baldosa viene un toque de luna
+        ctx.fillStyle = `rgb(${MOON_RGB})`; ctx.beginPath(); ctx.arc(x + rr * 0.55, y - rr * 0.55, rr * 0.16, 0, Math.PI * 2); ctx.fill();
       }
       const fk = run.forks && run.forks.find(f => !f.done && f.pre === T.i);
       if (fk) {   // bifurcación: una Y en la baldosa (después de tocarla, reaccioná rápido para el camino difícil)
@@ -3657,8 +3683,8 @@ body.pat-still::before { animation: none; }
       for (let j = 0; j < 6; j++) { const [hx, hy] = vx(j); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(px + hx * R, py + hy * R, 2.5, 0, Math.PI * 2); ctx.fill(); }
       // Cuerpos: con Tercer cuerpo son tres y rotan (pivote, el que gira y uno que descansa en la baldosa anterior);
       // si no, dos que se alternan
-      const fl = Math.max(0, 1 - (now - flash[0]) / 220), three = MD.three, nb = three ? 3 : 2;
-      const piv = k % nb, mov = (k + 1) % nb, rest = (k + 2) % nb;
+      const fl = Math.max(0, 1 - (now - flash[0]) / 220), three = MD.three;
+      const piv = k % 2, mov = (k + 1) % 2;
       const body = (id, x, y, r) => {
         if (LK.des.com) {   // Eclipse (diseño de los Gemelos Vaivén): un sol con rayos, una luna creciente y, con tres, un planeta con anillo
           if (id === 0) {
@@ -3674,9 +3700,20 @@ body.pat-still::before { animation: none; }
           }
           return;
         }
-        ctx.fillStyle = id === 0 ? LK.note : id === 1 ? `rgb(${acc})` : '#8fb6ff'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = id === 0 ? LK.note : id === 1 ? `rgb(${acc})` : `rgb(${MOON_RGB})`; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
       };
-      if (three && k > 0) { const B = tiles[k - 1]; ctx.globalAlpha = 0.85; body(rest, SX(B.x), SY(B.y), pr * 0.8); ctx.globalAlpha = 1; }
+      // Tercer cuerpo: la luna gira alrededor del mismo pivote en sentido contrario, saliendo del vértice opuesto.
+      // Los vértices donde hay que tocar cuando llega la luna se marcan con un anillo de su color.
+      if (three) {
+        for (const o of run.notes) {
+          if (!o.moon || o.piv !== k || o.judged) continue;
+          const [hx, hy] = vx(P.D - sg * o.side), near = Math.max(0, Math.min(1, 1 - (o.t - t) / (st * 8)));
+          ctx.strokeStyle = `rgba(${MOON_RGB},${(0.45 + 0.55 * near).toFixed(2)})`; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(px + hx * R, py + hy * R, pr * (1.6 - 0.5 * near), 0, Math.PI * 2); ctx.stroke();
+        }
+        const vm = P.D - sg * Math.max(0, t - P.t) / (P.u * st), vm0 = Math.floor(vm), fm = vm - vm0, [ux, uy] = vx(vm0), [wx, wy] = vx(vm0 + 1);
+        body(2, px + (ux + (wx - ux) * fm) * R, py + (uy + (wy - uy) * fm) * R, pr * 0.75);
+      }
       body(piv, px, py, pr * (1 + 0.25 * fl)); body(mov, mx, my, pr);
     }
     // Sostenida en curso: arco alrededor del pivote que se llena hasta soltar
